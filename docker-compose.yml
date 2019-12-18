@@ -1,0 +1,35 @@
+version: '3'
+services:
+
+  slurmclustermaster-main:
+    image: "rosetta/slurmclustermaster"
+    container_name: slurmclustermaster-main
+    hostname: slurmclustermaster-main
+    environment:
+      - SAFEMODE=False
+    privileged: true
+    volumes:
+      - ./data/shared:/shared
+      # - ./data/singularity_cache:/rosetta/.singularity/cache # Not working, check permissions...
+    ports:
+      - "8590:8590"
+      - "5900:5900"
+
+  slurmclusterworker-one:
+    image: "rosetta/slurmclusterworker"
+    container_name: slurmclusterworker-one
+    hostname: slurmclusterworker-one
+    environment:
+      - SAFEMODE=False
+    privileged: true
+    volumes:
+      - ./data/shared:/shared
+
+  dregistry:
+    container_name: dregistry
+    hostname: dregistry
+    image: "rosetta/dregistry"
+    volumes:
+      - ./data/dregistry:/var/lib/registry
+    ports:
+      - "5000:5000"

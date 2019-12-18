@@ -1,0 +1,12 @@
+Bootstrap:library
+From: debian:9
+
+%runscript
+    exec echo "Hello world!"
+
+%environment
+    TESTVARIABLE=42
+    export TESTVARIABLE
+
+%labels
+   AUTHOR stefano.russo@gmail.com
