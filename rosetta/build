@@ -35,7 +35,9 @@ if [[ "x$SERVICE" == "x" ]] ; then
     $BUILD_COMMAND images/slurmclustermaster -t rosetta/slurmclustermaster    
     $BUILD_COMMAND images/slurmclusterworker -t rosetta/slurmclusterworker    
     $BUILD_COMMAND images/dregistry -t rosetta/dregistry
-  
+    $BUILD_COMMAND images/webapp -t rosetta/webapp
+
+    
 else
 
     # Build a specific image

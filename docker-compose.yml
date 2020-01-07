@@ -33,3 +33,26 @@ services:
       - ./data/dregistry:/var/lib/registry
     ports:
       - "5000:5000"
+
+  webapp:
+    image: "rosetta/webapp"
+    container_name: webapp
+    hostname: webapp
+    environment:
+      - SAFEMODE=False
+      - DJANGO_LOG_LEVEL=CRITICAL
+      - ROSETTA_LOG_LEVEL=DEBUG 
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data_rosetta/webapp/data:/data
+      - ./data_rosetta/webapp/log:/var/log/webapp
+      #- ./images/webapp/code:/opt/webapp_code
+
+
+
+
+
+
+
+
