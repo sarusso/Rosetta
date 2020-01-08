@@ -14,7 +14,7 @@ docker tag rosetta/metadesktop localhost:5000/rosetta/metadesktop
 docker push localhost:5000/rosetta/metadesktop
 
 # Run
-rosetta/shell slurmclustermaster-main "SINGULARITY_NOHTTPS=true singularity run --writable-tmpfs --containall --cleanenv docker://dregistry:5000/rosetta/metadesktop"
+rosetta/shell slurmclustermaster-main "SINGULARITY_NOHTTPS=true singularity run --pid --writable-tmpfs --containall --cleanenv docker://dregistry:5000/rosetta/metadesktop"
 
 # Run variants/tests
 # rosetta/shell slurmclustermaster-main "SINGULARITY_NOHTTPS=true singularity run docker://dregistry:5000/rosetta/metadesktop"
