@@ -1,0 +1,108 @@
+{% load static %} 
+{% include "header.html" %}
+{% include "navigation.html" with main_path='/main/' %}
+
+<br/>
+<br/>
+
+<div class="container">
+  <div class="dashboard">
+    <div class="span8 offset2">
+      <h1>Account and profile</h1>
+      <hr>
+
+      <br />
+      <h3>Account</h3>
+      <form action="/account/" method="POST">
+      {% csrf_token %}
+      <table class="dashboard">
+
+       <tr>
+        <td>
+        <b>Account ID</b>
+        </td>
+        <td>
+        {{data.user.username}} | <a href="/logout/">Logout</a>
+        </td>
+       </tr>
+      
+       <tr>
+        <td>
+        <b>Account email</b>
+        </td>
+        <td>
+        {% if data.edit == 'email' %}    
+          <table class="frametab"><tr><td>
+          <input type='hidden' name='edit' value='email' />
+          <input type="email" value="{{data.user.email}}" name='value' style='width:95%' required autofocus />
+          </td><td>
+          <input type="submit" value="Go">
+          </td></tr></table>          
+        {% else %}
+         {{data.user.email}} | <a href="/account/?edit=email">Change</a>
+        {% endif %}
+        </td>
+       </tr>      
+
+       <tr>
+        <td>
+        <b>Account password</b>
+        </td>
+        <td>
+        {% if data.edit == 'password' %}    
+          <table class="frametab"><tr><td>
+          <input type='hidden' name='edit' value='password' />
+          <input type="password" name='value' style='width:95%' required autofocus />
+          </td><td>
+          <input type="submit" value="Go">
+          </td></tr></table>          
+        {% else %}
+         ******* | <a href="/account/?edit=password">Change</a>
+        {% endif %}
+        </td>
+       </tr>   
+
+       </table>
+       <br />
+       
+       <h3>Profile</h3>
+       <table class="dashboard">
+       
+       <tr>
+        <td>
+        <b>Time Zone</b>
+        </td>
+        <td>
+        
+        {% if data.edit == 'timezone' %}    
+          {% include "components/tzselect.html" %}
+          <input type='hidden' name='edit' value='timezone' />
+          <input type="submit" value="Go">
+        {% else %}
+         {{data.profile.timezone}} | <a href="/account/?edit=timezone">Change</a>
+        {% endif %}
+        </td>
+       </tr>
+
+      </table>
+
+      </form>
+      
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      
+    </div>
+  </div>
+</div>
+
+
+{% include "footer.html" %}
+
+
+
+
+

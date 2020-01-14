@@ -12,7 +12,7 @@ class Command(BaseCommand):
             print('Not creating admin user as it already exist')
         except User.DoesNotExist:
             print('Creating admin user with default password')
-            admin = User.objects.create_superuser('admin', 'admin@example.com', 'a')
+            admin = User.objects.create_superuser('admin', 'admin@example.com', 'admin')
             Profile.objects.create(user=admin)
 
         try:

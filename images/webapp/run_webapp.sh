@@ -37,10 +37,6 @@ if [[ "x$DJANGO_EMAIL_APIKEY" == "x" ]] ; then
     export DJANGO_EMAIL_APIKEY=""
 fi
 
-# Set log levels
-export DJANGO_LOG_LEVEL="CRITICAL"
-export ROSETTA_LOG_LEVEL="CRITICAL"
-
 # Stay quiet on Python warnings
 export PYTHONWARNINGS=ignore
 

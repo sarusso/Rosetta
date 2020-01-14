@@ -1,0 +1,39 @@
+{% load static %} 
+{% include "header.html" %}
+{% include "navigation.html" with main_path='/main/' %}
+
+<br/>
+<br/>
+
+<div class="container">
+  <div class="dashboard">
+    <div class="span8 offset2">
+      <h1>Error</h1>
+      <hr>
+      <br/>
+      <br/><br/>
+      <div class='centerbox-error-outer'> 
+        <a href="/main"> 
+          <span class='centerbox-error-inner'>     
+          {{data.error}}
+          </span>
+        </a>
+      </div>
+
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      
+    </div>
+  </div>
+</div>
+
+{% include "footer.html" %}
+
+
+
+
+

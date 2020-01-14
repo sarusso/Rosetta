@@ -1,0 +1,53 @@
+    {% if not data.dedicated or data.user.is_authenticated %}
+    <!-- Navigation -->
+    <a id="menu-toggle" href="#" class="btn btn-light btn-lg toggle" style="border:1px solid #c0c0c0"><i class="fa fa-bars" ></i></a>
+    <nav id="sidebar-wrapper">
+        <ul class="sidebar-nav">
+            <a id="menu-close" href="#" class="btn btn-light btn-lg pull-right toggle"><i class="fa fa-times"></i></a>      
+            {% if not data.dedicated %}
+            <br/>
+            <br/>
+            <li class="sidebar-brand">
+                <a href="/main/#top" onclick = $("#menu-close").click(); >Menu</a>
+            </li>
+            <li>
+                <a href="/main/#top" onclick = $("#menu-close").click(); >Home</a>
+            </li>
+
+            <br/>
+            <hr>
+            {% else %}
+            <br/><br/>
+            {% endif %}
+
+            {% if user.is_authenticated %}
+
+            <li>
+                <a href="/tasks" onclick = $("#menu-close").click(); >Tasks</a>
+            </li>
+            <li>
+                <a href="/account" onclick = $("#menu-close").click(); >Account</a>
+            </li>            
+           
+            {% else %}
+            <li>
+              <center>
+                <form class="form-signin" role="form" action='/login/' method='POST'>
+                {% csrf_token %}
+                <input type="username" class="form-control" placeholder="Email" name='username' required>            
+                <input type="password" class="form-control" placeholder="Password" name='password'>
+                <input type='submit' class="btn btn-lg ha-btn-lg" value='Login' />
+                </form>
+              </center>         
+            </li>
+            <center>
+            <div style="padding:10px">
+            <!--  <a href="/register" class="menulink">Register</a> <b>|</b>  -->
+            <font color="gray">Forgot password? Just leave it empty to get a login link by email.</font>
+            </div>
+            </center>
+            {% endif %}
+      
+        </ul>
+    </nav>
+    {% endif %}

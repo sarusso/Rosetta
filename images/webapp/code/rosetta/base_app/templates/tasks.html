@@ -1,0 +1,99 @@
+{% load static %} 
+{% include "header.html" %}
+{% include "navigation.html" with main_path='/main/' %}
+
+<br/>
+<br/>
+
+<div class="container">
+  <div class="dashboard">
+    <div class="span8 offset2">
+      {% if not data.sid %}
+      <h1>Task List</h1>
+      {% else %}
+      <h1>Task Info</h1>
+      {% endif %}
+       
+      <hr>
+
+          
+          {% for task in data.tasks %}
+          <table class="dashboard">
+
+           <tr>
+            <td><b>Task name</b></td>
+            <td>{{ task.name }}</td>
+           </tr>
+
+           <tr>
+            <td><b>Task type</b></td>
+            <td>{{ task.type }}</td>
+           </tr>
+
+           <tr>
+            <td><b>Task URL</b></td>
+            <td>https://metabox.online/task/{{ task.shortuuid }}</td>
+           </tr>
+
+           <tr>
+            <td><b>Task user</b></td>
+            <td>metauser</td>
+           </tr>
+
+           <tr>
+            <td><b>Task status</b></td>
+            <td>{{ task.status }}</td>
+           </tr>
+
+           <tr>
+            <td><b>Task created</b></td>
+            <td>{{ task.created }}</td>
+           </tr>
+
+           <tr>
+            <td><b>Operations</b></td>
+            
+            <td>
+            {% if task.status == "Running" %}
+            <a href=?uuid={{task.uuid}}&action=stop>Stop</a> | 
+            {% else %}
+            <!-- <a href=?uuid={{task.uuid}}&action=start>Start</a> |  -->
+            <font color="#c0c0c0">Stop</font> | 
+            
+            {% endif%}
+            <a href=?uuid={{task.uuid}}&action=delete>Delete</a>
+            {% if task.status == "Running" %}
+             | <a href="/task/{{task.shortuuid}}/">Connect</a>
+            {% else %}
+             | <font color="#c0c0c0">Connect</font>
+            {% endif%}
+            </td>
+  
+           </tr>
+
+          </table>
+          <br />
+          {% endfor %}
+          
+          
+          <br />
+          {% if not data.sid %}
+          <a href="/create_task">Add new...</a>
+          {% endif %}
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      
+    </div>
+  </div>
+</div>
+
+{% include "footer.html" %}
+
+
+
+
+

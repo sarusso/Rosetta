@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    {% if data.title %}
+    <title>{{data.title}}</title>
+    {% else %}
+    <title>Rosetta</title>
+    {% endif %}
+
+    <!-- Bootstrap Core CSS -->
+    <link href="/static/css/bootstrap-3.3.5.min.css" rel="stylesheet">
+
+    <!-- Datepicker CSS -->
+    <link href="/static/css/bootstrap-datetimepicker-4.17.47.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="/static/css/stylish-portfolio.css" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="/static/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+
+    <!-- jQuery -->
+    <script src="/static/js/jquery-1.11.1.js"></script>
+    
+    <!-- Bootstrap Core JavaScript -->
+    <script src="/static/js/bootstrap-3.3.5.min.js"></script>
+    
+    <!-- Moment Javascript -->
+    <script src="/static/js/moment-with-locales-2.22.2.js"></script>
+
+    <!-- Date time picker -->
+    <script src="/static/js/bootstrap-datetimepicker-4.17.47.js"></script>
+
+</head>
+
+<body {{ onload }}>
+  

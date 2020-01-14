@@ -37,6 +37,8 @@ RUN apt-get install python3-dev -y
 # Install postgres driver required for psycopg2
 RUN apt-get install libpq-dev -y
 
+# Docker
+RUN apt-get install docker.io -y
 
 #------------------------------
 # Install Django project
@@ -72,6 +74,7 @@ RUN mkdir /var/log/webapp/ && chown rosetta:rosetta /var/log/webapp/
 COPY run_webapp.sh /etc/supervisor/conf.d/
 RUN chmod 755 /etc/supervisor/conf.d/run_webapp.sh
 COPY supervisord_webapp.conf /etc/supervisor/conf.d/
+COPY supervisord_dregistrytunnel.conf /etc/supervisor/conf.d/
 
 
 #------------------------------
@@ -79,8 +82,6 @@ COPY supervisord_webapp.conf /etc/supervisor/conf.d/
 #------------------------------
 
 COPY prestartup_webapp.sh /prestartup/
-
-
 
 
 

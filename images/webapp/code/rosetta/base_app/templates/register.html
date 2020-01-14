@@ -1,0 +1,85 @@
+{% load static %} 
+{% include "header.html" %}
+{% include "navigation.html" with main_path='/main/' %}
+
+<br/>
+<br/>
+
+<div class="container">
+  <div class="dashboard">
+    <div class="span8 offset2" style="font-size:18px">
+    
+      <h1>Sign up</h1>
+      <hr>
+      
+      {% if data.status == "wrong_invite" %}   
+      <div class='centerbox-error'>
+          Sorry, this invitation code is not valid.
+      </div>
+      
+      {% elif data.status == "already" %}
+      <div class='centerbox'>
+          You are already signed in, cannot create a new account.
+      </div>
+
+      {% elif data.status == "something_missing" %}
+      <div class='centerbox'>
+          Some input (email/password/invitation code) is missing.
+      </div>
+
+      {% elif data.status == "activated" %}
+      <div class='centerbox-success'>
+          Ok, account created!
+      </div>
+      <br />
+      
+      You signed up with the following email address: <b>{{data.user.email}}</b>. If this is wrong, change it now in your account settings.
+      <br/>
+      <br/>
+      Start by clicking on the top-right menu icon.
+      {% else %}
+
+      <p><b>Welcome to Dropely!</b></p>
+      
+      <p>We are now in closed beta testing, which means that we can only accept invite-based new users. If you have an invitation code, you can sign up right now. Otherwise, <a href="/newsletter">leave your email</a> to reserve your spot in the queue and we will let you know as soon as you can sign up.</p>
+      <br/>
+      <br/>
+      
+      <div class='centerbox'>
+          <form class="form-signin" role="form" action='/register/' method='POST'>
+          {% csrf_token %}
+          <input type="email" class="form-control" placeholder="Email" name='email' required autofocus>
+          <input type="password" class="form-control" placeholder="Password" name='password' required>
+          <input type="text" class="form-control" placeholder="Invitation code" name='invitation' value='Invite: {{ data.invite }}' required autofocus>
+          <input type='submit' class="btn btn-lg ha-btn-lg" value='Sign up' />
+          </form>
+      </div>
+      <br /></br>
+      <!-- <div class='centerbox' style="max-width:980px; padding:10px; background-color:#e6fff3; border:1px solid #A9A9A9;" >
+      <center>Please not that we do not verify email addressed and passwords at this stage, so please <u>double check</u> the form above before signing up.</center>
+</div> -->
+      {% endif %}
+      
+      {% if data.error %}   
+      <div class='centerbox-error'>
+          {{ data.error }}
+      </div>
+      
+      {% endif %}
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      
+    </div>
+  </div>
+</div>
+
+
+{% include "footer.html" %}
+
+
+
+

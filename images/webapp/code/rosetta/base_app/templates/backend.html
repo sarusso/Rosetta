@@ -1,0 +1,51 @@
+<html>
+    <head>
+        <title>Rosetta WebApp</title>
+    </head>
+    <body>
+        <div style="text-align:center; margin-top:50px">
+            <h1>Rosetta WebApp</h1>
+            {% if data.error %}
+            <div style="color:red">
+              {{ data.error }}
+            </div>
+            {% elif data.success %}
+            <div style="color:green">
+              {{data.success}}
+            </div>
+            {% else %}            
+            <br/>
+            {% endif %} 
+            
+            {% if request.user.is_authenticated %}
+            Logged in as <b>{{ request.user.username }}</b> | <a href="/logout">Logout</a>
+            {% else %}
+            <form class="form-signin" role="form" action='/login/' method='POST'>
+            {% csrf_token %}
+            <input style="max-width:300px; margin: 5px auto" type="username" class="form-control" placeholder="Username" name='username' required autofocus>
+            <input style="max-width:300px; margin: 5px auto" type="password" class="form-control" placeholder="Password" name='password'>
+            <input style="width:100px; height:35px; margin: 5px auto; font-size:16px" type='submit' class="btn btn-success" value='Log in' />
+            </form>
+            {% endif %}
+        </div>
+
+        <div style="max-width:500px; margin: 30px auto">
+            Modules:
+            <ul style="margin-top:5px; margin-bottom:20px">
+                <li><a href="/admin">Admin</a></li>
+                <li><a href="/api/v1/doc">Swagger APIs v1 Doc</a></li>
+            </ul>
+
+            REST APIs v1:
+            <ul style="margin-top:5px">
+                <li><a href="/api/v1/base/login/">/api/v1/base/login/</a></li>
+                <li><a href="/api/v1/base/logout/">/api/v1/base/logout/</a></li>
+            </ul>
+            
+        </div>
+        
+    </body>
+    
+
+</html>
+

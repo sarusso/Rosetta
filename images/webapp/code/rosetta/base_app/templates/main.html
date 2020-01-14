@@ -1,51 +1,23 @@
-<html>
-    <head>
-        <title>Rosetta WebApp</title>
-    </head>
-    <body>
-        <div style="text-align:center; margin-top:50px">
-            <h1>Rosetta WebApp</h1>
-            {% if data.error %}
-            <div style="color:red">
-              {{ data.error }}
+{% load static %} 
+{% include "header.html" with onload="onload=''" use_bg=True  %}
+{% include "navigation.html"%}
+
+    <!-- Header -->
+    <header id="top" class="header">
+        <div style="display:table-row">
+            <div class="text-vertical-center">
+                <h1>Rosetta 💁🏽</h1>
+                <h2 style="margin-left:25px; margin-right:25px; font-weight:100; line-height: 30px;"><i>A container-centric Science Platform<br></i></h2>
             </div>
-            {% elif data.success %}
-            <div style="color:green">
-              {{data.success}}
+        </div>
+        <div style="display:table-row">
+            <div class="text-vertical-bottom">
+                <a href="https://github.com/sarusso/Rosetta" class="btn btn-dark btn-lg">Find Out More</a>
             </div>
-            {% else %}            
-            <br/>
-            {% endif %} 
-            
-            {% if request.user.is_authenticated %}
-            Logged in as <b>{{ request.user.username }}</b> | <a href="/logout">Logout</a>
-            {% else %}
-            <form class="form-signin" role="form" action='/login/' method='POST'>
-            {% csrf_token %}
-            <input style="max-width:300px; margin: 5px auto" type="username" class="form-control" placeholder="Username" name='username' required autofocus>
-            <input style="max-width:300px; margin: 5px auto" type="password" class="form-control" placeholder="Password" name='password'>
-            <input style="width:100px; height:35px; margin: 5px auto; font-size:16px" type='submit' class="btn btn-success" value='Log in' />
-            </form>
-            {% endif %}
         </div>
+    </header>
 
-        <div style="max-width:500px; margin: 30px auto">
-            Modules:
-            <ul style="margin-top:5px; margin-bottom:20px">
-                <li><a href="/admin">Admin</a></li>
-                <li><a href="/api/v1/doc">Swagger APIs v1 Doc</a></li>
-            </ul>
+{% include "footer.html" %}
 
-            REST APIs v1:
-            <ul style="margin-top:5px">
-                <li><a href="/api/v1/base/login/">/api/v1/base/login/</a></li>
-                <li><a href="/api/v1/base/logout/">/api/v1/base/logout/</a></li>
-            </ul>
-            
-        </div>
-        
-    </body>
-    
 
-</html>
 

@@ -1,0 +1,40 @@
+{% load static %} 
+{% include "header.html" %}
+{% include "navigation.html" with main_path='/main/' %}
+
+<br/>
+<br/>
+
+<div class="container">
+  <div class="dashboard">
+    <div class="span8 offset2">
+      <h1>Success</h1>
+      <hr>
+      <br/>
+      <div class='centerbox-success-outer'> 
+        <a href="/main"> 
+          <span class='centerbox-success-inner'>     
+          {{data.success}}
+          </span>
+        </a>
+      </div>
+      
+      
+
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      
+    </div>
+  </div>
+</div>
+
+{% include "footer.html" %}
+
+
+
+
+

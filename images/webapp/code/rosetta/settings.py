@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+from django.core.exceptions import ImproperlyConfigured
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -149,6 +151,21 @@ SWAGGER_SETTINGS = {
 # Data path for resources etc.
 DATA_PATH  = '/data/'
 TMP_PATH   = '/tmp/'
+
+
+#===============================
+#  Email settings
+#===============================
+
+DJANGO_PROJECT_NAME = os.environ.get('DJANGO_PROJECT_NAME', 'Rosetta')
+DJANGO_PUBLIC_HTTP_HOST = os.environ.get('DJANGO_PUBLIC_HTTP_HOST', 'http://localhost:8080')
+
+DJANGO_EMAIL_SERVICE = os.environ.get('DJANGO_EMAIL_SERVICE', 'Sendgrid')
+if not DJANGO_EMAIL_SERVICE in ['Sendgrid', None]:
+    raise ImproperlyConfigured('Invalid EMAIL_METHOD ("{}")'.format(DJANGO_EMAIL_SERVICE))
+DJANGO_EMAIL_FROM = os.environ.get('DJANGO_EMAIL_FROM', 'Rosetta Platform <info@rosetta.platform>')
+DJANGO_EMAIL_APIKEY = os.environ.get('DJANGO_EMAIL_APIKEY', None)
+
 
 #===============================
 #  Logging

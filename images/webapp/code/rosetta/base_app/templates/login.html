@@ -1,30 +1,53 @@
-<html>
-    <head>
-        <title>Rosetta WebApp</title>
-    </head>
-    <body>
-        <div style="text-align:center; margin-top:50px">
-            {% if data.error %}
-            <div style="color:red">
-              {{ data.error }}
-            </div>
-            {% elif data.success %}
-            <div style="color:green">
-              {{data.success}}
-            </div>
-            {% else %}            
-            <br/>
-            {% endif %} 
-            
-            <form class="form-signin" role="form" action='/login/' method='POST'>
-            {% csrf_token %}
-            <input style="max-width:300px; margin: 5px auto" type="username" class="form-control" placeholder="Username" name='username' required autofocus>
-            <input style="max-width:300px; margin: 5px auto" type="password" class="form-control" placeholder="Password" name='password'>
-            <input style="width:100px; height:35px; margin: 5px auto; font-size:16px" type='submit' class="btn btn-success" value='Log in' />
-            </form>
+{% load static %} 
+{% include "header.html" with onload="onload='init()'" use_bg=True  %}
+{% include "navigation.html"%}
+
+    <center>
+    <div style="width:300px;">
+      <form class="form-signin" role="form" action='/login/' method='POST'>
+        {% csrf_token %}
+        <br />
+        <br />
+        <br />
+        <h1>Rosetta 💁🏽</h1>
+        <p style="font-size: 16px;">
+
+        <br />
+        <br />
+        <input style="margin-bottom:5px;" type="username" class="form-control" placeholder="Email" name='username' required autofocus>
+        <input type="password" class="form-control" placeholder="Password" name='password'>
+        <br />
+        <input type='submit' style="width:110px" class="btn btn-lg btn-success btn-block" value='Log in' />
+        
+        {% if data.error %}
+        <br/>
+        <div class='centerbox-error'>
+          {{ data.error }}
         </div>
-    </body>
+        
+        {% elif data.success %}
+        <br/>
+        <div class='centerbox-success'>
+          {{data.success}}
+        </div>
+        
+        {% else %}
+        <br />
+        
+        {% endif %}
+             
+
+        </p>
+      </form>      
+    </div>
+    {% if not data.success %}
+    <b>Forgot password?</b><br/> Just leave it empty to get a login link by email!
+    {% endif %}
     
+    <br /><br /><br />
+    </center>
 
-</html>
 
+
+
+{% include "footer.html" %}

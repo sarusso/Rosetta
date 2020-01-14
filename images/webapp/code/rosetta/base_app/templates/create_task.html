@@ -1,0 +1,112 @@
+{% load static %} 
+{% include "header.html" %}
+{% include "navigation.html" with main_path='/main/' %}
+
+<br/>
+<br/>
+
+<div class="container">
+  <div class="dashboard">
+    <div class="span8 offset2">
+      <h1>New Task</h1> 
+      <hr>
+
+      {% if not data.name %}
+
+          <h3>Choose a name and a type for your new Task.</h3> 
+          
+          <br/>
+          
+          <form action="/create_task/" method="POST">
+          {% csrf_token %}
+
+          <table class="dashboard" style="max-width:430px">
+    
+           <tr>
+            <td><b>Task name </b></td>
+            <td>
+             <input type="text" name="name" value="" placeholder="" size="23" required />
+            </td>
+           </tr>
+
+           <tr>
+            <td><b>Task user</b></td>
+            <td>
+             <input type="text" name="name" value="" placeholder="metauser" size="23" disabled />
+            </td>
+           </tr>
+
+           <tr>
+            <td><b>Task Type</b></td><td>
+              <!-- Dropdown with versions -->
+              <select name="type" >
+              <option value="metadesktop" selected>Meta Desktop</option>
+              <option value="astroccok">Astrocook</option>
+              <option value="gadgetviewer">Gadget Viewer</option>
+              </select>          
+            </td>
+           </tr>
+           
+           <tr>
+            <td><b>Computing resource</b></td><td>
+              <!-- Dropdown with versions -->
+              <select name="computing" >
+              <option value="builtin" selected>Rosetta built-in</option>
+              <option value="demoslurm">Demo Slurm cluster</option>
+              </select>          
+            </td>
+           </tr>
+                      
+           <tr><td colspan=2>
+           <table><tr><td  style="border: 1px solid lightgray;" >
+           I understand that files saved or modified and not explicity saved to a persistent share, including system packages, will be LOST when the task ends.
+           </td><td  style="border: 1px solid lightgray;" >
+           <input class="form-check-input" type="checkbox" value="" id="invalidCheck" required>
+           </td></table>
+           </td></tr>
+           <tr>
+           <td colspan=2 align=center style="padding:20px">
+           <input type="submit" value="Create">
+           </td>
+           </tr>
+          </table>
+          </form>
+
+          <br/>          
+          <br/>
+          <br/>
+          <br/>
+          <br/>
+          <br/>
+          <br/>
+          <br/>
+          <br/>
+          
+
+
+
+ 
+      {% else %}
+        Ok, task created. Go back to your <a href="/tasks">tasks list</a>.
+        
+
+      {% endif %} 
+  
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      
+    </div>
+  </div>
+</div>
+
+{% include "footer.html" %}
+
+
+
+
+
+

@@ -35,9 +35,13 @@ base_app_api_router.register(r'users', base_app_api.UserViewSet)
 urlpatterns = [
                
     # Webpages
-    path('', base_app_views.main_view),
+    url(r'^$', base_app_views.entrypoint),
+    path('main/', base_app_views.main_view),
     path('login/', base_app_views.login_view),
     path('logout/', base_app_views.logout_view),
+    url(r'^account/$', base_app_views.account),
+    url(r'^tasks/$', base_app_views.tasks),
+    url(r'^create_task/$', base_app_views.create_task),
 
     # Modules
     path('admin/', admin.site.urls),
