@@ -5,7 +5,9 @@ import uuid
 import inspect
 import json
 import socket
-
+import os
+import subprocess
+                
 # Django imports
 from django.conf import settings
 from django.shortcuts import render
@@ -371,9 +373,6 @@ def account(request):
 @private_view
 def tasks(request):
 
-    # Mock task management commands?
-    mock_task_commands=True
-
     # Init data
     data={}
     data['user']  = request.user
@@ -387,7 +386,6 @@ def tasks(request):
     # Setting var
     standby_supported = False
 
-
     # Perform actions if required:
     if action and uuid:
         if action=='delete':
@@ -397,11 +395,9 @@ def tasks(request):
                 
                 # Delete the Docker container
                 delete_command = 'sudo docker stop {} && sudo docker rm {}'.format(task.tid,task.tid)
-                if mock_task_commands:
-                    delete_command = 'echo "Hello World!"'
                 out = os_shell(delete_command, capture=True)
                 if out.exit_code != 0:
-                    logger.error('Error when removing Docker container for task with DID="{}": "{}"'.format(task.tid, out.stderr))                      
+                    logger.error('Error when removing Docker container for task "{}": "{}"'.format(task.tid, out.stderr))                      
                 
                 # Ok, delete
                 task.delete()
@@ -426,10 +422,7 @@ def tasks(request):
                     stop_command = 'sudo docker stop {}'.format(task.tid)
                 else:
                     stop_command = 'sudo docker stop {} && sudo docker rm {}'.format(task.tid,task.tid)
-                
-                if mock_task_commands:
-                    stop_command = 'echo "Hello World!"'
- 
+
                 out = os_shell(stop_command, capture=True)
                 if out.exit_code != 0:                        
                     raise Exception(out.stderr)
@@ -445,8 +438,67 @@ def tasks(request):
 
             # Unset uuid to load the list again
             uuid = None
+            
+        elif action=='connect':
+            
+            # Get the task (raises if none available including no permission)
+            task = Task.objects.get(user=request.user, uuid=uuid)
+            
+            # Create task tunnel
+            if task.tunneled:
+                # If the task is already tunneled, do nothing.
+                pass
+            
+            elif not task.tunneled and task.compute=='local':
+                # 1) Get task IP
+                task_ip_addr = task.ip_addr
+                logger.debug('task_ip_addr="{}"'.format(task_ip_addr))
+
+            
+                # 2) Get a free port fot the tunnel:
+                allocated_tunnel_ports = []
+                for other_task in Task.objects.all():
+                    if other_task.tunneled and other_task.tunnel_port:
+                        allocated_tunnel_ports.append(other_task.tunnel_port)
+                
+                for port in range(7000, 7006):
+                    if not port in allocated_tunnel_ports:
+                        tunnel_port = port
+                        break
+                if not tunnel_port:
+                    logger.error('Cannot find a free port for the tunnel for task "{}"'.format(task.tid))                      
+                    raise ErrorMessage('Cannot find a free port for the tunnel to the task')
+                
+                tunnel_command= 'nohup ssh -4 -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:8590 localhost  &> /dev/null & '.format(tunnel_port, task_ip_addr)
+                
+                logger.debug(tunnel_command)
+                
+                subprocess.Popen(['nohup', 'tunnel_command'],
+                                 stdout=open('/dev/null', 'w'),
+                                 stderr=open('/dev/null', 'w'),
+                                 preexec_fn=os.setpgrp
+                                 )
+
+                task.tunneled=True
+                task.tunnel_port = tunnel_port
+                task.save()
+                
+                
+                
+                #out = os_shell(tunnel_command, capture=True)
+                #if out.exit_code != 0:
+                #    logger.error('Error when creating the tunnel for task "{}": "{}"'.format(task.tid, out.stderr))                      
+                #    raise ErrorMessage('Error when creating the tunnel for task')
+                
+                
+                
+            else:
+                raise ErrorMessage('Connecting to tasks on compute "{}" is not supported yet'.format(task.compute))
 
 
+            # Ok, now redirect
+            from django.shortcuts import redirect
+            return redirect('http://localhost:{}'.format(task.tunnel_port))
 
     # Get all task(s)
     if uuid:
@@ -463,7 +515,7 @@ def tasks(request):
             data['error'] = 'Error in getting Virtual Devices info'
             logger.error('Error in getting Virtual Devices: "{}"'.format(e))
             return render(request, 'error.html', {'data': data})   
-        
+
     data['tasks'] = tasks
 
     return render(request, 'tasks.html', {'data': data})
@@ -476,19 +528,12 @@ def tasks(request):
 @private_view
 def create_task(request):
 
-    # Mock task management commands?
-    mock_task_commands=True
-
-    # Get post data
-    name     = request.POST.get('name',None)
-    password = request.POST.get('password',None)        
-
     # Init data
     data={}
     data['user']    = request.user
     data['profile'] = Profile.objects.get(user=request.user)
     data['title']   = 'New Task'
-    data['name']    = name
+    data['name']    = request.POST.get('name',None)
     
     if data['name']:
         
@@ -529,8 +574,8 @@ def create_task(request):
             #    except socket.error:
             #        raise Exception('Error, I could not find a valid IP address for the DNS service')
 
-            # Init run command 
-            run_command  = 'sudo docker run --cap-add=NET_ADMIN --cap-add=NET_RAW --name metabox-task-{}'.format( str_shortuuid)
+            # Init run command #--cap-add=NET_ADMIN --cap-add=NET_RAW 
+            run_command  = 'sudo docker run  --network=rosetta_default --name rosetta-task-{}'.format( str_shortuuid)
 
             # Data volume
             run_command += ' -v {}/task-{}:/data'.format(TASK_DATA_DIR, str_shortuuid)
@@ -544,9 +589,6 @@ def create_task(request):
 
             # Debug
             logger.debug('Running new task with command="{}"'.format(run_command))
-
-            if mock_task_commands:
-                run_command = 'echo "Hello World!"'
             out = os_shell(run_command, capture=True)
             if out.exit_code != 0:                        
                 raise Exception(out.stderr)
@@ -558,8 +600,9 @@ def create_task(request):
                 
                 # Set fields
                 task.uuid   = str_uuid
-                task.did    = out.stdout
+                task.tid    = out.stdout
                 task.status = 'Running'
+                task.compute = 'local'
                 
                 # Save
                 task.save()
