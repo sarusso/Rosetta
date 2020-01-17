@@ -21,23 +21,18 @@
           <table class="dashboard">
 
            <tr>
+            <td><b>Task id</b></td>
+            <td>{{ task.short_uuid }}</td>
+           </tr>
+
+           <tr>
             <td><b>Task name</b></td>
             <td>{{ task.name }}</td>
            </tr>
 
            <tr>
-            <td><b>Task type</b></td>
-            <td>{{ task.type }}</td>
-           </tr>
-
-           <tr>
-            <td><b>Task URL</b></td>
-            <td>https://metabox.online/task/{{ task.shortuuid }}</td>
-           </tr>
-
-           <tr>
-            <td><b>Task user</b></td>
-            <td>metauser</td>
+            <td><b>Task container</b></td>
+            <td>{{ task.container }}</td>
            </tr>
 
            <tr>
@@ -48,12 +43,6 @@
            <tr>
             <td><b>Task created</b></td>
             <td>{{ task.created }}</td>
-           </tr>
-           
-           <tr>
-            <td><b>Task tunneled</b></td>
-            <td>{{ task.tunneled }}</td>
-           
            </tr>
            
            <tr>
@@ -73,7 +62,7 @@
             
             {% endif%}
             <a href=?uuid={{task.uuid}}&action=delete>Delete</a>
-            {% if task.status == "Running" %}
+            {% if task.status == "running" %}
              | <a href=?uuid={{task.uuid}}&action=connect>Connect</a>
             {% else %}
              | <font color="#c0c0c0">Connect</font>

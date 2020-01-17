@@ -1,4 +1,5 @@
 import uuid
+import enum
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -9,6 +10,14 @@ from .utils import os_shell
 # Setup logging
 import logging
 logger = logging.getLogger(__name__)
+
+
+# Task statuses
+class TaskStatuses(object):
+    created = 'created'
+    running = 'running'
+    stopped = 'stopped'
+    exited = 'exited'
 
 
 #=========================
@@ -42,17 +51,25 @@ class LoginToken(models.Model):
 #  Tasks 
 #=========================
 class Task(models.Model):
-    user     = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE)
-    tid      = models.CharField('Task ID', max_length=64, blank=False, null=False)
-    uuid     = models.CharField('Task UUID', max_length=36, blank=False, null=False)
-    name     = models.CharField('Task name', max_length=36, blank=False, null=False)
-    type     = models.CharField('Task type', max_length=36, blank=False, null=False)
-    status   = models.CharField('Task status', max_length=36, blank=True, null=True)
-    created  = models.DateTimeField('Created on', default=timezone.now)
-    compute  = models.CharField('Task compute', max_length=36, blank=True, null=True)
-
-    tunneled    = models.BooleanField('Task tunneled', default=False)
+    user      = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE)
+    tid       = models.CharField('Task ID', max_length=64, blank=False, null=False)
+    uuid      = models.CharField('Task UUID', max_length=36, blank=False, null=False)
+    name      = models.CharField('Task name', max_length=36, blank=False, null=False)
+    container = models.CharField('Task container', max_length=36, blank=False, null=False)
+    status    = models.CharField('Task status', max_length=36, blank=True, null=True)
+    created   = models.DateTimeField('Created on', default=timezone.now)
+    compute   = models.CharField('Task compute', max_length=36, blank=True, null=True)
     tunnel_port = models.IntegerField('Task tunnel port', blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        
+        try:
+            getattr(TaskStatuses, str(self.status))
+        except AttributeError:
+            raise Exception('Invalid status "{}"'.format(self.status))
+
+        # Call parent save
+        super(Task, self).save(*args, **kwargs)
 
 
     def __str__(self):
@@ -65,8 +82,32 @@ class Task(models.Model):
         if out.exit_code != 0:
             raise Exception('Error: ' + out.stderr)
         return out.stdout
-        
+    
+    def update_status(self):
+        if self.compute == 'local':
+            
+            check_command = 'sudo docker inspect --format \'{{.State.Status}}\' ' + self.tid # or, .State.Running
+            out = os_shell(check_command, capture=True)
+            logger.debug('Status: "{}"'.format(out.stdout))
+            if out.exit_code != 0: 
+                if (('No such' in out.stderr) and (self.tid in out.stderr)):
+                    logger.debug('Task "{}" is not running in reality'.format(self.tid))
+                self.status = TaskStatuses.exited
+            else:
+                if out.stdout == 'running':
+                    self.status = TaskStatuses.running
+                    
+                elif out.stdout == 'exited':
+                    self.status = TaskStatuses.exited
+                    
+                else:
+                    raise Exception('Unknown task status: "{}"'.format(out.stdout))
+                
+            self.save()                   
 
+    @property
+    def short_uuid(self):
+        return self.uuid.split('-')[0]
 
 
 

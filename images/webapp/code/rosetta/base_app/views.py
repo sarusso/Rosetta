@@ -20,7 +20,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import update_session_auth_hash
 
 # Project imports
-from .models import Profile, LoginToken, Task
+from .models import Profile, LoginToken, Task, TaskStatuses
 from .utils import send_email, format_exception, random_username, log_user_activity, timezonize, os_shell
 
 # Setup logging
@@ -410,7 +410,7 @@ def tasks(request):
                 logger.error('Error in deleting task with uuid="{}": "{}"'.format(uuid, e))
                 return render(request, 'error.html', {'data': data})  
         
-        elif action=='stop': # or delete,a nd if delete also remove object
+        elif action=='stop': # or delete,a and if delete also remove object
             try:
                 # Get the task (raises if none available including no permission)
                 task = Task.objects.get(user=request.user, uuid=uuid)
@@ -445,58 +445,54 @@ def tasks(request):
             task = Task.objects.get(user=request.user, uuid=uuid)
             
             # Create task tunnel
-            if task.tunneled:
-                # If the task is already tunneled, do nothing.
-                pass
-            
-            elif not task.tunneled and task.compute=='local':
-                # 1) Get task IP
-                task_ip_addr = task.ip_addr
-                logger.debug('task_ip_addr="{}"'.format(task_ip_addr))
+            if task.compute=='local':
+                
+                # If there is no tunnel port allocated yet, find one                
+                if not task.tunnel_port:
 
-            
-                # 2) Get a free port fot the tunnel:
-                allocated_tunnel_ports = []
-                for other_task in Task.objects.all():
-                    if other_task.tunneled and other_task.tunnel_port:
-                        allocated_tunnel_ports.append(other_task.tunnel_port)
-                
-                for port in range(7000, 7006):
-                    if not port in allocated_tunnel_ports:
-                        tunnel_port = port
-                        break
-                if not tunnel_port:
-                    logger.error('Cannot find a free port for the tunnel for task "{}"'.format(task.tid))                      
-                    raise ErrorMessage('Cannot find a free port for the tunnel to the task')
-                
-                tunnel_command= 'nohup ssh -4 -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:8590 localhost  &> /dev/null & '.format(tunnel_port, task_ip_addr)
-                
-                logger.debug(tunnel_command)
-                
-                subprocess.Popen(['nohup', 'tunnel_command'],
-                                 stdout=open('/dev/null', 'w'),
-                                 stderr=open('/dev/null', 'w'),
-                                 preexec_fn=os.setpgrp
-                                 )
+                    # Get a free port fot the tunnel:
+                    allocated_tunnel_ports = []
+                    for other_task in Task.objects.all():
+                        if other_task.tunnel_port and not other_task.status in [TaskStatuses.exited, TaskStatuses.stopped]:
+                            allocated_tunnel_ports.append(other_task.tunnel_port)
+                    
+                    for port in range(7000, 7006):
+                        if not port in allocated_tunnel_ports:
+                            tunnel_port = port
+                            break
+                    if not tunnel_port:
+                        logger.error('Cannot find a free port for the tunnel for task "{}"'.format(task.tid))                      
+                        raise ErrorMessage('Cannot find a free port for the tunnel to the task')
 
-                task.tunneled=True
-                task.tunnel_port = tunnel_port
-                task.save()
+                    task.tunnel_port = tunnel_port
+                    task.save()
+
+
+                # Check if the tunnel is active and if not create it
+                logger.debug('Checking if task "{}" has a running tunnel'.format(task.tid))
                 
-                
-                
-                #out = os_shell(tunnel_command, capture=True)
-                #if out.exit_code != 0:
-                #    logger.error('Error when creating the tunnel for task "{}": "{}"'.format(task.tid, out.stderr))                      
-                #    raise ErrorMessage('Error when creating the tunnel for task')
-                
-                
-                
+                out = os_shell('ps -ef | grep ":{}:{}:8590" | grep -v grep'.format(task.tunnel_port, task.ip_addr), capture=True)
+
+                if out.exit_code == 0:
+                    logger.debug('Task "{}" has a running tunnel, using it'.format(task.tid))
+                else:
+                    logger.debug('Task "{}" has no running tunnel, creating it'.format(task.tid))
+                    
+                    # Tunnel command
+                    tunnel_command= 'ssh -4 -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:8590 localhost & '.format(task.tunnel_port, task.ip_addr)
+                    background_tunnel_command = 'nohup {} >/dev/null 2>&1 &'.format(tunnel_command)
+                    
+                    # Log
+                    logger.debug('Opening tunnel with command: {}'.format(background_tunnel_command))
+
+                    # Execute
+                    subprocess.Popen(background_tunnel_command, shell=True)
+                   
             else:
                 raise ErrorMessage('Connecting to tasks on compute "{}" is not supported yet'.format(task.compute))
 
 
-            # Ok, now redirect
+            # Ok, now redirect to the task through the tunnel
             from django.shortcuts import redirect
             return redirect('http://localhost:{}'.format(task.tunnel_port))
 
@@ -515,6 +511,10 @@ def tasks(request):
             data['error'] = 'Error in getting Virtual Devices info'
             logger.error('Error in getting Virtual Devices: "{}"'.format(e))
             return render(request, 'error.html', {'data': data})   
+
+    # Update task statuses
+    for task in tasks:
+        task.update_status()
 
     data['tasks'] = tasks
 
@@ -538,13 +538,13 @@ def create_task(request):
     if data['name']:
         
         # Type
-        data['type'] = request.POST.get('type', None)
-        if not data['type']:
-            data['error'] = 'No type given'
+        data['container'] = request.POST.get('container', None)
+        if not data['container']:
+            data['error'] = 'No container given'
             return render(request, 'error.html', {'data': data})
 
-        if not data['type'] in SUPPORTED_TASK_TYPES:
-            data['error'] = 'No valid task type'
+        if not data['container'] in SUPPORTED_TASK_TYPES:
+            data['error'] = 'No valid task container'
             return render(request, 'error.html', {'data': data})
         
 
@@ -559,35 +559,20 @@ def create_task(request):
             #netifaces.ifaddresses('eth0')
             #backend_ip = netifaces.ifaddresses('eth0')[netifaces.AF_INET][0]['addr']       
 
-
-            # Get the IP address of the DNS service               
-            #inspect_json = json.loads(os_shell('sudo docker inspect metaboxonline-dns-one', capture=True).stdout)
-            #DNS_SERVICE_IP = inspect_json[0]['NetworkSettings']['IPAddress']    
-        
-            # The following does not work on WIndows
-            # Do not use .format as there are too many graph brackets    
-            #DNS_SERVICE_IP = os_shell('docker inspect --format \'{{ .NetworkSettings.IPAddress }}\' ' + PROJECT_NAME + '-' + service + '-' +instance, capture=True).stdout
-        
-            #if DNS_SERVICE_IP:
-            #    try:
-            #        socket.inet_aton(DNS_SERVICE_IP)
-            #    except socket.error:
-            #        raise Exception('Error, I could not find a valid IP address for the DNS service')
-
             # Init run command #--cap-add=NET_ADMIN --cap-add=NET_RAW 
             run_command  = 'sudo docker run  --network=rosetta_default --name rosetta-task-{}'.format( str_shortuuid)
 
             # Data volume
             run_command += ' -v {}/task-{}:/data'.format(TASK_DATA_DIR, str_shortuuid)
-            
-            # Ports TODO: remove or generate randomly
-            #run_command += ' -p 8590:8590 -p 5900:5900 -p 50381:22'
-            
-            # Host name, image entry command
-            task_type = 'task-{}'.format(data['type'])
-            run_command += ' -h task-{} -d -t localhost:5000/rosetta/metadesktop'.format(str_shortuuid, task_type)
 
-            # Debug
+            # Host name, image entry command
+            task_container = 'task-{}'.format(data['container'])
+            run_command += ' -h task-{} -d -t localhost:5000/rosetta/metadesktop'.format(str_shortuuid, task_container)
+
+            # Create the model
+            task = Task.objects.create(user=request.user, name=data['name'], status=TaskStatuses.created, container=data['container'])
+                
+            # Run the task Debug
             logger.debug('Running new task with command="{}"'.format(run_command))
             out = os_shell(run_command, capture=True)
             if out.exit_code != 0:                        
@@ -595,23 +580,14 @@ def create_task(request):
             else:
                 logger.debug('Created task with id: "{}"'.format(out.stdout))
                 
-                # Create the model
-                task = Task.objects.create(user=request.user, name=data['name'], status='Created', type=data['type'])
-                
                 # Set fields
                 task.uuid   = str_uuid
                 task.tid    = out.stdout
-                task.status = 'Running'
                 task.compute = 'local'
+                task.status = TaskStatuses.running
                 
                 # Save
                 task.save()
-
-            # Create passwd file on Proxy
-            #out = os_shell('ssh -o StrictHostKeyChecking=no proxy "cd /shared/reyns/etc_apache2_sites_enabled/ && htpasswd -bc {}.htpasswd metauser {}"'.format(str_shortuuid, password), capture=True)
-            #if out.exit_code != 0:
-            #    logger.error(out.stderr) 
-
 
         except Exception as e:
             data['error'] = 'Error in creating new Task.'
