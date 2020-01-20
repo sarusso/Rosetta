@@ -56,8 +56,9 @@
            
            <tr>
             <td><b>Computing resource</b></td><td>
-              <select name="computing" >
-              <option value="builtin" selected>Local</option>
+              <select name="compute" >
+              <option value="local" selected>Local</option>
+              <option value="demoremote">Demo remote</option>
               <option value="demoslurm">Demo Slurm cluster</option>
               </select>          
             </td>
@@ -65,7 +66,7 @@
                       
            <tr><td colspan=2>
            <table><tr><td  style="border: 1px solid lightgray;" >
-           I understand that files saved or modified and not explicity saved to a persistent share, including system packages, will be LOST when the task ends.
+           I understand that files saved or modified and not explicitly saved to a persistent share, including system packages, will be LOST when the task ends.
            </td><td  style="border: 1px solid lightgray;" >
            <input class="form-check-input" type="checkbox" value="" id="invalidCheck" required>
            </td></table>

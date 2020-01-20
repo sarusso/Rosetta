@@ -44,6 +44,21 @@
             <td><b>Task created</b></td>
             <td>{{ task.created }}</td>
            </tr>
+
+           <tr>
+            <td><b>Task pid</b></td>
+            <td>{{ task.pid}}</td>
+           </tr>
+
+           <tr>
+            <td><b>Task ip</b></td>
+            <td>{{ task.ip}}</td>
+           </tr>
+
+           <tr>
+            <td><b>Task port</b></td>
+            <td>{{ task.port }}</td>
+           </tr>
            
            <tr>
             <td><b>Task tunnel port</b></td>
@@ -54,14 +69,18 @@
             <td><b>Operations</b></td>
             
             <td>
-            {% if task.status == "Running" %}
+            {% if task.status == "running" %}
             <a href=?uuid={{task.uuid}}&action=stop>Stop</a> | 
             {% else %}
             <!-- <a href=?uuid={{task.uuid}}&action=start>Start</a> |  -->
             <font color="#c0c0c0">Stop</font> | 
             
-            {% endif%}
+            {% endif %}
+            {% if task.status == "exited" or task.status == "stopped" %}
             <a href=?uuid={{task.uuid}}&action=delete>Delete</a>
+            {% else %}
+            <font color="#c0c0c0">Delete</font>
+            {% endif %}
             {% if task.status == "running" %}
              | <a href=?uuid={{task.uuid}}&action=connect>Connect</a>
             {% else %}

@@ -59,6 +59,9 @@ class Task(models.Model):
     status    = models.CharField('Task status', max_length=36, blank=True, null=True)
     created   = models.DateTimeField('Created on', default=timezone.now)
     compute   = models.CharField('Task compute', max_length=36, blank=True, null=True)
+    pid       = models.IntegerField('Task pid', blank=True, null=True)
+    port      = models.IntegerField('Task port', blank=True, null=True)
+    ip        = models.CharField('Task ip address', max_length=36, blank=True, null=True)
     tunnel_port = models.IntegerField('Task tunnel port', blank=True, null=True)
 
     def save(self, *args, **kwargs):
@@ -75,14 +78,7 @@ class Task(models.Model):
     def __str__(self):
         return str('Task "{}" of user "{}" in status "{}" (TID "{}")'.format(self.name, self.user.email, self.status, self.tid))
 
-    @property
-    def ip_addr(self):
-        # TODO: if self.computing (or self.type) == "local":
-        out = os_shell('sudo docker inspect --format \'{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}\' ' + self.tid + ' | tail -n1', capture=True)
-        if out.exit_code != 0:
-            raise Exception('Error: ' + out.stderr)
-        return out.stdout
-    
+
     def update_status(self):
         if self.compute == 'local':
             

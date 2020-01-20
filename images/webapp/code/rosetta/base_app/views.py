@@ -388,18 +388,19 @@ def tasks(request):
 
     # Perform actions if required:
     if action and uuid:
+
+        # Get the task (raises if none available including no permission)
+        task = Task.objects.get(user=request.user, uuid=uuid)
+
         if action=='delete':
+            if task.status not in [TaskStatuses.stopped, TaskStatuses.exited]:
+                data['error'] = 'Can delete only tasks in the stopped state'
+                return render(request, 'error.html', {'data': data})  
             try:
                 # Get the task (raises if none available including no permission)
                 task = Task.objects.get(user=request.user, uuid=uuid)
                 
-                # Delete the Docker container
-                delete_command = 'sudo docker stop {} && sudo docker rm {}'.format(task.tid,task.tid)
-                out = os_shell(delete_command, capture=True)
-                if out.exit_code != 0:
-                    logger.error('Error when removing Docker container for task "{}": "{}"'.format(task.tid, out.stderr))                      
-                
-                # Ok, delete
+                # Delete
                 task.delete()
 
                 # Unset uuid to load the list again
@@ -412,24 +413,56 @@ def tasks(request):
         
         elif action=='stop': # or delete,a and if delete also remove object
             try:
-                # Get the task (raises if none available including no permission)
-                task = Task.objects.get(user=request.user, uuid=uuid)
 
-                str_shortuuid = task.uuid.split('-')[0]
-
-                # Delete the Docker container
-                if standby_supported:
-                    stop_command = 'sudo docker stop {}'.format(task.tid)
+                if task.compute == 'local':
+                    str_shortuuid = task.uuid.split('-')[0]
+    
+                    # Delete the Docker container
+                    if standby_supported:
+                        stop_command = 'sudo docker stop {}'.format(task.tid)
+                    else:
+                        stop_command = 'sudo docker stop {} && sudo docker rm {}'.format(task.tid,task.tid)
+    
+                    out = os_shell(stop_command, capture=True)
+                    if out.exit_code != 0:                        
+                        raise Exception(out.stderr)
+                    
+                elif task.compute == 'demoremote':
+                    
+                    # Stop the task remotely
+                    stop_command = 'ssh -4 -o StrictHostKeyChecking=no slurmclusterworker-one  "kill -9 {}"'.format(task.pid)
+                    logger.debug(stop_command)
+                    out = os_shell(stop_command, capture=True)
+                    if out.exit_code != 0:                        
+                        raise Exception(out.stderr)
+   
                 else:
-                    stop_command = 'sudo docker stop {} && sudo docker rm {}'.format(task.tid,task.tid)
-
-                out = os_shell(stop_command, capture=True)
-                if out.exit_code != 0:                        
-                    raise Exception(out.stderr)
+                    data['error']= 'Don\'t know how to stop tasks on "{}" compute resource.'.format(task.compute)
+                    return render(request, 'error.html', {'data': data})   
            
-                # Ok, delete
-                task.status = 'Stopped' 
+                # Ok, save status as deleted
+                task.status = 'stopped' 
                 task.save()
+
+                # Check if the tunnel is active and if so kill it
+                logger.debug('Checking if task "{}" has a running tunnel'.format(task.tid))
+                check_command = 'ps -ef | grep ":'+str(task.tunnel_port)+':'+str(task.ip)+':'+str(task.port)+'" | grep -v grep | awk \'{print $2}\''
+                logger.debug(check_command)
+                out = os_shell(check_command, capture=True)
+                logger.debug(out)
+                if out.exit_code == 0:
+                    logger.debug('Task "{}" has a running tunnel, killing it'.format(task.tid))
+                    tunnel_pid = out.stdout
+                    # Kill Tunnel command
+                    kill_tunnel_command= 'kill -9 {}'.format(tunnel_pid)
+                    
+                    # Log
+                    logger.debug('Killing tunnel with command: {}'.format(kill_tunnel_command))
+    
+                    # Execute
+                    os_shell(kill_tunnel_command, capture=True)
+                    if out.exit_code != 0:                    
+                        raise Exception(out.stderr)
 
             except Exception as e:
                 data['error'] = 'Error in stopping the task'
@@ -445,7 +478,7 @@ def tasks(request):
             task = Task.objects.get(user=request.user, uuid=uuid)
             
             # Create task tunnel
-            if task.compute=='local':
+            if task.compute in ['local', 'demoremote']:
                 
                 # If there is no tunnel port allocated yet, find one                
                 if not task.tunnel_port:
@@ -471,7 +504,7 @@ def tasks(request):
                 # Check if the tunnel is active and if not create it
                 logger.debug('Checking if task "{}" has a running tunnel'.format(task.tid))
                 
-                out = os_shell('ps -ef | grep ":{}:{}:8590" | grep -v grep'.format(task.tunnel_port, task.ip_addr), capture=True)
+                out = os_shell('ps -ef | grep ":{}:{}:{}" | grep -v grep'.format(task.tunnel_port, task.ip, task.port), capture=True)
 
                 if out.exit_code == 0:
                     logger.debug('Task "{}" has a running tunnel, using it'.format(task.tid))
@@ -479,7 +512,7 @@ def tasks(request):
                     logger.debug('Task "{}" has no running tunnel, creating it'.format(task.tid))
                     
                     # Tunnel command
-                    tunnel_command= 'ssh -4 -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:8590 localhost & '.format(task.tunnel_port, task.ip_addr)
+                    tunnel_command= 'ssh -4 -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} localhost & '.format(task.tunnel_port, task.ip, task.port)
                     background_tunnel_command = 'nohup {} >/dev/null 2>&1 &'.format(tunnel_command)
                     
                     # Log
@@ -547,47 +580,107 @@ def create_task(request):
             data['error'] = 'No valid task container'
             return render(request, 'error.html', {'data': data})
         
+        compute = request.POST.get('compute', None)
 
+        logger.debug(compute)
+
+        if compute not in ['local', 'demoremote']:
+            data['error'] = 'Unknown compute resource "{}'.format(compute)
+            return render(request, 'error.html', {'data': data})
+        
+        # Generate the task uuid
+        str_uuid = str(uuid.uuid4())
+        str_shortuuid = str_uuid.split('-')[0]
+        
+        # Create the task object
+        task = Task.objects.create(uuid      = str_uuid,
+                                   user      = request.user,
+                                   name      = data['name'],
+                                   status    = TaskStatuses.created,
+                                   container = data['container'],
+                                   compute   = compute)
+        
+        # Actually start tasks
         try:
-            
-            #Generate uuid
-            str_uuid = str(uuid.uuid4())
-            str_shortuuid = str_uuid.split('-')[0]
-            
-            # Get our ip address             
-            #import netifaces
-            #netifaces.ifaddresses('eth0')
-            #backend_ip = netifaces.ifaddresses('eth0')[netifaces.AF_INET][0]['addr']       
+            if compute == 'local':            
 
-            # Init run command #--cap-add=NET_ADMIN --cap-add=NET_RAW 
-            run_command  = 'sudo docker run  --network=rosetta_default --name rosetta-task-{}'.format( str_shortuuid)
+                # Get our ip address             
+                #import netifaces
+                #netifaces.ifaddresses('eth0')
+                #backend_ip = netifaces.ifaddresses('eth0')[netifaces.AF_INET][0]['addr']       
+    
+                # Init run command #--cap-add=NET_ADMIN --cap-add=NET_RAW 
+                run_command  = 'sudo docker run  --network=rosetta_default --name rosetta-task-{}'.format( str_shortuuid)
+    
+                # Data volume
+                run_command += ' -v {}/task-{}:/data'.format(TASK_DATA_DIR, str_shortuuid)
+    
+                # Host name, image entry command
+                task_container = 'task-{}'.format(data['container'])
+                run_command += ' -h task-{} -d -t localhost:5000/rosetta/metadesktop'.format(str_shortuuid, task_container)
+    
+                # Create the model
+                task = Task.objects.create(user=request.user, name=data['name'], status=TaskStatuses.created, container=data['container'])
+                    
+                # Run the task Debug
+                logger.debug('Running new task with command="{}"'.format(run_command))
+                out = os_shell(run_command, capture=True)
+                if out.exit_code != 0:                        
+                    raise Exception(out.stderr)
+                else:
+                    task_tid = out.stdout
+                    logger.debug('Created task with id: "{}"'.format(task_tid))
+                    
 
-            # Data volume
-            run_command += ' -v {}/task-{}:/data'.format(TASK_DATA_DIR, str_shortuuid)
-
-            # Host name, image entry command
-            task_container = 'task-{}'.format(data['container'])
-            run_command += ' -h task-{} -d -t localhost:5000/rosetta/metadesktop'.format(str_shortuuid, task_container)
-
-            # Create the model
-            task = Task.objects.create(user=request.user, name=data['name'], status=TaskStatuses.created, container=data['container'])
+                    # Get task IP address
+                    out = os_shell('sudo docker inspect --format \'{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}\' ' + task_tid + ' | tail -n1', capture=True)
+                    if out.exit_code != 0:
+                        raise Exception('Error: ' + out.stderr)
+                    task_ip = out.stdout
+                    
+                    # Set fields
+                    task.tid    = task_tid
+                    task.status = TaskStatuses.running
+                    task.ip     = task_ip
+                    task.port   = 8590
                 
-            # Run the task Debug
-            logger.debug('Running new task with command="{}"'.format(run_command))
-            out = os_shell(run_command, capture=True)
-            if out.exit_code != 0:                        
-                raise Exception(out.stderr)
-            else:
-                logger.debug('Created task with id: "{}"'.format(out.stdout))
+                    # Save
+                    task.save()
+
+            elif compute == 'demoremote':
+                logger.debug('Using Demo Remote as compute resource')
+
+
+                # 1) Run the singularity container on slurmclusterworker-one (non blocking)
+                run_command = 'ssh -4 -o StrictHostKeyChecking=no slurmclusterworker-one  "export SINGULARITY_NOHTTPS=true && exec nohup singularity run --pid --writable-tmpfs --containall --cleanenv docker://dregistry:5000/rosetta/metadesktop &> /dev/null & echo \$!"'
+                out = os_shell(run_command, capture=True)
+                if out.exit_code != 0:                        
+                    raise Exception(out.stderr)
+                
+                # Save pid echoed by the command above
+                task_pid = out.stdout
+
+                # 2) Simulate the agent (i.e. report container IP and port port)
+
+                # Get task IP address
+                out = os_shell('sudo docker inspect --format \'{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}\' slurmclusterworker-one | tail -n1', capture=True)
+                if out.exit_code != 0:
+                    raise Exception('Error: ' + out.stderr)
+                task_ip = out.stdout
                 
                 # Set fields
-                task.uuid   = str_uuid
-                task.tid    = out.stdout
-                task.compute = 'local'
+                task.tid    = task.uuid
                 task.status = TaskStatuses.running
+                task.ip     = task_ip
+                task.pid    = task_pid
+                task.port   = 8590
                 
                 # Save
                 task.save()
+                
+
+            else:
+                raise Exception('Consistency exception: invalid compute resource "{}'.format(compute))
 
         except Exception as e:
             data['error'] = 'Error in creating new Task.'
