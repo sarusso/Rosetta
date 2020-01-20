@@ -10,5 +10,11 @@ if [[ $# -eq 0 ]] ; then
     docker-compose down
     docker-compose up -d
 else
-    docker-compose up -d --no-deps $@
+    UPDATE_OUT=$(docker-compose up -d --no-deps $@ 2>&1)
+    if [[ $UPDATE_OUT == *"is up-to-date"* ]]; then
+        echo "Image is up to date, only restarting the service..."
+        docker-compose restart $@
+    else
+        echo "Updated image and restarted the the service."
+    fi
 fi
