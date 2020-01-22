@@ -515,3 +515,28 @@ th, td {
     display: block;
     padding: 10px;    
 }
+
+
+
+/*-------------------*/
+/*   Dashboard       */
+/*-------------------*/
+.dashboard table {
+	/*border: 1px #c0c0c0 solid;*/
+	background: #F8F8F8;
+	padding: 10px;
+} 
+
+.dashboard td {
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+
+} 
+
+
+
+
+
+
