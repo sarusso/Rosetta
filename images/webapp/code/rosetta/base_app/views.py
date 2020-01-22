@@ -20,7 +20,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import update_session_auth_hash
 
 # Project imports
-from .models import Profile, LoginToken, Task, TaskStatuses
+from .models import Profile, LoginToken, Task, TaskStatuses, Container
 from .utils import send_email, format_exception, random_username, log_user_activity, timezonize, os_shell
 
 # Setup logging
@@ -31,7 +31,8 @@ logger = logging.getLogger(__name__)
 from .exceptions import ErrorMessage, ConsistencyException
 
 # Conf
-SUPPORTED_TASK_TYPES = ['metadesktop', 'astrocook', 'gadgetviewer']
+SUPPORTED_CONTAINER_TYPES = ['docker', 'singularity']
+SUPPORTED_REGISTRIES = ['docker_local', 'docker_hub', 'signularity_hub'] 
 TASK_DATA_DIR = "/data"
 
 #=========================
@@ -566,27 +567,32 @@ def create_task(request):
     data['user']    = request.user
     data['profile'] = Profile.objects.get(user=request.user)
     data['title']   = 'New Task'
-    data['name']    = request.POST.get('name',None)
     
-    if data['name']:
+    # Get containers configured on the platform, both private to this user and public
+    data['platform_containers'] = Container.objects.filter(user=request.user)
+    data['user_containers'] = Container.objects.filter(user=None)
+
+    # Task name if any
+    task_name = request.POST.get('task_name', None)
+
+    if task_name:
         
-        # Type
-        data['container'] = request.POST.get('container', None)
-        if not data['container']:
-            data['error'] = 'No container given'
-            return render(request, 'error.html', {'data': data})
+        # Task container
+        task_container_id = request.POST.get('task_container_id', None)
 
-        if not data['container'] in SUPPORTED_TASK_TYPES:
-            data['error'] = 'No valid task container'
-            return render(request, 'error.html', {'data': data})
-        
-        compute = request.POST.get('compute', None)
+        # Get the container object, first try as public and then as private
+        try:
+            task_container = Container.objects.get(id=task_container_id, user=None)
+        except Container.DoesNotExist:
+            try:
+                task_container =  Container.objects.get(id=task_container_id, user=request.user)
+            except Container.DoesNotExist:
+                raise Exception('Consistency error, container with id "{}" does not exists or user "{}" does not have access rights'.format(task_container_id, request.user.email))
 
-        logger.debug(compute)
-
-        if compute not in ['local', 'demoremote']:
-            data['error'] = 'Unknown compute resource "{}'.format(compute)
-            return render(request, 'error.html', {'data': data})
+        # Compute
+        task_compute = request.POST.get('task_compute', None)
+        if task_compute not in ['local', 'demoremote']:
+            raise ErrorMessage('Unknown compute resource "{}')
         
         # Generate the task uuid
         str_uuid = str(uuid.uuid4())
@@ -595,14 +601,15 @@ def create_task(request):
         # Create the task object
         task = Task.objects.create(uuid      = str_uuid,
                                    user      = request.user,
-                                   name      = data['name'],
+                                   name      = task_name,
                                    status    = TaskStatuses.created,
-                                   container = data['container'],
-                                   compute   = compute)
+                                   container = task_container,
+                                   compute   = task_compute)
         
+                
         # Actually start tasks
         try:
-            if compute == 'local':            
+            if task_compute == 'local':            
 
                 # Get our ip address             
                 #import netifaces
@@ -615,13 +622,15 @@ def create_task(request):
                 # Data volume
                 run_command += ' -v {}/task-{}:/data'.format(TASK_DATA_DIR, str_shortuuid)
     
-                # Host name, image entry command
-                task_container = 'task-{}'.format(data['container'])
-                run_command += ' -h task-{} -d -t localhost:5000/rosetta/metadesktop'.format(str_shortuuid, task_container)
-    
-                # Create the model
-                task = Task.objects.create(user=request.user, name=data['name'], status=TaskStatuses.created, container=data['container'])
+                # Set registry string
+                if task.container.registry == 'local':
+                    registry_string = 'localhost:5000/'
+                else:
+                    registry_string  = ''
                     
+                # Host name, image entry command
+                run_command += ' -h task-{} -d -t {}{}'.format(str_shortuuid, registry_string, task.container.image)
+      
                 # Run the task Debug
                 logger.debug('Running new task with command="{}"'.format(run_command))
                 out = os_shell(run_command, capture=True)
@@ -647,7 +656,7 @@ def create_task(request):
                     # Save
                     task.save()
 
-            elif compute == 'demoremote':
+            elif task_compute == 'demoremote':
                 logger.debug('Using Demo Remote as compute resource')
 
 
@@ -680,19 +689,125 @@ def create_task(request):
                 
 
             else:
-                raise Exception('Consistency exception: invalid compute resource "{}'.format(compute))
+                raise Exception('Consistency exception: invalid compute resource "{}'.format(task_compute))
 
         except Exception as e:
             data['error'] = 'Error in creating new Task.'
             logger.error(e)
             return render(request, 'error.html', {'data': data})
     
+        # Set created switch
+        data['created'] = True
 
     return render(request, 'create_task.html', {'data': data})
 
 
 
 
+#=========================
+#  Containers
+#=========================
+
+@private_view
+def containers(request):
+
+    # Init data
+    data={}
+    data['user']    = request.user
+    data['profile'] = Profile.objects.get(user=request.user)
+    data['title']   = 'Add compute'
+    data['name']    = request.POST.get('name',None)
+    
+    # Get containers configured on the platform, both private to this user and public
+    data['platform_containers'] = Container.objects.filter(user=request.user)
+    data['user_containers'] = Container.objects.filter(user=None)
+
+    return render(request, 'containers.html', {'data': data})
 
 
+
+#=========================
+#  Add Container view
+#=========================
+
+@private_view
+def add_container(request):
+
+    # Init data
+    data={}
+    data['user']    = request.user
+    data['profile'] = Profile.objects.get(user=request.user)
+    data['title']   = 'Add container'
+    
+    # Container image if any
+    container_image = request.POST.get('container_image',None)
+
+    if container_image:
+        
+        # Container type
+        container_type = request.POST.get('container_type', None)
+        if not container_type:
+            raise ErrorMessage('No container type given')
+        if not container_type in SUPPORTED_CONTAINER_TYPES:
+            raise ErrorMessage('No valid container type')
+
+        # Container registry
+        container_registry = request.POST.get('container_registry', None)
+        if not container_registry:
+            raise ErrorMessage('No registry type given')
+        if not container_registry in SUPPORTED_REGISTRIES:
+            raise ErrorMessage('No valid registry')
+
+        # Container service ports
+        container_service_ports = request.POST.get('container_service_ports', None)
+
+        # Log
+        logger.debug('Creating new container object with image="{}", type="{}", registry="{}", service_ports="{}"'.format(container_image, container_type, container_registry, container_service_ports))
+
+        # Create
+        Container.objects.create(user          = request.user,
+                                 image         = container_image,
+                                 type          = container_type,
+                                 registry      = container_registry,
+                                 service_ports = container_service_ports)
+        # Set added switch
+        data['added'] = True
+
+    return render(request, 'add_container.html', {'data': data})
+
+
+
+#=========================
+#  Computes view
+#=========================
+
+@private_view
+def computes(request):
+
+    # Init data
+    data={}
+    data['user']    = request.user
+    data['profile'] = Profile.objects.get(user=request.user)
+    data['title']   = 'Add compute'
+    data['name']    = request.POST.get('name',None)
+    
+
+    return render(request,  'computes.html', {'data': data})
+
+#=========================
+#  Add Compute view
+#=========================
+
+@private_view
+def add_compute(request):
+
+    # Init data
+    data={}
+    data['user']    = request.user
+    data['profile'] = Profile.objects.get(user=request.user)
+    data['title']   = 'Add compute'
+    data['name']    = request.POST.get('name',None)
+    
+
+    return render(request, 'add_compute.html', {'data': data})
 

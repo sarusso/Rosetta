@@ -11,7 +11,7 @@
       <h1>New Task</h1> 
       <hr>
 
-      {% if not data.name %}
+      {% if not data.created %}
 
           <h3>Choose a name and a type for your new Task.</h3> 
           
@@ -20,12 +20,12 @@
           <form action="/create_task/" method="POST">
           {% csrf_token %}
 
-          <table class="dashboard" style="max-width:430px">
+          <table class="dashboard" style="max-width:600px">
     
            <tr>
             <td><b>Task name </b></td>
             <td>
-             <input type="text" name="name" value="" placeholder="" size="23" required />
+             <input type="text" name="task_name" value="" placeholder="" size="23" required />
             </td>
            </tr>
 
@@ -46,21 +46,30 @@
 
            <tr>
             <td><b>Task container</b></td><td>
-              <select name="container" >
-              <option value="metadesktop" selected>Meta Desktop</option>
+              <select name="task_container_id" >
+              <!-- <option value="metadesktop" selected>Meta Desktop</option>
               <option value="astroccok">Astrocook</option>
-              <option value="gadgetviewer">Gadget Viewer</option>
-              </select>          
+              <option value="gadgetviewer">Gadget Viewer</option> -->
+              {% for container in data.platform_containers %}
+              <option value="{{container.id}}">{{container.image}} (platform)</option> -->
+              {% endfor %}
+              {% for container in data.user_containers %}
+              <option value="{{container.id}}">{{container.image}} (user)</option> -->
+              {% endfor %}              
+              
+              </select>
+              &nbsp; | <a href="/add_container">Add new...</a>          
             </td>
            </tr>
            
            <tr>
             <td><b>Computing resource</b></td><td>
-              <select name="compute" >
+              <select name="task_compute" >
               <option value="local" selected>Local</option>
               <option value="demoremote">Demo remote</option>
               <option value="demoslurm">Demo Slurm cluster</option>
-              </select>          
+              </select>
+              &nbsp; | <a href="/add_compute">Add new...</a>
             </td>
            </tr>
                       

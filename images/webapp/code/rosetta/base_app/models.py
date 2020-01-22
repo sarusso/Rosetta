@@ -55,7 +55,6 @@ class Task(models.Model):
     tid       = models.CharField('Task ID', max_length=64, blank=False, null=False)
     uuid      = models.CharField('Task UUID', max_length=36, blank=False, null=False)
     name      = models.CharField('Task name', max_length=36, blank=False, null=False)
-    container = models.CharField('Task container', max_length=36, blank=False, null=False)
     status    = models.CharField('Task status', max_length=36, blank=True, null=True)
     created   = models.DateTimeField('Created on', default=timezone.now)
     compute   = models.CharField('Task compute', max_length=36, blank=True, null=True)
@@ -63,6 +62,9 @@ class Task(models.Model):
     port      = models.IntegerField('Task port', blank=True, null=True)
     ip        = models.CharField('Task ip address', max_length=36, blank=True, null=True)
     tunnel_port = models.IntegerField('Task tunnel port', blank=True, null=True)
+
+    # Links
+    container    = models.ForeignKey('Container', on_delete=models.CASCADE, related_name='+')
 
     def save(self, *args, **kwargs):
         
@@ -106,7 +108,21 @@ class Task(models.Model):
         return self.uuid.split('-')[0]
 
 
+#=========================
+#  Containers
+#=========================
+class Container(models.Model):
 
+    #uuid           = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user           = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE, null=True)
+    # If a container has no user, it will be available to anyone. Can be created, edited and deleted only by admins.
+    image         = models.CharField('Container image', max_length=255, blank=False, null=False)
+    type          = models.CharField('Container type', max_length=36, blank=False, null=False)
+    registry      = models.CharField('Container registry', max_length=255, blank=False, null=False)
+    service_ports = models.CharField('Container service ports', max_length=36, blank=True, null=True)
+    #private       = models.BooleanField('Container is private and needs auth to be pulled from the registry')
 
+    def __str__(self):
+        return str('Container of type "{}" with image "{}" from registry "{}" of user "{}"'.format(self.type, self.image, self.registry, self.user))
 
 

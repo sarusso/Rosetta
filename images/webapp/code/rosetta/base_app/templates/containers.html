@@ -1,0 +1,88 @@
+{% load static %} 
+{% include "header.html" %}
+{% include "navigation.html" with main_path='/main/' %}
+
+<br/>
+<br/>
+
+<div class="container">
+  <div class="dashboard">
+    <div class="span8 offset2">
+      <h1>Containers List</h1>
+      <hr/>
+
+             
+      {% for container in data.platform_containers %}
+      <table class="dashboard">
+
+       <tr>
+        <td><b>Container image</b></td>
+        <td>{{ container.image }} (platform)</td>
+       </tr>
+
+       <tr>
+        <td><b>Container type</b></td>
+        <td>{{ container.type }}</td>
+       </tr>
+
+       <tr>
+        <td><b>Container registry</b></td>
+        <td>{{ container.registry }}</td>
+       </tr>
+
+       <tr>
+        <td><b>Container service ports</b></td>
+        <td>{{ container.service_ports}}</td>
+       </tr>
+
+      </table>
+      <br />
+      {% endfor %}
+
+
+      {% for container in data.user_containers %}
+      <table class="dashboard">
+
+       <tr>
+        <td><b>Container image</b></td>
+        <td>{{ container.image }} (user)</td>
+       </tr>
+
+       <tr>
+        <td><b>Container type</b></td>
+        <td>{{ container.type }}</td>
+       </tr>
+
+       <tr>
+        <td><b>Container registry</b></td>
+        <td>{{ container.registry }}</td>
+       </tr>
+
+       <tr>
+        <td><b>Container service ports</b></td>
+        <td>{{ container.service_ports}}</td>
+       </tr>
+
+      </table>
+      <br />
+      {% endfor %}    
+      
+      <br />
+      <a href="/create_container">Add new...</a>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      
+    </div>
+  </div>
+</div>
+
+{% include "footer.html" %}
+
+
+
+
+
