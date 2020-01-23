@@ -569,8 +569,8 @@ def create_task(request):
     data['title']   = 'New Task'
     
     # Get containers configured on the platform, both private to this user and public
-    data['platform_containers'] = Container.objects.filter(user=request.user)
-    data['user_containers'] = Container.objects.filter(user=None)
+    data['user_containers'] = Container.objects.filter(user=request.user)
+    data['platform_containers'] = Container.objects.filter(user=None)
 
     # Task name if any
     task_name = request.POST.get('task_name', None)
@@ -651,7 +651,7 @@ def create_task(request):
                     task.tid    = task_tid
                     task.status = TaskStatuses.running
                     task.ip     = task_ip
-                    task.port   = 8590
+                    task.port   = int(task.container.service_ports.split(',')[0])
                 
                     # Save
                     task.save()
@@ -682,7 +682,7 @@ def create_task(request):
                 task.status = TaskStatuses.running
                 task.ip     = task_ip
                 task.pid    = task_pid
-                task.port   = 8590
+                task.port   = int(task.container.service_ports.split(',')[0])
                 
                 # Save
                 task.save()
@@ -719,8 +719,8 @@ def containers(request):
     data['name']    = request.POST.get('name',None)
     
     # Get containers configured on the platform, both private to this user and public
-    data['platform_containers'] = Container.objects.filter(user=request.user)
-    data['user_containers'] = Container.objects.filter(user=None)
+    data['user_containers'] = Container.objects.filter(user=request.user)
+    data['platform_containers'] = Container.objects.filter(user=None)
 
     return render(request, 'containers.html', {'data': data})
 
@@ -760,6 +760,12 @@ def add_container(request):
 
         # Container service ports
         container_service_ports = request.POST.get('container_service_ports', None)
+        
+        try:
+            for container_service_port in container_service_ports:
+                int(container_service_port)
+        except:
+            raise ErrorMessage('Invalid service port "{}"'.format(container_service_port))
 
         # Log
         logger.debug('Creating new container object with image="{}", type="{}", registry="{}", service_ports="{}"'.format(container_image, container_type, container_registry, container_service_ports))
