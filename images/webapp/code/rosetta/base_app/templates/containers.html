@@ -8,7 +8,7 @@
 <div class="container">
   <div class="dashboard">
     <div class="span8 offset2">
-      <h1>Containers List</h1>
+      <h1>Container List</h1>
       <hr/>
 
              
@@ -61,6 +61,11 @@
        <tr>
         <td><b>Container service ports</b></td>
         <td>{{ container.service_ports}}</td>
+       </tr>
+
+       <tr>
+        <td><b>Operations</b></td>
+        <td><a href="?action=delete&uuid={{ container.uuid }}">Delete</a></td>
        </tr>
 
       </table>

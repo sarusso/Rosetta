@@ -46,15 +46,15 @@
 
            <tr>
             <td><b>Task container</b></td><td>
-              <select name="task_container_id" >
+              <select name="task_container_uuid" >
               <!-- <option value="metadesktop" selected>Meta Desktop</option>
               <option value="astroccok">Astrocook</option>
               <option value="gadgetviewer">Gadget Viewer</option> -->
               {% for container in data.platform_containers %}
-              <option value="{{container.id}}">{{container.image}} (platform)</option> -->
+              <option value="{{container.uuid}}">{{container.image}} (platform)</option> -->
               {% endfor %}
               {% for container in data.user_containers %}
-              <option value="{{container.id}}">{{container.image}} (user)</option> -->
+              <option value="{{container.uuid}}">{{container.image}} (user)</option> -->
               {% endfor %}              
               
               </select>
@@ -103,7 +103,7 @@
 
  
       {% else %}
-        Ok, task created. Go back to your <a href="/tasks">tasks list</a>.
+        Ok, task created. Go back to your <a href="/tasks">task list</a>.
         
 
       {% endif %} 

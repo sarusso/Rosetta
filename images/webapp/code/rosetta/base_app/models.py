@@ -25,6 +25,7 @@ class TaskStatuses(object):
 #=========================
 
 class Profile(models.Model):
+    uuid      = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user      = models.OneToOneField(User, on_delete=models.CASCADE)
     timezone  = models.CharField('User Timezone', max_length=36, default='UTC')
     authtoken = models.CharField('User auth token', max_length=36, blank=True, null=True)
@@ -43,6 +44,7 @@ class Profile(models.Model):
 #=========================
 
 class LoginToken(models.Model):
+    uuid  = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user  = models.OneToOneField(User, on_delete=models.CASCADE)
     token = models.CharField('Login token', max_length=36)
 
@@ -51,16 +53,16 @@ class LoginToken(models.Model):
 #  Tasks 
 #=========================
 class Task(models.Model):
-    user      = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE)
-    tid       = models.CharField('Task ID', max_length=64, blank=False, null=False)
-    uuid      = models.CharField('Task UUID', max_length=36, blank=False, null=False)
-    name      = models.CharField('Task name', max_length=36, blank=False, null=False)
-    status    = models.CharField('Task status', max_length=36, blank=True, null=True)
-    created   = models.DateTimeField('Created on', default=timezone.now)
-    compute   = models.CharField('Task compute', max_length=36, blank=True, null=True)
-    pid       = models.IntegerField('Task pid', blank=True, null=True)
-    port      = models.IntegerField('Task port', blank=True, null=True)
-    ip        = models.CharField('Task ip address', max_length=36, blank=True, null=True)
+    uuid     = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user     = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE)
+    tid      = models.CharField('Task ID', max_length=64, blank=False, null=False)
+    name     = models.CharField('Task name', max_length=36, blank=False, null=False)
+    status   = models.CharField('Task status', max_length=36, blank=True, null=True)
+    created  = models.DateTimeField('Created on', default=timezone.now)
+    compute  = models.CharField('Task compute', max_length=36, blank=True, null=True)
+    pid      = models.IntegerField('Task pid', blank=True, null=True)
+    port     = models.IntegerField('Task port', blank=True, null=True)
+    ip       = models.CharField('Task ip address', max_length=36, blank=True, null=True)
     tunnel_port = models.IntegerField('Task tunnel port', blank=True, null=True)
 
     # Links
@@ -105,7 +107,7 @@ class Task(models.Model):
 
     @property
     def short_uuid(self):
-        return self.uuid.split('-')[0]
+        return str(self.uuid).split('-')[0]
 
 
 #=========================
@@ -113,8 +115,9 @@ class Task(models.Model):
 #=========================
 class Container(models.Model):
 
-    #uuid           = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user           = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE, null=True)
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE, null=True)
+    
     # If a container has no user, it will be available to anyone. Can be created, edited and deleted only by admins.
     image         = models.CharField('Container image', max_length=255, blank=False, null=False)
     type          = models.CharField('Container type', max_length=36, blank=False, null=False)
