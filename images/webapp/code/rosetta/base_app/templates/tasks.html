@@ -8,12 +8,8 @@
 <div class="container">
   <div class="dashboard">
     <div class="span8 offset2">
-      {% if not data.sid %}
       <h1>Task List</h1>
-      {% else %}
-      <h1>Task Info</h1>
-      {% endif %}
-       
+
       <hr>
 
           
@@ -21,27 +17,27 @@
           <table class="dashboard">
 
            <tr>
-            <td><b>Task id</b></td>
-            <td>{{ task.short_uuid }}</td>
+            <td><b>ID</b></td>
+            <td>{{ task.id }}</td>
            </tr>
 
            <tr>
-            <td><b>Task name</b></td>
+            <td><b>Name</b></td>
             <td>{{ task.name }}</td>
            </tr>
 
            <tr>
-            <td><b>Task container</b></td>
-            <td>{{ task.container.image }}</td>
+            <td><b>Container</b></td>
+            <td><a href="">{{ task.container.image }}</a></td>
            </tr>
 
            <tr>
-            <td><b>Task status</b></td>
+            <td><b>Status</b></td>
             <td>{{ task.status }}</td>
            </tr>
 
            <tr>
-            <td><b>Task created</b></td>
+            <td><b>Created at</b></td>
             <td>{{ task.created }}</td>
            </tr>
 
@@ -51,12 +47,12 @@
            </tr> -->
 
            <tr>
-            <td><b>Task ip</b></td>
+            <td><b>IP</b></td>
             <td>{{ task.ip}}</td>
            </tr>
 
            <tr>
-            <td><b>Task port</b></td>
+            <td><b>Port</b></td>
             <td>{{ task.port }}</td>
            </tr>
            
@@ -83,8 +79,10 @@
             {% endif %}
             {% if task.status == "running" %}
              | <a href=?uuid={{task.uuid}}&action=connect>Connect</a>
+             | <a href=/task_log/?uuid={{task.uuid}}&action=viewlog>View Log</a>
             {% else %}
              | <font color="#c0c0c0">Connect</font>
+             | <font color="#c0c0c0">View Log</font>
             {% endif%}
             </td>
   

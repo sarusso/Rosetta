@@ -1,0 +1,51 @@
+{% load static %} 
+{% include "header.html" with refresh=data.refresh %}
+{% include "navigation.html" with main_path='/main/' %}
+
+<br/>
+<br/>
+
+<div class="container">
+  <div class="dashboard">
+    <div class="span8 offset2">
+    
+      <h1><a href="/tasks/">Task List</a> &gt;  {{ data.task.id }} Log</h1>
+       
+      <hr>
+
+  
+      <b>ID:</b> {{ data.task.id }} &nbsp; &nbsp; 
+      <b>Status:</b> {{ data.task.status }} &nbsp; &nbsp; 
+      <b>Auto refresh:{{data.refresh}}</b>&nbsp;
+      {% if not data.refresh %} OFF {% else %} <a href="?uuid={{data.task.uuid}}">OFF</a> {% endif %} | 
+      {% if data.refresh == "3" %} 3s {% else %} <a href="?uuid={{data.task.uuid}}&refresh=3">3s</a> {% endif %} |   
+      {% if data.refresh == "10" %} 10s{% else %} <a href="?uuid={{data.task.uuid}}}&refresh=10">10s</a> {% endif %} |   
+      {% if data.refresh == "60" %} 60s{% else %} <a href="?uuid={{data.task.uuid}}}&refresh=60">60s</a> {% endif %}  
+        
+      <pre id="output" style="border: 1px solid #a0a0a0; width: 100%; height: 500px; background-color:black; color:white; white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: white-space: -o-pre-wrap; word-wrap: break-word;">{{ data.log }}</pre>
+
+
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      
+    </div>
+  </div>
+</div>
+
+{% include "footer.html" %}
+
+
+<script>
+jQuery( function(){
+       var pre = jQuery("#output");
+        pre.scrollTop( pre.prop("scrollHeight") );
+    });
+</script>
+
+
+
+

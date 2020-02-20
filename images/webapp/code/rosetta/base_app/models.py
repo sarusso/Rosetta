@@ -106,8 +106,9 @@ class Task(models.Model):
             self.save()                   
 
     @property
-    def short_uuid(self):
+    def id(self):
         return str(self.uuid).split('-')[0]
+
 
 
 #=========================
@@ -127,5 +128,13 @@ class Container(models.Model):
 
     def __str__(self):
         return str('Container of type "{}" with image "{}" from registry "{}" of user "{}"'.format(self.type, self.image, self.registry, self.user))
+
+    @property
+    def id(self):
+        return str(self.uuid).split('-')[0]
+
+    #@property
+    #def name(self):
+    #    return self.image.split(':')[0].replace('_',' ').replace('-', ' ').replace('/', ' ').title()
 
 

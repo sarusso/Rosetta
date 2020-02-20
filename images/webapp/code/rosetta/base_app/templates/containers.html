@@ -8,30 +8,78 @@
 <div class="container">
   <div class="dashboard">
     <div class="span8 offset2">
-      <h1>Container List</h1>
+      <h1><a href="/containers">Container List</a> {% if data.container %}&gt; {{ data.container.id }} {% endif %} </h1>
       <hr/>
 
-             
-      {% for container in data.platform_containers %}
+      {% if data.container %}
       <table class="dashboard">
 
        <tr>
-        <td><b>Container image</b></td>
-        <td>{{ container.image }} (platform)</td>
+        <td><b>ID</b></td>
+        <td>{{ data.container.id }}</td>
        </tr>
 
        <tr>
-        <td><b>Container type</b></td>
+        <td><b>Image</b></td>
+        <td>{{ data.container.image }}</td>
+       </tr>
+
+       <tr>
+        <td><b>Type</b></td>
+        <td>{{ data.container.type }}</td>
+       </tr>
+
+       <tr>
+        <td><b>Owner</b></td>
+        <td>{% if data.container.user %}{{data.container.user}}{% else %}Platform{% endif %}</td>
+       </tr>
+
+       <tr>
+        <td><b>Registry</b></td>
+        <td>{{ data.container.registry }}</td>
+       </tr>
+
+       <tr>
+        <td><b>Service port(s)</b></td>
+        <td>{{ data.container.service_ports}}</td>
+       </tr>
+
+      </table>
+      <br />
+      
+      {% else %}
+      
+      {% for container in data.platform_containers %}
+      
+      <table class="dashboard">
+
+       <tr>
+        <td><b>ID</b></td>
+        <td><a href="?uuid={{ container.uuid }}">{{ container.id }}</a></td>
+       </tr>
+
+       <tr>
+        <td><b>Image</b></td>
+        <td>{{ container.image }}</td>
+       </tr>
+
+       <tr>
+        <td><b>Type</b></td>
         <td>{{ container.type }}</td>
        </tr>
 
        <tr>
-        <td><b>Container registry</b></td>
+        <td><b>Owner</b></td>
+        <td>Platform</td>
+       </tr>
+
+       <tr>
+        <td><b>Registry</b></td>
         <td>{{ container.registry }}</td>
        </tr>
 
        <tr>
-        <td><b>Container service ports</b></td>
+        <td><b>Service port(s)</b></td>
         <td>{{ container.service_ports}}</td>
        </tr>
 
@@ -44,22 +92,32 @@
       <table class="dashboard">
 
        <tr>
-        <td><b>Container image</b></td>
-        <td>{{ container.image }} (user)</td>
+        <td><b>ID</b></td>
+        <td><a href="?uuid={{ container.uuid }}">{{ container.id }}</a></td>
        </tr>
 
        <tr>
-        <td><b>Container type</b></td>
+        <td><b>Image</b></td>
+        <td>{{ container.image }}</td>
+       </tr>
+
+       <tr>
+        <td><b>Type</b></td>
         <td>{{ container.type }}</td>
        </tr>
 
        <tr>
-        <td><b>Container registry</b></td>
+        <td><b>Owner</b></td>
+        <td>{{container.user}}</td>
+       </tr>
+
+       <tr>
+        <td><b>Registry</b></td>
         <td>{{ container.registry }}</td>
        </tr>
 
        <tr>
-        <td><b>Container service ports</b></td>
+        <td><b>Service port(s)</b></td>
         <td>{{ container.service_ports}}</td>
        </tr>
 
@@ -74,13 +132,13 @@
       
       <br />
       <a href="/add_container">Add new...</a>
-      <br/>
-      <br/>
-      <br/>
-      <br/>
-      <br/>
-      <br/>
       
+      {% endif %}
+      <br />
+      <br />
+      <br />
+      <br />
+
     </div>
   </div>
 </div>

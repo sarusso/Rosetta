@@ -404,9 +404,6 @@ def tasks(request):
                 # Delete
                 task.delete()
 
-                # Unset uuid to load the list again
-                uuid = None
-
             except Exception as e:
                 data['error'] = 'Error in deleting the task'
                 logger.error('Error in deleting task with uuid="{}": "{}"'.format(uuid, e))
@@ -434,7 +431,8 @@ def tasks(request):
                     logger.debug(stop_command)
                     out = os_shell(stop_command, capture=True)
                     if out.exit_code != 0:
-                        raise Exception(out.stderr)
+                        if not 'No such process' in out.stderr:
+                            raise Exception(out.stderr)
 
                 else:
                     data['error']= 'Don\'t know how to stop tasks on "{}" compute resource.'.format(task.compute)
@@ -468,9 +466,6 @@ def tasks(request):
                 data['error'] = 'Error in stopping the task'
                 logger.error('Error in stopping task with uuid="{}": "{}"'.format(uuid, e))
                 return render(request, 'error.html', {'data': data})
-
-            # Unset uuid to load the list again
-            uuid = None
 
         elif action=='connect':
 
@@ -524,26 +519,17 @@ def tasks(request):
             else:
                 raise ErrorMessage('Connecting to tasks on compute "{}" is not supported yet'.format(task.compute))
 
-
             # Ok, now redirect to the task through the tunnel
             from django.shortcuts import redirect
             return redirect('http://localhost:{}'.format(task.tunnel_port))
 
-    # Get all task(s)
-    if uuid:
-        try:
-            tasks = [Task.objects.get(user=request.user, uuid=uuid)]
-        except Exception as e:
-            data['error'] = 'Error in getting info for Task "{}"'.format(uuid)
-            logger.error('Error in getting Virtual Device with uuid="{}": "{}"'.format(uuid, e))
-            return render(request, 'error.html', {'data': data})
-    else:
-        try:
-            tasks = Task.objects.filter(user=request.user).order_by('created')
-        except Exception as e:
-            data['error'] = 'Error in getting Virtual Devices info'
-            logger.error('Error in getting Virtual Devices: "{}"'.format(e))
-            return render(request, 'error.html', {'data': data})
+    # Get all tasks
+    try:
+        tasks = Task.objects.filter(user=request.user).order_by('created') 
+    except Exception as e:
+        data['error'] = 'Error in getting Tasks info'
+        logger.error('Error in getting Virtual Devices: "{}"'.format(e))
+        return render(request, 'error.html', {'data': data})
 
     # Update task statuses
     for task in tasks:
@@ -660,7 +646,7 @@ def create_task(request):
 
 
                 # 1) Run the singularity container on slurmclusterworker-one (non blocking)
-                run_command = 'ssh -4 -o StrictHostKeyChecking=no slurmclusterworker-one  "export SINGULARITY_NOHTTPS=true && exec nohup singularity run --pid --writable-tmpfs --containall --cleanenv docker://dregistry:5000/rosetta/metadesktop &> /dev/null & echo \$!"'
+                run_command = 'ssh -4 -o StrictHostKeyChecking=no slurmclusterworker-one  "export SINGULARITY_NOHTTPS=true && exec nohup singularity run --pid --writable-tmpfs --containall --cleanenv docker://dregistry:5000/rosetta/metadesktop &> /tmp/{}.log & echo \$!"'.format(task.uuid)
                 out = os_shell(run_command, capture=True)
                 if out.exit_code != 0:
                     raise Exception(out.stderr)
@@ -701,6 +687,71 @@ def create_task(request):
     return render(request, 'create_task.html', {'data': data})
 
 
+#=========================
+#  Task log
+#=========================
+
+@private_view
+def task_log(request):
+
+    # Init data
+    data={}
+    data['user']  = request.user
+    data['profile'] = Profile.objects.get(user=request.user)
+    data['title'] = 'Tasks'
+
+    # Get uuid and refresh if any
+    uuid    = request.GET.get('uuid', None)
+    refresh = request.GET.get('refresh', None)
+
+    if not uuid:
+        return render(request, 'error.html', {'data': 'uuid not set'})
+
+    # Get the task (raises if none available including no permission)
+    task = Task.objects.get(user=request.user, uuid=uuid)
+
+    # Set back task and refresh
+    data['task']    = task 
+    data['refresh'] = refresh
+
+    # Get the log
+    try:
+
+        if task.compute == 'local':
+
+            raise NotImplementedError('Not yet')
+
+            # View the Docker container log (attach)
+            #view_log_command = 'sudo docker stop {} && sudo docker rm {}'.format(task.tid,task.tid)
+
+            #out = os_shell(view_log_command, capture=True)
+            #if out.exit_code != 0:
+            #    raise Exception(out.stderr)
+
+        elif task.compute == 'demoremote':
+
+            # View the Singularity container log
+            view_log_command = 'ssh -4 -o StrictHostKeyChecking=no slurmclusterworker-one  "cat /tmp/{}.log"'.format(task.uuid)
+            logger.debug(view_log_command)
+            out = os_shell(view_log_command, capture=True)
+            if out.exit_code != 0:
+                raise Exception(out.stderr)
+            else:
+                data['log'] = out.stdout
+
+        else:
+            data['error']= 'Don\'t know how to view task logs on "{}" compute resource.'.format(task.compute)
+            return render(request, 'error.html', {'data': data})
+
+    except Exception as e:
+        data['error'] = 'Error in viewing task log'
+        logger.error('Error in viewing task log with uuid="{}": "{}"'.format(uuid, e))
+        return render(request, 'error.html', {'data': data})
+
+    return render(request, 'task_log.html', {'data': data})
+
+
+
 
 
 #=========================
@@ -714,35 +765,40 @@ def containers(request):
     data={}
     data['user']    = request.user
     data['profile'] = Profile.objects.get(user=request.user)
-    data['title']   = 'Containers'
-    data['name']    = request.POST.get('name',None)
 
     # Get action if any
     action = request.GET.get('action', None)
-    uuid = request.GET.get('uuid', None)
+    uuid   = request.GET.get('uuid', None)
 
+    # Do we have to operate on a specific container?
+    if uuid:
+        try:
 
-    if action and uuid:
+            # Get the task (raises if none available including no permission)
+            container = Container.objects.get(uuid=uuid)
+            data['container'] = container
 
-        if action=='delete':
-            try:
-                # Get the task (raises if none available including no permission)
-                container = Container.objects.get(user=request.user, uuid=uuid)
+            if action and action=='delete':
 
                 # Delete
                 container.delete()
 
-                # Unset uuid to load the list again
-                uuid = None
+                # Unset container to load the list again
+                data['container'] = None
 
-            except Exception as e:
-                data['error'] = 'Error in deleting the container'
-                logger.error('Error in deleting task with uuid="{}": "{}"'.format(uuid, e))
-                return render(request, 'error.html', {'data': data})
+        except Exception as e:
+            data['error'] = 'Error in getting the container or performing the required action'
+            logger.error('Error in getting the container with uuid="{}" or performing the required action: "{}"'.format(uuid, e))
+            return render(request, 'error.html', {'data': data})
 
-    # Get containers configured on the platform, both private to this user and public
-    data['user_containers'] = Container.objects.filter(user=request.user)
-    data['platform_containers'] = Container.objects.filter(user=None)
+    # Do we have to get he list of containers?
+    if not uuid:
+    
+        # Get containers configured on the platform, both private to this user and public
+        data['user_containers'] = Container.objects.filter(user=request.user)
+        data['platform_containers'] = Container.objects.filter(user=None)
+
+    logger.debug(data)
 
     return render(request, 'containers.html', {'data': data})
 
