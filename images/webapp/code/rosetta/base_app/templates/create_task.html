@@ -20,7 +20,7 @@
           <form action="/create_task/" method="POST">
           {% csrf_token %}
 
-          <table class="dashboard" style="max-width:600px">
+          <table class="dashboard" style="max-width:700px">
     
            <tr>
             <td><b>Task name </b></td>
@@ -51,10 +51,10 @@
               <option value="astroccok">Astrocook</option>
               <option value="gadgetviewer">Gadget Viewer</option> -->
               {% for container in data.platform_containers %}
-              <option value="{{container.uuid}}">{{container.image}} (platform)</option> -->
+              <option value="{{container.uuid}}">{{container.image}} ({{container.type}})</option> -->
               {% endfor %}
               {% for container in data.user_containers %}
-              <option value="{{container.uuid}}">{{container.image}} (user)</option> -->
+              <option value="{{container.uuid}}">{{container.image}} ({{container.type}})</option> -->
               {% endfor %}              
               
               </select>
@@ -72,10 +72,19 @@
               &nbsp; | <a href="/add_compute">Add new...</a>
             </td>
            </tr>
-                      
+
+           <!-- <tr>
+            <td><b>Run using</b></td><td>
+              <select name="run_using" >
+              <option value="docker" selected>Docker</option>
+              <option value="singularity">Singularity</option>
+              </select>
+            </td>
+           </tr>  -->
+                     
            <tr><td colspan=2>
            <table><tr><td  style="border: 1px solid lightgray;" >
-           I understand that files saved or modified and not explicitly saved to a persistent share, including system packages, will be LOST when the task ends.
+           I understand that files saved or modified in this container, if not explicitly saved to a persistent storage, will be LOST when the task ends.
            </td><td  style="border: 1px solid lightgray;" >
            <input class="form-check-input" type="checkbox" value="" id="invalidCheck" required>
            </td></table>
