@@ -18,14 +18,22 @@ class Command(BaseCommand):
         
         # Testuser
         try:
-            User.objects.get(username='testuser')
+            testuser = User.objects.get(username='testuser')
             print('Not creating test user as it already exist')
+        
         except User.DoesNotExist:
             print('Creating test user with default password')
             testuser = User.objects.create_user('testuser', 'testuser@rosetta.platform', 'testpass')
+            print('Making testuser admin')
+            testuser.is_staff = True
+            testuser.is_admin=True
+            testuser.is_superuser=True
+            testuser.save() 
+            print('Creating testuser profile')
             Profile.objects.create(user=testuser, authtoken='129aac94-284a-4476-953c-ffa4349b4a50')
+            
 
-        # public containers
+        # Public containers
         public_containers = Container.objects.filter(user=None)
         if public_containers:
             print('Not creating public containers as they already exist')
@@ -47,9 +55,19 @@ class Command(BaseCommand):
                                      service_ports = '8590')
 
 
-
-
-
+        # Public containers
+        testuser_containers = Container.objects.filter(user=testuser)
+        if testuser_containers:
+            print('Not creating testuser containers as they already exist')
+        else:
+            print('Creating testuser containers...')
+            
+            # JuPyter
+            Container.objects.create(user          = testuser,
+                                     image         = 'jupyter/base-notebook',
+                                     type          = 'docker',
+                                     registry      = 'docker_hub',
+                                     service_ports = '8888')
 
 
 
