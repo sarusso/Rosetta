@@ -1,0 +1,77 @@
+          
+          <table class="dashboard">
+
+           <tr>
+            <td><b>ID</b></td>
+            <td><a href="?uuid={{ task.uuid }}">{{ task.id }}</a></td>
+           </tr>
+
+           <tr>
+            <td><b>Name</b></td>
+            <td>{{ task.name }}</td>
+           </tr>
+
+           <tr>
+            <td><b>Container</b></td>
+            <td><a href="/containers/?uuid={{ task.container.uuid }}">{{ task.container.image }}</a></td>
+           </tr>
+
+           <tr>
+            <td><b>Status</b></td>
+            <td>{{ task.status }}</td>
+           </tr>
+
+           <tr>
+            <td><b>Created at</b></td>
+            <td>{{ task.created }}</td>
+           </tr>
+
+           <!-- <tr>
+            <td><b>Task pid</b></td>
+            <td>{{ task.pid}}</td>
+           </tr> -->
+
+           <tr>
+            <td><b>IP</b></td>
+            <td>{{ task.ip}}</td>
+           </tr>
+
+           <tr>
+            <td><b>Port</b></td>
+            <td>{{ task.port }}</td>
+           </tr>
+           
+           <tr>
+            <td><b>Task tunnel port</b></td>
+            <td>{{ task.tunnel_port }}</td>
+           </tr>
+           
+           <tr>
+            <td><b>Operations</b></td>
+            
+            <td>
+            {% if task.status == "running" %}
+            <a href="?uuid={{task.uuid}}&action=stop&details={{details}}">Stop</a> | 
+            {% else %}
+            <!-- <a href=?uuid={{task.uuid}}&action=start>Start</a> |  -->
+            <font color="#c0c0c0">Stop</font> | 
+            
+            {% endif %}
+            {% if task.status == "exited" or task.status == "stopped" %}
+            <a href="?uuid={{task.uuid}}&action=delete&details=False">Delete</a>
+            {% else %}
+            <font color="#c0c0c0">Delete</font>
+            {% endif %}
+            {% if task.status == "running" %}
+             | <a href="?uuid={{task.uuid}}&action=connect">Connect</a>
+             | <a href="/task_log/?uuid={{task.uuid}}&action=viewlog">View Log</a>
+            {% else %}
+             | <font color="#c0c0c0">Connect</font>
+             | <font color="#c0c0c0">View Log</font>
+            {% endif%}
+            </td>
+  
+           </tr>
+
+          </table>
+          <br/>

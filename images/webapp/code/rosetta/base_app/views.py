@@ -21,7 +21,7 @@ from django.contrib.auth import update_session_auth_hash
 
 # Project imports
 from .models import Profile, LoginToken, Task, TaskStatuses, Container
-from .utils import send_email, format_exception, random_username, log_user_activity, timezonize, os_shell
+from .utils import send_email, format_exception, random_username, log_user_activity, timezonize, os_shell, booleanize
 
 # Setup logging
 import logging
@@ -32,7 +32,9 @@ from .exceptions import ErrorMessage, ConsistencyException
 
 # Conf
 SUPPORTED_CONTAINER_TYPES = ['docker', 'singularity']
-SUPPORTED_REGISTRIES = ['docker_local', 'docker_hub', 'signularity_hub']
+SUPPORTED_REGISTRIES = ['docker_local', 'docker_hub', 'singularity_hub']
+UNSUPPORTED_TYPES_VS_REGISTRIES = ['docker:singularity_hub']
+
 TASK_DATA_DIR = "/data"
 
 #=========================
@@ -381,161 +383,186 @@ def tasks(request):
     data['title'] = 'Tasks'
 
     # Get action if any
-    action = request.GET.get('action', None)
-    uuid = request.GET.get('uuid', None)
-
+    action  = request.GET.get('action', None)
+    uuid    = request.GET.get('uuid', None)
+    details = booleanize(request.GET.get('details', None))
+    
     # Setting var
     standby_supported = False
 
-    # Perform actions if required:
-    if action and uuid:
+    # Do we have to operate on a specific task?
+    if uuid:
 
-        # Get the task (raises if none available including no permission)
-        task = Task.objects.get(user=request.user, uuid=uuid)
-
-        if action=='delete':
-            if task.status not in [TaskStatuses.stopped, TaskStatuses.exited]:
-                data['error'] = 'Can delete only tasks in the stopped state'
-                return render(request, 'error.html', {'data': data})
-            try:
-                # Get the task (raises if none available including no permission)
-                task = Task.objects.get(user=request.user, uuid=uuid)
-
-                # Delete
-                task.delete()
-
-            except Exception as e:
-                data['error'] = 'Error in deleting the task'
-                logger.error('Error in deleting task with uuid="{}": "{}"'.format(uuid, e))
-                return render(request, 'error.html', {'data': data})
-
-        elif action=='stop': # or delete,a and if delete also remove object
-            try:
-
-                if task.compute == 'local':
-
-                    # Delete the Docker container
-                    if standby_supported:
-                        stop_command = 'sudo docker stop {}'.format(task.tid)
-                    else:
-                        stop_command = 'sudo docker stop {} && sudo docker rm {}'.format(task.tid,task.tid)
-
-                    out = os_shell(stop_command, capture=True)
-                    if out.exit_code != 0:
-                        raise Exception(out.stderr)
-
-                elif task.compute == 'demoremote':
-
-                    # Stop the task remotely
-                    stop_command = 'ssh -4 -o StrictHostKeyChecking=no slurmclusterworker-one  "kill -9 {}"'.format(task.pid)
-                    logger.debug(stop_command)
-                    out = os_shell(stop_command, capture=True)
-                    if out.exit_code != 0:
-                        if not 'No such process' in out.stderr:
-                            raise Exception(out.stderr)
-
-                else:
-                    data['error']= 'Don\'t know how to stop tasks on "{}" compute resource.'.format(task.compute)
-                    return render(request, 'error.html', {'data': data})
-
-                # Ok, save status as deleted
-                task.status = 'stopped'
-                task.save()
-
-                # Check if the tunnel is active and if so kill it
-                logger.debug('Checking if task "{}" has a running tunnel'.format(task.tid))
-                check_command = 'ps -ef | grep ":'+str(task.tunnel_port)+':'+str(task.ip)+':'+str(task.port)+'" | grep -v grep | awk \'{print $2}\''
-                logger.debug(check_command)
-                out = os_shell(check_command, capture=True)
-                logger.debug(out)
-                if out.exit_code == 0:
-                    logger.debug('Task "{}" has a running tunnel, killing it'.format(task.tid))
-                    tunnel_pid = out.stdout
-                    # Kill Tunnel command
-                    kill_tunnel_command= 'kill -9 {}'.format(tunnel_pid)
-
-                    # Log
-                    logger.debug('Killing tunnel with command: {}'.format(kill_tunnel_command))
-
-                    # Execute
-                    os_shell(kill_tunnel_command, capture=True)
-                    if out.exit_code != 0:
-                        raise Exception(out.stderr)
-
-            except Exception as e:
-                data['error'] = 'Error in stopping the task'
-                logger.error('Error in stopping task with uuid="{}": "{}"'.format(uuid, e))
-                return render(request, 'error.html', {'data': data})
-
-        elif action=='connect':
-
+        try:
+            
             # Get the task (raises if none available including no permission)
-            task = Task.objects.get(user=request.user, uuid=uuid)
+            try:
+                task = Task.objects.get(user=request.user, uuid=uuid)
+            except Task.DoesNotExist:
+                raise ErrorMessage('Task does not exists or no access rights')
+            data['task'] = task
+    
+            #----------------
+            #  Task actions
+            #----------------
 
-            # Create task tunnel
-            if task.compute in ['local', 'demoremote']:
-
-                # If there is no tunnel port allocated yet, find one
-                if not task.tunnel_port:
-
-                    # Get a free port fot the tunnel:
-                    allocated_tunnel_ports = []
-                    for other_task in Task.objects.all():
-                        if other_task.tunnel_port and not other_task.status in [TaskStatuses.exited, TaskStatuses.stopped]:
-                            allocated_tunnel_ports.append(other_task.tunnel_port)
-
-                    for port in range(7000, 7006):
-                        if not port in allocated_tunnel_ports:
-                            tunnel_port = port
-                            break
-                    if not tunnel_port:
-                        logger.error('Cannot find a free port for the tunnel for task "{}"'.format(task.tid))
-                        raise ErrorMessage('Cannot find a free port for the tunnel to the task')
-
-                    task.tunnel_port = tunnel_port
+            if action=='delete':
+                if task.status not in [TaskStatuses.stopped, TaskStatuses.exited]:
+                    data['error'] = 'Can delete only tasks in the stopped state'
+                    return render(request, 'error.html', {'data': data})
+                try:
+                    # Get the task (raises if none available including no permission)
+                    task = Task.objects.get(user=request.user, uuid=uuid)
+    
+                    # Delete
+                    task.delete()
+                    
+                    # Unset task
+                    data['task'] = None    
+    
+                except Exception as e:
+                    data['error'] = 'Error in deleting the task'
+                    logger.error('Error in deleting task with uuid="{}": "{}"'.format(uuid, e))
+                    return render(request, 'error.html', {'data': data})
+    
+            elif action=='stop': # or delete,a and if delete also remove object
+                try:
+                    if task.compute == 'local':
+     
+                        # Delete the Docker container
+                        if standby_supported:
+                            stop_command = 'sudo docker stop {}'.format(task.tid)
+                        else:
+                            stop_command = 'sudo docker stop {} && sudo docker rm {}'.format(task.tid,task.tid)
+     
+                        out = os_shell(stop_command, capture=True)
+                        if out.exit_code != 0:
+                            raise Exception(out.stderr)
+     
+                    elif task.compute == 'demoremote':
+     
+                        # Stop the task remotely
+                        stop_command = 'ssh -4 -o StrictHostKeyChecking=no slurmclusterworker-one  "kill -9 {}"'.format(task.pid)
+                        logger.debug(stop_command)
+                        out = os_shell(stop_command, capture=True)
+                        if out.exit_code != 0:
+                            if not 'No such process' in out.stderr:
+                                raise Exception(out.stderr)
+     
+                    else:
+                        data['error']= 'Don\'t know how to stop tasks on "{}" compute resource.'.format(task.compute)
+                        return render(request, 'error.html', {'data': data})
+     
+                    # Ok, save status as deleted
+                    task.status = 'stopped'
                     task.save()
-
-
-                # Check if the tunnel is active and if not create it
-                logger.debug('Checking if task "{}" has a running tunnel'.format(task.tid))
-
-                out = os_shell('ps -ef | grep ":{}:{}:{}" | grep -v grep'.format(task.tunnel_port, task.ip, task.port), capture=True)
-
-                if out.exit_code == 0:
-                    logger.debug('Task "{}" has a running tunnel, using it'.format(task.tid))
+     
+                    # Check if the tunnel is active and if so kill it
+                    logger.debug('Checking if task "{}" has a running tunnel'.format(task.tid))
+                    check_command = 'ps -ef | grep ":'+str(task.tunnel_port)+':'+str(task.ip)+':'+str(task.port)+'" | grep -v grep | awk \'{print $2}\''
+                    logger.debug(check_command)
+                    out = os_shell(check_command, capture=True)
+                    logger.debug(out)
+                    if out.exit_code == 0:
+                        logger.debug('Task "{}" has a running tunnel, killing it'.format(task.tid))
+                        tunnel_pid = out.stdout
+                        # Kill Tunnel command
+                        kill_tunnel_command= 'kill -9 {}'.format(tunnel_pid)
+     
+                        # Log
+                        logger.debug('Killing tunnel with command: {}'.format(kill_tunnel_command))
+     
+                        # Execute
+                        os_shell(kill_tunnel_command, capture=True)
+                        if out.exit_code != 0:
+                            raise Exception(out.stderr)
+    
+                except Exception as e:
+                    data['error'] = 'Error in stopping the task'
+                    logger.error('Error in stopping task with uuid="{}": "{}"'.format(uuid, e))
+                    return render(request, 'error.html', {'data': data})
+    
+            elif action=='connect':
+    
+                # Create task tunnel
+                if task.compute in ['local', 'demoremote']:
+    
+                    # If there is no tunnel port allocated yet, find one
+                    if not task.tunnel_port:
+    
+                        # Get a free port fot the tunnel:
+                        allocated_tunnel_ports = []
+                        for other_task in Task.objects.all():
+                            if other_task.tunnel_port and not other_task.status in [TaskStatuses.exited, TaskStatuses.stopped]:
+                                allocated_tunnel_ports.append(other_task.tunnel_port)
+    
+                        for port in range(7000, 7006):
+                            if not port in allocated_tunnel_ports:
+                                tunnel_port = port
+                                break
+                        if not tunnel_port:
+                            logger.error('Cannot find a free port for the tunnel for task "{}"'.format(task.tid))
+                            raise ErrorMessage('Cannot find a free port for the tunnel to the task')
+    
+                        task.tunnel_port = tunnel_port
+                        task.save()
+    
+    
+                    # Check if the tunnel is active and if not create it
+                    logger.debug('Checking if task "{}" has a running tunnel'.format(task.tid))
+    
+                    out = os_shell('ps -ef | grep ":{}:{}:{}" | grep -v grep'.format(task.tunnel_port, task.ip, task.port), capture=True)
+    
+                    if out.exit_code == 0:
+                        logger.debug('Task "{}" has a running tunnel, using it'.format(task.tid))
+                    else:
+                        logger.debug('Task "{}" has no running tunnel, creating it'.format(task.tid))
+    
+                        # Tunnel command
+                        tunnel_command= 'ssh -4 -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} localhost & '.format(task.tunnel_port, task.ip, task.port)
+                        background_tunnel_command = 'nohup {} >/dev/null 2>&1 &'.format(tunnel_command)
+    
+                        # Log
+                        logger.debug('Opening tunnel with command: {}'.format(background_tunnel_command))
+    
+                        # Execute
+                        subprocess.Popen(background_tunnel_command, shell=True)
+    
                 else:
-                    logger.debug('Task "{}" has no running tunnel, creating it'.format(task.tid))
+                    raise ErrorMessage('Connecting to tasks on compute "{}" is not supported yet'.format(task.compute))
+    
+                # Ok, now redirect to the task through the tunnel
+                from django.shortcuts import redirect
+                return redirect('http://localhost:{}'.format(task.tunnel_port))
 
-                    # Tunnel command
-                    tunnel_command= 'ssh -4 -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} localhost & '.format(task.tunnel_port, task.ip, task.port)
-                    background_tunnel_command = 'nohup {} >/dev/null 2>&1 &'.format(tunnel_command)
+        except Exception as e:
+            data['error'] = 'Error in getting the task or performing the required action'
+            logger.error('Error in getting the task with uuid="{}" or performing the required action: "{}"'.format(uuid, e))
+            return render(request, 'error.html', {'data': data})
 
-                    # Log
-                    logger.debug('Opening tunnel with command: {}'.format(background_tunnel_command))
 
-                    # Execute
-                    subprocess.Popen(background_tunnel_command, shell=True)
+    # Do we have to list all the tasks?
+    if not uuid or (uuid and not details):
 
-            else:
-                raise ErrorMessage('Connecting to tasks on compute "{}" is not supported yet'.format(task.compute))
-
-            # Ok, now redirect to the task through the tunnel
-            from django.shortcuts import redirect
-            return redirect('http://localhost:{}'.format(task.tunnel_port))
-
-    # Get all tasks
-    try:
-        tasks = Task.objects.filter(user=request.user).order_by('created') 
-    except Exception as e:
-        data['error'] = 'Error in getting Tasks info'
-        logger.error('Error in getting Virtual Devices: "{}"'.format(e))
-        return render(request, 'error.html', {'data': data})
-
-    # Update task statuses
-    for task in tasks:
-        task.update_status()
-
-    data['tasks'] = tasks
+        #----------------
+        #  Task list
+        #----------------
+    
+        # Get all tasks
+        try:
+            tasks = Task.objects.filter(user=request.user).order_by('created') 
+        except Exception as e:
+            data['error'] = 'Error in getting Tasks info'
+            logger.error('Error in getting Virtual Devices: "{}"'.format(e))
+            return render(request, 'error.html', {'data': data})
+    
+        # Update task statuses
+        for task in tasks:
+            task.update_status()
+    
+        # Set task and tasks variables
+        data['task']  = None   
+        data['tasks'] = tasks
 
     return render(request, 'tasks.html', {'data': data})
 
@@ -719,14 +746,14 @@ def task_log(request):
 
         if task.compute == 'local':
 
-            raise NotImplementedError('Not yet')
-
             # View the Docker container log (attach)
-            #view_log_command = 'sudo docker stop {} && sudo docker rm {}'.format(task.tid,task.tid)
-
-            #out = os_shell(view_log_command, capture=True)
-            #if out.exit_code != 0:
-            #    raise Exception(out.stderr)
+            view_log_command = 'sudo docker logs {}'.format(task.tid,)
+            logger.debug(view_log_command)
+            out = os_shell(view_log_command, capture=True)
+            if out.exit_code != 0:
+                raise Exception(out.stderr)
+            else:
+                data['log'] = out.stdout
 
         elif task.compute == 'demoremote':
 
@@ -772,33 +799,39 @@ def containers(request):
 
     # Do we have to operate on a specific container?
     if uuid:
+
         try:
 
-            # Get the task (raises if none available including no permission)
-            container = Container.objects.get(uuid=uuid)
+            # Get the container (raises if none available including no permission)
+            try:
+                container = Container.objects.get(uuid=uuid)
+            except Container.DoesNotExist:
+                raise ErrorMessage('Container does not exists or no access rights')                
+            if container.user and container.user != request.user:
+                raise ErrorMessage('Container does not exists or no access rights')
             data['container'] = container
+
+            #-------------------
+            # Container actions
+            #-------------------
 
             if action and action=='delete':
 
                 # Delete
                 container.delete()
 
-                # Unset container to load the list again
-                data['container'] = None
-
         except Exception as e:
             data['error'] = 'Error in getting the container or performing the required action'
             logger.error('Error in getting the container with uuid="{}" or performing the required action: "{}"'.format(uuid, e))
             return render(request, 'error.html', {'data': data})
 
-    # Do we have to get he list of containers?
-    if not uuid:
-    
-        # Get containers configured on the platform, both private to this user and public
-        data['user_containers'] = Container.objects.filter(user=request.user)
-        data['platform_containers'] = Container.objects.filter(user=None)
+    #----------------
+    # Container list
+    #----------------
 
-    logger.debug(data)
+    # Get containers configured on the platform, both private to this user and public
+    data['user_containers'] = Container.objects.filter(user=request.user)
+    data['platform_containers'] = Container.objects.filter(user=None)
 
     return render(request, 'containers.html', {'data': data})
 
@@ -827,14 +860,18 @@ def add_container(request):
         if not container_type:
             raise ErrorMessage('No container type given')
         if not container_type in SUPPORTED_CONTAINER_TYPES:
-            raise ErrorMessage('No valid container type')
+            raise ErrorMessage('No valid container type, got "{}"'.format(container_type))
 
         # Container registry
         container_registry = request.POST.get('container_registry', None)
         if not container_registry:
             raise ErrorMessage('No registry type given')
         if not container_registry in SUPPORTED_REGISTRIES:
-            raise ErrorMessage('No valid registry')
+            raise ErrorMessage('No valid container registry, got "{}"'.format(container_registry))
+
+        # Check container type vs container registry compatibility
+        if container_type+':'+container_registry in UNSUPPORTED_TYPES_VS_REGISTRIES:
+            raise ErrorMessage('Sorry, container type "{}" is not compatible with registry type "{}"'.format(container_type, container_registry))
 
         # Container service ports
         container_service_ports = request.POST.get('container_service_ports', None)

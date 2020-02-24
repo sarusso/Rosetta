@@ -8,125 +8,27 @@
 <div class="container">
   <div class="dashboard">
     <div class="span8 offset2">
-      <h1><a href="/containers">Container List</a> {% if data.container %}&gt; {{ data.container.id }} {% endif %} </h1>
+      
+      {% if data.container %}
+      <h1><a href="/containers">Container List</a> &gt; {{ data.container.id }}  </h1>      
+      {% else %}
+      <h1>Container List</h1>
+      {% endif %}
+      
       <hr/>
 
       {% if data.container %}
-      <table class="dashboard">
-
-       <tr>
-        <td><b>ID</b></td>
-        <td>{{ data.container.id }}</td>
-       </tr>
-
-       <tr>
-        <td><b>Image</b></td>
-        <td>{{ data.container.image }}</td>
-       </tr>
-
-       <tr>
-        <td><b>Type</b></td>
-        <td>{{ data.container.type }}</td>
-       </tr>
-
-       <tr>
-        <td><b>Owner</b></td>
-        <td>{% if data.container.user %}{{data.container.user}}{% else %}Platform{% endif %}</td>
-       </tr>
-
-       <tr>
-        <td><b>Registry</b></td>
-        <td>{{ data.container.registry }}</td>
-       </tr>
-
-       <tr>
-        <td><b>Service port(s)</b></td>
-        <td>{{ data.container.service_ports}}</td>
-       </tr>
-
-      </table>
-      <br />
-      
+      {% include "components/container.html" with container=data.container %}
       {% else %}
       
       {% for container in data.platform_containers %}
-      
-      <table class="dashboard">
-
-       <tr>
-        <td><b>ID</b></td>
-        <td><a href="?uuid={{ container.uuid }}">{{ container.id }}</a></td>
-       </tr>
-
-       <tr>
-        <td><b>Image</b></td>
-        <td>{{ container.image }}</td>
-       </tr>
-
-       <tr>
-        <td><b>Type</b></td>
-        <td>{{ container.type }}</td>
-       </tr>
-
-       <tr>
-        <td><b>Owner</b></td>
-        <td>Platform</td>
-       </tr>
-
-       <tr>
-        <td><b>Registry</b></td>
-        <td>{{ container.registry }}</td>
-       </tr>
-
-       <tr>
-        <td><b>Service port(s)</b></td>
-        <td>{{ container.service_ports}}</td>
-       </tr>
-
-      </table>
+      {% include "components/container.html" with container=container %}
       <br />
       {% endfor %}
 
 
       {% for container in data.user_containers %}
-      <table class="dashboard">
-
-       <tr>
-        <td><b>ID</b></td>
-        <td><a href="?uuid={{ container.uuid }}">{{ container.id }}</a></td>
-       </tr>
-
-       <tr>
-        <td><b>Image</b></td>
-        <td>{{ container.image }}</td>
-       </tr>
-
-       <tr>
-        <td><b>Type</b></td>
-        <td>{{ container.type }}</td>
-       </tr>
-
-       <tr>
-        <td><b>Owner</b></td>
-        <td>{{container.user}}</td>
-       </tr>
-
-       <tr>
-        <td><b>Registry</b></td>
-        <td>{{ container.registry }}</td>
-       </tr>
-
-       <tr>
-        <td><b>Service port(s)</b></td>
-        <td>{{ container.service_ports}}</td>
-       </tr>
-
-       <tr>
-        <td><b>Operations</b></td>
-        <td><a href="?action=delete&uuid={{ container.uuid }}">Delete</a></td>
-       </tr>
-
-      </table>
+      {% include "components/container.html" with container=container %}
       <br />
       {% endfor %}    
       

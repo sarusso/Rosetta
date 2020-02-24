@@ -1,0 +1,40 @@
+      <table class="dashboard">
+
+       <tr>
+        <td><b>ID</b></td>
+        <td><a href="?uuid={{ container.uuid }}">{{ container.id }}</a></td>
+       </tr>
+
+       <tr>
+        <td><b>Image</b></td>
+        <td>{{ container.image }}</td>
+       </tr>
+
+       <tr>
+        <td><b>Type</b></td>
+        <td>{{ container.type }}</td>
+       </tr>
+
+       <tr>
+        <td><b>Owner</b></td>
+        <td>{% if container.user %}{{ container.user }}{% else %}Platform{% endif %}</td>
+       </tr>
+
+       <tr>
+        <td><b>Registry</b></td>
+        <td>{{ container.registry }}</td>
+       </tr>
+
+       <tr>
+        <td><b>Service port(s)</b></td>
+        <td>{{ container.service_ports}}</td>
+       </tr>
+       
+       {% if container.user %}
+       <tr>
+        <td><b>Operations</b></td>
+        <td><a href="?action=delete&uuid={{ container.uuid }}">Delete</a></td>
+       </tr>
+       {% endif %}
+      </table>
+      <br/>

@@ -8,95 +8,25 @@
 <div class="container">
   <div class="dashboard">
     <div class="span8 offset2">
+      
+
+      {% if data.task %}
+      <h1><a href="/tasks">Task List</a> &gt; {{ data.task.id }}  </h1>      
+      {% else %}
       <h1>Task List</h1>
+      {% endif %}
 
       <hr>
-
-          
-          {% for task in data.tasks %}
-          <table class="dashboard">
-
-           <tr>
-            <td><b>ID</b></td>
-            <td>{{ task.id }}</td>
-           </tr>
-
-           <tr>
-            <td><b>Name</b></td>
-            <td>{{ task.name }}</td>
-           </tr>
-
-           <tr>
-            <td><b>Container</b></td>
-            <td><a href="">{{ task.container.image }}</a></td>
-           </tr>
-
-           <tr>
-            <td><b>Status</b></td>
-            <td>{{ task.status }}</td>
-           </tr>
-
-           <tr>
-            <td><b>Created at</b></td>
-            <td>{{ task.created }}</td>
-           </tr>
-
-           <!-- <tr>
-            <td><b>Task pid</b></td>
-            <td>{{ task.pid}}</td>
-           </tr> -->
-
-           <tr>
-            <td><b>IP</b></td>
-            <td>{{ task.ip}}</td>
-           </tr>
-
-           <tr>
-            <td><b>Port</b></td>
-            <td>{{ task.port }}</td>
-           </tr>
+      {% if data.task %}
+      {% include "components/task.html" with task=data.task details=True %}
+      {% else %}
+      {% for task in data.tasks %}
+      {% include "components/task.html" with task=task %}
+      {% endfor %}
+      <br />
+      <a href="/create_task">Add new...</a>
+      {% endif %}
            
-           <tr>
-            <td><b>Task tunnel port</b></td>
-            <td>{{ task.tunnel_port }}</td>
-           </tr>
-           
-           <tr>
-            <td><b>Operations</b></td>
-            
-            <td>
-            {% if task.status == "running" %}
-            <a href=?uuid={{task.uuid}}&action=stop>Stop</a> | 
-            {% else %}
-            <!-- <a href=?uuid={{task.uuid}}&action=start>Start</a> |  -->
-            <font color="#c0c0c0">Stop</font> | 
-            
-            {% endif %}
-            {% if task.status == "exited" or task.status == "stopped" %}
-            <a href=?uuid={{task.uuid}}&action=delete>Delete</a>
-            {% else %}
-            <font color="#c0c0c0">Delete</font>
-            {% endif %}
-            {% if task.status == "running" %}
-             | <a href=?uuid={{task.uuid}}&action=connect>Connect</a>
-             | <a href=/task_log/?uuid={{task.uuid}}&action=viewlog>View Log</a>
-            {% else %}
-             | <font color="#c0c0c0">Connect</font>
-             | <font color="#c0c0c0">View Log</font>
-            {% endif%}
-            </td>
-  
-           </tr>
-
-          </table>
-          <br />
-          {% endfor %}
-          
-          
-          <br />
-          {% if not data.sid %}
-          <a href="/create_task">Add new...</a>
-          {% endif %}
       <br/>
       <br/>
       <br/>
