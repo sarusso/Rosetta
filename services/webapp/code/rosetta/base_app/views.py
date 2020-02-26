@@ -20,7 +20,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import update_session_auth_hash
 
 # Project imports
-from .models import Profile, LoginToken, Task, TaskStatuses, Container
+from .models import Profile, LoginToken, Task, TaskStatuses, Container, Computing
 from .utils import send_email, format_exception, random_username, log_user_activity, timezonize, os_shell, booleanize
 
 # Setup logging
@@ -427,7 +427,7 @@ def tasks(request):
     
             elif action=='stop': # or delete,a and if delete also remove object
                 try:
-                    if task.compute == 'local':
+                    if task.computing == 'local':
      
                         # Delete the Docker container
                         if standby_supported:
@@ -439,7 +439,7 @@ def tasks(request):
                         if out.exit_code != 0:
                             raise Exception(out.stderr)
      
-                    elif task.compute == 'demoremote':
+                    elif task.computing == 'demoremote':
      
                         # Stop the task remotely
                         stop_command = 'ssh -4 -o StrictHostKeyChecking=no slurmclusterworker-one  "kill -9 {}"'.format(task.pid)
@@ -450,7 +450,7 @@ def tasks(request):
                                 raise Exception(out.stderr)
      
                     else:
-                        data['error']= 'Don\'t know how to stop tasks on "{}" compute resource.'.format(task.compute)
+                        data['error']= 'Don\'t know how to stop tasks on "{}" computing resource.'.format(task.computing)
                         return render(request, 'error.html', {'data': data})
      
                     # Ok, save status as deleted
@@ -485,7 +485,7 @@ def tasks(request):
             elif action=='connect':
     
                 # Create task tunnel
-                if task.compute in ['local', 'demoremote']:
+                if task.computing in ['local', 'demoremote']:
     
                     # If there is no tunnel port allocated yet, find one
                     if not task.tunnel_port:
@@ -529,7 +529,7 @@ def tasks(request):
                         subprocess.Popen(background_tunnel_command, shell=True)
     
                 else:
-                    raise ErrorMessage('Connecting to tasks on compute "{}" is not supported yet'.format(task.compute))
+                    raise ErrorMessage('Connecting to tasks on computing "{}" is not supported yet'.format(task.computing))
     
                 # Ok, now redirect to the task through the tunnel
                 from django.shortcuts import redirect
@@ -602,9 +602,9 @@ def create_task(request):
                 raise Exception('Consistency error, container with uuid "{}" does not exists or user "{}" does not have access rights'.format(task_container_uuid, request.user.email))
 
         # Compute
-        task_compute = request.POST.get('task_compute', None)
-        if task_compute not in ['local', 'demoremote']:
-            raise ErrorMessage('Unknown compute resource "{}')
+        task_computing = request.POST.get('task_computing', None)
+        if task_computing not in ['local', 'demoremote']:
+            raise ErrorMessage('Unknown computing resource "{}')
 
         # Generate the task uuid
         str_uuid = str(uuid.uuid4())
@@ -616,12 +616,12 @@ def create_task(request):
                                    name      = task_name,
                                    status    = TaskStatuses.created,
                                    container = task_container,
-                                   compute   = task_compute)
+                                   computing = task_computing)
 
 
         # Actually start tasks
         try:
-            if task_compute == 'local':
+            if task_computing == 'local':
 
                 # Get our ip address
                 #import netifaces
@@ -668,8 +668,8 @@ def create_task(request):
                     # Save
                     task.save()
 
-            elif task_compute == 'demoremote':
-                logger.debug('Using Demo Remote as compute resource')
+            elif task_computing == 'demoremote':
+                logger.debug('Using Demo Remote as computing resource')
 
 
                 # 1) Run the singularity container on slurmclusterworker-one (non blocking)
@@ -701,7 +701,7 @@ def create_task(request):
 
 
             else:
-                raise Exception('Consistency exception: invalid compute resource "{}'.format(task_compute))
+                raise Exception('Consistency exception: invalid computing resource "{}'.format(task_computing))
 
         except Exception as e:
             data['error'] = 'Error in creating new Task.'
@@ -744,7 +744,7 @@ def task_log(request):
     # Get the log
     try:
 
-        if task.compute == 'local':
+        if task.computing == 'local':
 
             # View the Docker container log (attach)
             view_log_command = 'sudo docker logs {}'.format(task.tid,)
@@ -755,7 +755,7 @@ def task_log(request):
             else:
                 data['log'] = out.stdout
 
-        elif task.compute == 'demoremote':
+        elif task.computing == 'demoremote':
 
             # View the Singularity container log
             view_log_command = 'ssh -4 -o StrictHostKeyChecking=no slurmclusterworker-one  "cat /tmp/{}.log"'.format(task.uuid)
@@ -767,7 +767,7 @@ def task_log(request):
                 data['log'] = out.stdout
 
         else:
-            data['error']= 'Don\'t know how to view task logs on "{}" compute resource.'.format(task.compute)
+            data['error']= 'Don\'t know how to view task logs on "{}" computing resource.'.format(task.computing)
             return render(request, 'error.html', {'data': data})
 
     except Exception as e:
@@ -899,35 +899,36 @@ def add_container(request):
 
 
 #=========================
-#  Computes view
+#  Computings view
 #=========================
 
 @private_view
-def computes(request):
+def computings(request):
 
     # Init data
     data={}
     data['user']    = request.user
     data['profile'] = Profile.objects.get(user=request.user)
-    data['title']   = 'Add compute'
+    data['title']   = 'Add computing'
     data['name']    = request.POST.get('name',None)
+    
+    data['computings'] = Computing.objects.all()
 
-
-    return render(request,  'computes.html', {'data': data})
+    return render(request, 'computings.html', {'data': data})
 
 #=========================
 #  Add Compute view
 #=========================
 
 @private_view
-def add_compute(request):
+def add_computing(request):
 
     # Init data
     data={}
     data['user']    = request.user
     data['profile'] = Profile.objects.get(user=request.user)
-    data['title']   = 'Add compute'
+    data['title']   = 'Add computing'
     data['name']    = request.POST.get('name',None)
 
 
-    return render(request, 'add_compute.html', {'data': data})
+    return render(request, 'add_computing.html', {'data': data})

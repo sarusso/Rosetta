@@ -49,20 +49,70 @@ class LoginToken(models.Model):
     token = models.CharField('Login token', max_length=36)
 
 
+
+#=========================
+#  Containers
+#=========================
+class Container(models.Model):
+
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE, null=True)  
+    # If a container has no user, it will be available to anyone. Can be created, edited and deleted only by admins.
+    
+    image         = models.CharField('Container image', max_length=255, blank=False, null=False)
+    type          = models.CharField('Container type', max_length=36, blank=False, null=False)
+    registry      = models.CharField('Container registry', max_length=255, blank=False, null=False)
+    service_ports = models.CharField('Container service ports', max_length=36, blank=True, null=True)
+    #private       = models.BooleanField('Container is private and needs auth to be pulled from the registry')
+
+    def __str__(self):
+        return str('Container of type "{}" with image "{}" from registry "{}" of user "{}"'.format(self.type, self.image, self.registry, self.user))
+
+    @property
+    def id(self):
+        return str(self.uuid).split('-')[0]
+
+    #@property
+    #def name(self):
+    #    return self.image.split(':')[0].replace('_',' ').replace('-', ' ').replace('/', ' ').title()
+
+#=========================
+#  Computing resources
+#=========================
+
+# TODO: this must be an abstract class. Or maybe not? Maybe Add ComputingConfiguration/Handler with the relevant fields and methods?
+#       ...so that can be used as foreign key in the tasks as well? Examples: ComputingConfiguration ComputingType ComputingHandler
+
+class Computing(models.Model):
+
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE, null=True)
+    # If a compute resource has no user, it will be available to anyone. Can be created, edited and deleted only by admins.
+    
+    name  = models.CharField('Computing Name', max_length=255, blank=False, null=False)
+
+    def __str__(self):
+        return str('Computing Resource "{}" of user "{}"'.format(self.name, self.user))
+
+    @property
+    def id(self):
+        return str(self.uuid).split('-')[0]
+
+
 #=========================
 #  Tasks 
 #=========================
 class Task(models.Model):
-    uuid     = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user     = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE)
-    tid      = models.CharField('Task ID', max_length=64, blank=False, null=False)
-    name     = models.CharField('Task name', max_length=36, blank=False, null=False)
-    status   = models.CharField('Task status', max_length=36, blank=True, null=True)
-    created  = models.DateTimeField('Created on', default=timezone.now)
-    compute  = models.CharField('Task compute', max_length=36, blank=True, null=True)
-    pid      = models.IntegerField('Task pid', blank=True, null=True)
-    port     = models.IntegerField('Task port', blank=True, null=True)
-    ip       = models.CharField('Task ip address', max_length=36, blank=True, null=True)
+    uuid      = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user      = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE)
+    tid       = models.CharField('Task ID', max_length=64, blank=False, null=False)
+    name      = models.CharField('Task name', max_length=36, blank=False, null=False)
+    status    = models.CharField('Task status', max_length=36, blank=True, null=True)
+    created   = models.DateTimeField('Created on', default=timezone.now)
+    computing = models.ForeignKey(Computing, related_name='+', on_delete=models.CASCADE)
+    pid       = models.IntegerField('Task pid', blank=True, null=True)
+    port      = models.IntegerField('Task port', blank=True, null=True)
+    ip        = models.CharField('Task ip address', max_length=36, blank=True, null=True)
     tunnel_port = models.IntegerField('Task tunnel port', blank=True, null=True)
 
     # Links
@@ -84,7 +134,7 @@ class Task(models.Model):
 
 
     def update_status(self):
-        if self.compute == 'local':
+        if self.computing == 'local':
             
             check_command = 'sudo docker inspect --format \'{{.State.Status}}\' ' + self.tid # or, .State.Running
             out = os_shell(check_command, capture=True)
@@ -110,31 +160,5 @@ class Task(models.Model):
         return str(self.uuid).split('-')[0]
 
 
-
-#=========================
-#  Containers
-#=========================
-class Container(models.Model):
-
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE, null=True)
-    
-    # If a container has no user, it will be available to anyone. Can be created, edited and deleted only by admins.
-    image         = models.CharField('Container image', max_length=255, blank=False, null=False)
-    type          = models.CharField('Container type', max_length=36, blank=False, null=False)
-    registry      = models.CharField('Container registry', max_length=255, blank=False, null=False)
-    service_ports = models.CharField('Container service ports', max_length=36, blank=True, null=True)
-    #private       = models.BooleanField('Container is private and needs auth to be pulled from the registry')
-
-    def __str__(self):
-        return str('Container of type "{}" with image "{}" from registry "{}" of user "{}"'.format(self.type, self.image, self.registry, self.user))
-
-    @property
-    def id(self):
-        return str(self.uuid).split('-')[0]
-
-    #@property
-    #def name(self):
-    #    return self.image.split(':')[0].replace('_',' ').replace('-', ' ').replace('/', ' ').title()
 
 

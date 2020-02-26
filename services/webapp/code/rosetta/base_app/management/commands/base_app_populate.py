@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from ...models import Profile, Container
+from ...models import Profile, Container, Computing
 
 class Command(BaseCommand):
     help = 'Adds the admin superuser with \'a\' password.'
@@ -71,9 +71,20 @@ class Command(BaseCommand):
 
 
 
+        # Computing resources
+        #Computing.objects.create(user = None,
+        #                         name = 'L',
+        #                         type = '')
 
+        # Computing resources
+        #Computing.objects.create(user = None,
+        #                         name = 'L',
+        #                         type = '')
 
-
+        # Computing resources
+        #Computing.objects.create(user = None,
+        #                         name = 'L',
+        #                         type = '')
 
 
 

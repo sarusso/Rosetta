@@ -43,8 +43,8 @@ urlpatterns = [
     url(r'^tasks/$', base_app_views.tasks),
     url(r'^create_task/$', base_app_views.create_task),
     url(r'^task_log/$', base_app_views.task_log),
-    url(r'^computes/$', base_app_views.computes),
-    url(r'^add_compute/$', base_app_views.add_compute),
+    url(r'^computings/$', base_app_views.computings),
+    url(r'^add_computing/$', base_app_views.add_computing),
     url(r'^containers/$', base_app_views.containers),
     url(r'^add_container/$', base_app_views.add_container),
 
