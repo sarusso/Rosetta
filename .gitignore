@@ -15,4 +15,4 @@ __pycache__/
 data*
 
 # DB conf
-images/webapp/db_conf.sh
+services/webapp/db_conf.sh

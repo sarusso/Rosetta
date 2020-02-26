@@ -61,9 +61,9 @@ Django development server is running on port 8080 of the "webapp" service.
 
 To enable live code changes, add or comment out the following in docker-compose.yaml under the "volumes" section of the "webapp" service:
 
-    - ./images/webapp/code:/opt/webapp_code
+    - ./services/webapp/code:/opt/webapp_code
     
-This will mount the code from images/webapp/code as a volume inside the webapp container itself allowing to make immediately effective codebase edits.
+This will mount the code from services/webapp/code as a volume inside the webapp container itself allowing to make immediately effective codebase edits.
 
 Note that when you edit the Django ORM model, you need to rerun the migrate the database, either by just rerunning the webapp service:
 

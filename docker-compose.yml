@@ -54,7 +54,7 @@ services:
       - ./data_rosetta/webapp/data:/data
       - ./data_rosetta/webapp/log:/var/log/webapp
       - /var/run/docker.sock:/var/run/docker.sock
-      #- ./images/webapp/code:/opt/webapp_code
+      #- ./services/webapp/code:/opt/webapp_code
 
 
 

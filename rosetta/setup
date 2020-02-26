@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Use dev (local) database for backend
-if [ ! -f images/webapp/db_conf.sh ]; then
+if [ ! -f services/webapp/db_conf.sh ]; then
     echo "Using dev webapp database settings."
-    cp images/webapp/db_conf-dev.sh  images/webapp/db_conf.sh
+    cp services/webapp/db_conf-dev.sh  services/webapp/db_conf.sh
 else
     echo "Not using dev webapp database settings as settings are already present."
 fi

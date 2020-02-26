@@ -2,7 +2,7 @@
 set -e
 
 # Check if we are in the right place
-if [ ! -d ./images ]; then
+if [ ! -d ./services ]; then
     echo "You must run this command from the project's root folder."
     exit 1
 fi
@@ -28,19 +28,19 @@ fi
 
 if [[ "x$SERVICE" == "x" ]] ; then
     
-    # Build all images
-    $BUILD_COMMAND images/base -t rosetta/base
-    $BUILD_COMMAND images/slurmbase -t rosetta/slurmbase
-    $BUILD_COMMAND images/slurmcluster -t rosetta/slurmcluster    
-    $BUILD_COMMAND images/slurmclustermaster -t rosetta/slurmclustermaster    
-    $BUILD_COMMAND images/slurmclusterworker -t rosetta/slurmclusterworker    
-    $BUILD_COMMAND images/dregistry -t rosetta/dregistry
-    $BUILD_COMMAND images/webapp -t rosetta/webapp
+    # Build all services
+    $BUILD_COMMAND services/base -t rosetta/base
+    $BUILD_COMMAND services/slurmbase -t rosetta/slurmbase
+    $BUILD_COMMAND services/slurmcluster -t rosetta/slurmcluster    
+    $BUILD_COMMAND services/slurmclustermaster -t rosetta/slurmclustermaster    
+    $BUILD_COMMAND services/slurmclusterworker -t rosetta/slurmclusterworker    
+    $BUILD_COMMAND services/dregistry -t rosetta/dregistry
+    $BUILD_COMMAND services/webapp -t rosetta/webapp
 
     
 else
 
     # Build a specific image
-    $BUILD_COMMAND images/$SERVICE -t rosetta/$SERVICE
+    $BUILD_COMMAND services/$SERVICE -t rosetta/$SERVICE
 
 fi

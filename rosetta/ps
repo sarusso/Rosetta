@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Check if we are in the right place
-if [ ! -d ./images ]; then
+if [ ! -d ./services ]; then
     echo "You must run this command from the project's root folder."
     exit 1
 fi
