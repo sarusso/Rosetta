@@ -3,7 +3,7 @@ set -e
 
 
 # Build
-cd ../Software/MetaDesktop
+cd ../containers/MetaDesktop
 docker build . -t rosetta/metadesktop
 cd ../../
 
@@ -14,7 +14,7 @@ docker tag rosetta/metadesktop localhost:5000/rosetta/metadesktop
 docker push localhost:5000/rosetta/metadesktop
 
 # Run
-rosetta/shell slurmclustermaster-main "SINGULARITY_NOHTTPS=true singularity run --pid --writable-tmpfs --containall --cleanenv docker://dregistry:5000/rosetta/metadesktop"
+rosetta/shell slurmclusterworker-one "SINGULARITY_NOHTTPS=true singularity run --pid --writable-tmpfs --containall --cleanenv docker://dregistry:5000/rosetta/metadesktop"
 
 # Run variants/tests
 # rosetta/shell slurmclustermaster-main "SINGULARITY_NOHTTPS=true singularity run docker://dregistry:5000/rosetta/metadesktop"
