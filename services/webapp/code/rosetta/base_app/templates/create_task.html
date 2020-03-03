@@ -11,14 +11,16 @@
       <h1>New Task</h1> 
       <hr>
 
-      {% if not data.created %}
+      {% if data.step == 'one' %}
 
-          <h3>Choose a name and a type for your new Task.</h3> 
+          <h3>Step 1: name, container and computing.</h3> 
           
           <br/>
           
           <form action="/create_task/" method="POST">
           {% csrf_token %}
+          <input type="hidden" name="step" value="one" />
+
 
           <table class="dashboard" style="max-width:700px">
     
@@ -29,22 +31,7 @@
             </td>
            </tr>
 
-           <!--
-           <tr>
-            <td><b>Task user</b></td>
-            <td>
-             <input type="text" name="name" value="" placeholder="metauser" size="23" disabled />
-            </td>
-           </tr>-->
-           
-           <!--<tr>
-            <td><b>Task password</b></td>
-            <td>
-             <input type="password" name="password" value="" placeholder="" size="23" disabled />
-            </td>
-           </tr> -->
-
-           <tr>
+          <tr>
             <td><b>Task container</b></td><td>
               <select name="task_container_uuid" >
               <!-- <option value="metadesktop" selected>Meta Desktop</option>
@@ -73,6 +60,86 @@
             </td>
            </tr>
 
+           <tr>
+           <td colspan=2 align=center style="padding:20px">
+           <input type="submit" value="Next">
+           </td>
+           </tr>
+          </table>
+          </form>
+
+      {% elif data.step == 'two' %}
+
+          <h3>Choose a name and a type for your new Task.</h3> 
+          
+          <br/>
+          
+          <form action="/create_task/" method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="step" value="two" />
+
+          <table class="dashboard" style="max-width:700px">
+    
+           <tr>
+            <td><b>Task name </b></td>
+            <td>
+             <input type="text" name="task_name" value="" placeholder="" size="23" required />
+            </td>
+           </tr>
+
+          <tr>
+            <td><b>Task container</b></td><td>
+              <select name="task_container_uuid" >
+              <!-- <option value="metadesktop" selected>Meta Desktop</option>
+              <option value="astroccok">Astrocook</option>
+              <option value="gadgetviewer">Gadget Viewer</option> -->
+              {% for container in data.platform_containers %}
+              <option value="{{container.uuid}}">{{container.image}} ({{container.type}})</option> -->
+              {% endfor %}
+              {% for container in data.user_containers %}
+              <option value="{{container.uuid}}">{{container.image}} ({{container.type}})</option> -->
+              {% endfor %}              
+              
+              </select>
+              &nbsp; | <a href="/add_container">Add new...</a>          
+            </td>
+           </tr>
+           
+           <tr>
+            <td><b>Computing resource</b></td><td>
+              <select name="task_computing" >
+              <option value="local" selected>Local</option>
+              <option value="demoremote">Demo remote</option>
+              <option value="demoslurm">Demo Slurm cluster</option>
+              </select>
+              &nbsp; | <a href="/add_computing">Add new...</a>
+            </td>
+           </tr>
+
+           <tr>
+            <td><b>Task user</b></td>
+            <td>
+             <input type="text" name="name" value="" placeholder="metauser" size="23" disabled />
+            </td>
+           </tr>
+           
+           <tr>
+            <td><b>Task password</b></td>
+            <td>
+             <input type="password" name="password" value="" placeholder="" size="23" disabled />
+            </td>
+           </tr>
+
+           <tr>
+            <td><b>Access method</b></td><td>
+              <select name="access_method" >
+              <option value="http_proxy" selected>HTTP proxy</option>
+              <option value="direct_tunnel">Direct tunnel</option>
+              <option value="None">None</option>
+              </select>
+            </td>
+           </tr>
+
            <!-- <tr>
             <td><b>Run using</b></td><td>
               <select name="run_using" >
@@ -97,20 +164,7 @@
           </table>
           </form>
 
-          <br/>          
-          <br/>
-          <br/>
-          <br/>
-          <br/>
-          <br/>
-          <br/>
-          <br/>
-          <br/>
-          
 
-
-
- 
       {% else %}
         Ok, task created. Go back to your <a href="/tasks">task list</a>.
         

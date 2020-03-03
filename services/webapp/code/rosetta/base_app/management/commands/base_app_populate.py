@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from ...models import Profile, Container, Computing
+from ...models import Profile, Container, Computing, ComputingSysConf, ComputingUserConf
 
 class Command(BaseCommand):
     help = 'Adds the admin superuser with \'a\' password.'
@@ -69,22 +69,50 @@ class Command(BaseCommand):
                                      registry      = 'docker_hub',
                                      service_ports = '8888')
 
-
-
         # Computing resources
-        #Computing.objects.create(user = None,
-        #                         name = 'L',
-        #                         type = '')
+        computing_resources = Computing.objects.all()
+        if computing_resources:
+            print('Not creating demo computing resources as they already exist')
+        else:
+            print('Creating demo computing resources containers...')
 
-        # Computing resources
-        #Computing.objects.create(user = None,
-        #                         name = 'L',
-        #                         type = '')
+            # Local computing resource
+            Computing.objects.create(user = None,
+                                     name = 'Local',
+                                     type = 'local')
+    
+            # Demo remote computing resource
+            demo_remote_computing = Computing.objects.create(user = None,
+                                     name = 'Demo remote',
+                                     type = 'remote',
+                                     requires_sys_conf  = True,
+                                     requires_user_conf = False)
+    
+            # Create demo remote sys computing conf
+            ComputingSysConf.objects.create(computing = demo_remote_computing,
+                                            data      = {'host': 'slurmclusterworker-one',
+                                                         'user': 'rosetta',
+                                                         'identity': 'privkey?'})
 
-        # Computing resources
-        #Computing.objects.create(user = None,
-        #                         name = 'L',
-        #                         type = '')
+
+            # Demo slurm computing resource
+            demo_slurm_computing = Computing.objects.create(user = None,
+                                     name = 'Demo Slurm',
+                                     type = 'slurm',
+                                     requires_sys_conf  = True,
+                                     requires_user_conf = True)
+    
+            # Create demo slurm sys computing conf
+            ComputingSysConf.objects.create(computing = demo_slurm_computing,
+                                            data      = {'master': 'slurmclusterworker-master'})
+
+            # Create demo slurm user computing conf
+            ComputingUserConf.objects.create(user      = testuser,
+                                             computing = demo_slurm_computing,
+                                             data      = {'user': 'testuser',
+                                                          'id_rsa': '/rosetta/.ssh/id_rsa',
+                                                          'id_rsa.pub': 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC2n4wiLiRmE1sla5+w0IW3wwPW/mqhhkm7IyCBS+rGTgnts7xsWcxobvamNdD6KSLNnjFZbBb7Yaf/BvWrwQgdqIFVU3gRWHYzoU6js+lKtBjd0e2DAVGivWCKEkSGLx7zhx7uH/Jt8kyZ4NaZq0p5+SFHBzePdR/1rURd8G8+G3OaCPKqP+JQT4RMUQHC5SNRJLcK1piYdmhDiYEyuQG4FlStKCWLCXeUY2EVirNMeQIfOgbUHJsVjH07zm1y8y7lTWDMWVZOnkG6Ap5kB+n4l1eWbslOKgDv29JTFOMU+bvGvYZh70lmLK7Hg4CMpXVgvw5VF9v97YiiigLwvC7wasBHaASwH7wUqakXYhdGFxJ23xVMSLnvJn4S++4L8t8bifRIVqhT6tZCPOU4fdOvJKCRjKrf7gcW/E33ovZFgoOCJ2vBLIh9N9ME0v7tG15JpRtgIBsCXwLcl3tVyCZJ/eyYMbc3QJGsbcPGb2CYRjDbevPCQlNavcMdlyrNIke7VimM5aW8OBJKVh5wCNRpd9XylrKo1cZHYxu/c5Lr6VUZjLpxDlSz+IuTn4VE7vmgHNPnXdlxRKjLHG/FZrZTSCWFEBcRoSa/hysLSFwwDjKd9nelOZRNBvJ+NY48vA8ixVnk4WAMlR/5qhjTRam66BVysHeRcbjJ2IGjwTJC5Q== rosetta@rosetta.platform'})
+
 
 
 

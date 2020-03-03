@@ -1,0 +1,41 @@
+      <table class="dashboard">
+
+       <tr>
+        <td><b>ID</b></td>
+        <td><a href="?uuid={{ computing.uuid }}">{{ computing.id }}</a></td>
+       </tr>
+
+       <tr>
+        <td><b>Name</b></td>
+        <td>{{ computing.name }}</td>
+       </tr>
+
+       <tr>
+        <td><b>Type</b></td>
+        <td>{{ computing.type }}</td>
+       </tr>
+
+       <tr>
+        <td><b>Owner</b></td>
+        <td>{% if computing.user %}{{ computing.user }}{% else %}Platform{% endif %}</td>
+       </tr>
+
+       <tr>
+        <td><b>Sys Conf</b></td>
+        <td>{{ computing.sys_conf_data }}</td>
+       </tr>
+
+       <tr>
+        <td><b>User Conf</b></td>
+        <td>{{ computing.user_conf_data }}</td>
+       </tr>
+
+       
+       {% if computing.user %}
+       <tr>
+        <td><b>Operations</b></td>
+        <td><a href="?action=delete&uuid={{ computing.uuid }}">Delete</a></td>
+       </tr>
+       {% endif %}
+      </table>
+      <br/>

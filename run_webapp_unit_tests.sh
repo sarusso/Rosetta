@@ -6,4 +6,8 @@
 DJANGO_LOG_LEVEL="CRITICAL"
 ROSETTA_LOG_LEVEL="CRITICAL"
 
-rosetta/shell webapp "cd /opt/webapp_code && DJANGO_LOG_LEVEL=$DJANGO_LOG_LEVEL ROSETTA_LOG_LEVEL=$ROSETTA_LOG_LEVEL python3 manage.py test $@"
+# Set DB to SQLIte in-memory
+DJANGO_DB_ENGINE="django.db.backends.sqlite3"
+DJANGO_DB_NAME=":memory:"
+
+rosetta/shell webapp "export DJANGO_DB_ENGINE=$DJANGO_DB_ENGINE && export DJANGO_DB_NAME=$DJANGO_DB_NAME && cd /opt/webapp_code && python3 manage.py makemigrations && DJANGO_LOG_LEVEL=$DJANGO_LOG_LEVEL ROSETTA_LOG_LEVEL=$ROSETTA_LOG_LEVEL python3 manage.py test $@"

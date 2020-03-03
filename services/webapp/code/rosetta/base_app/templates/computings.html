@@ -10,15 +10,15 @@
     <div class="span8 offset2">
       
       {% if data.computing %}
-      <h1><a href="/computings">Computing Resources List</a> &gt; {{ data.computing.id }}  </h1>      
+      <h1><a href="/computings">Computing List</a> &gt; {{ data.computing.id }}  </h1>      
       {% else %}
-      <h1>Computing Resources List</h1>
+      <h1>Computing List</h1>
       {% endif %}
       
       <hr/>
 
       {% if data.computing %}
-      {% include "components/computing.html" with computing=data.computing %}
+      {% include "components/computing.html" with computing=data.computin %}
       {% else %}
       
       {% for computing in data.platform_computings %}

@@ -1,11 +1,24 @@
 import uuid
 import enum
 
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
 from .utils import os_shell
+
+if 'sqlite' in settings.DATABASES['default']['ENGINE']:
+    from .fields import JSONField
+else:
+    from django.contrib.postgres.fields import JSONField
+
+class ConfigurationError(Exception):
+    pass
+
+class ConsistencyError(Exception):
+    pass
+
 
 # Setup logging
 import logging
@@ -89,10 +102,89 @@ class Computing(models.Model):
     user = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE, null=True)
     # If a compute resource has no user, it will be available to anyone. Can be created, edited and deleted only by admins.
     
-    name  = models.CharField('Computing Name', max_length=255, blank=False, null=False)
+    name = models.CharField('Computing Name', max_length=255, blank=False, null=False)
+    type = models.CharField('Computing Type', max_length=255, blank=False, null=False)
+
+    requires_sys_conf  = models.BooleanField(default=False)
+    requires_user_conf = models.BooleanField(default=False)
 
     def __str__(self):
         return str('Computing Resource "{}" of user "{}"'.format(self.name, self.user))
+
+    @property
+    def id(self):
+        return str(self.uuid).split('-')[0]
+
+    # Validate conf
+    def validate_conf_data(self, sys_conf_data=None, user_conf_data=None):
+        
+        if self.type == 'local':
+            pass
+        
+        elif self.type == 'remote':
+            # Check that we have all the data for a remote computing resource
+
+            # Look for host:
+            host_found = False
+            if sys_conf_data  and 'host' in sys_conf_data  and sys_conf_data['host']:  host_found=True
+            if user_conf_data and 'host' in user_conf_data and user_conf_data['host']: host_found=True
+            if not host_found:
+                raise ConfigurationError('Missing host in conf')
+            
+            
+            # Look for user:
+            user_found = False
+            if sys_conf_data  and 'user' in sys_conf_data  and sys_conf_data['user']:  user_found=True
+            if user_conf_data and 'user' in user_conf_data and user_conf_data['user']: user_found=True
+            if not user_found:
+                raise ConfigurationError('Missing user in conf')               
+
+            # Look for password/identity:
+            password_found = False
+            identity_found = False
+            if sys_conf_data  and 'password' in sys_conf_data  and sys_conf_data['password']:  password_found=True
+            if user_conf_data and 'password' in user_conf_data and user_conf_data['password']: password_found=True
+            if sys_conf_data  and 'identity' in sys_conf_data  and sys_conf_data['identity']:  identity_found=True
+            if user_conf_data and 'identity' in user_conf_data and user_conf_data['identity']: identity_found=True       
+            if not password_found and not identity_found:
+                raise ConfigurationError('Missing password or identity in conf')
+
+        elif self.type == 'slurm':
+            raise NotImplementedError('Not yet implemented for Slurm')
+
+        else:
+            raise ConsistencyError('Unknown computing type "{}"'.format(self.type))
+    
+    @property    
+    def sys_conf_data(self):          
+        return ComputingSysConf.objects.get(computing=self).data
+    
+    #@property    
+    #def user_conf_data(self):
+    #    return {'testuser':'ciao'}
+    
+    def attach_user_conf_data(self, user):
+        try:
+            self.user_conf_data = ComputingUserConf.objects.get(computing=self).data
+        except ComputingUserConf.DoesNotExist:
+            self.user_conf_data = None
+
+
+class ComputingSysConf(models.Model):
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    computing = models.ForeignKey(Computing, related_name='+', on_delete=models.CASCADE)
+    data = JSONField(blank=True, null=True)
+
+    @property
+    def id(self):
+        return str(self.uuid).split('-')[0]
+
+
+class ComputingUserConf(models.Model):
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE, null=True)
+    computing = models.ForeignKey(Computing, related_name='+', on_delete=models.CASCADE)
+    data = JSONField(blank=True, null=True)
 
     @property
     def id(self):
@@ -109,14 +201,14 @@ class Task(models.Model):
     name      = models.CharField('Task name', max_length=36, blank=False, null=False)
     status    = models.CharField('Task status', max_length=36, blank=True, null=True)
     created   = models.DateTimeField('Created on', default=timezone.now)
-    computing = models.ForeignKey(Computing, related_name='+', on_delete=models.CASCADE)
     pid       = models.IntegerField('Task pid', blank=True, null=True)
     port      = models.IntegerField('Task port', blank=True, null=True)
     ip        = models.CharField('Task ip address', max_length=36, blank=True, null=True)
     tunnel_port = models.IntegerField('Task tunnel port', blank=True, null=True)
 
     # Links
-    container    = models.ForeignKey('Container', on_delete=models.CASCADE, related_name='+')
+    computing = models.ForeignKey(Computing, related_name='+', on_delete=models.CASCADE)
+    container = models.ForeignKey('Container', on_delete=models.CASCADE, related_name='+')
 
     def save(self, *args, **kwargs):
         
