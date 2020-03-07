@@ -1,313 +1,29 @@
-
-# Python imports
-import time
 import uuid
-import inspect
-import json
-import socket
-import os
 import subprocess
-
-# Django imports
 from django.conf import settings
 from django.shortcuts import render
-from django.http import HttpResponseRedirect
 from django.contrib.auth import authenticate, login, logout
-from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
-from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from django.contrib.auth import update_session_auth_hash
-
-# Project imports
+from django.shortcuts import redirect
 from .models import Profile, LoginToken, Task, TaskStatuses, Container, Computing
-from .utils import send_email, format_exception, random_username, log_user_activity, timezonize, os_shell, booleanize
+from .utils import send_email, format_exception, timezonize, os_shell, booleanize, debug_param
+from .decorators import public_view, private_view
+from .tasks import start_task, stop_task
+from .exceptions import ErrorMessage
 
 # Setup logging
 import logging
 logger = logging.getLogger(__name__)
-
-# Custom exceptions
-from .exceptions import ErrorMessage, ConsistencyException
 
 # Conf
 SUPPORTED_CONTAINER_TYPES = ['docker', 'singularity']
 SUPPORTED_REGISTRIES = ['docker_local', 'docker_hub', 'singularity_hub']
 UNSUPPORTED_TYPES_VS_REGISTRIES = ['docker:singularity_hub']
 
-TASK_DATA_DIR = "/data"
-
 # Task cache
 _task_cache = {}
 
-#=========================
-#  Decorators
-#=========================
-
-# Public view
-def public_view(wrapped_view):
-    def public_view_wrapper(request, *argv, **kwargs):
-        # -------------- START Public/private common code --------------
-        try:
-            log_user_activity("DEBUG", "Called", request, wrapped_view.__name__)
-
-            # Try to get the templates from view kwargs
-            # Todo: Python3 compatibility: https://stackoverflow.com/questions/2677185/how-can-i-read-a-functions-signature-including-default-argument-values
-
-            argSpec=inspect.getargspec(wrapped_view)
-
-            if 'template' in argSpec.args:
-                template = argSpec.defaults[0]
-            else:
-                template = None
-
-            # Call wrapped view
-            data = wrapped_view(request, *argv, **kwargs)
-
-            if not isinstance(data, HttpResponse):
-                if template:
-                    #logger.debug('using template + data ("{}","{}")'.format(template,data))
-                    return render(request, template, {'data': data})
-                else:
-                    raise ConsistencyException('Got plain "data" output but no template defined in view')
-            else:
-                #logger.debug('using returned httpresponse')
-                return data
-
-        except Exception as e:
-            if isinstance(e, ErrorMessage):
-                error_text = str(e)
-            else:
-
-                # Raise te exception if we are in debug mode
-                if settings.DEBUG:
-                    raise
-
-                # Otherwise,
-                else:
-
-                    # first log the exception
-                    logger.error(format_exception(e))
-
-                    # and then mask it.
-                    error_text = 'something went wrong'
-
-            data = {'user': request.user,
-                    'title': 'Error',
-                    'error' : 'Error: "{}"'.format(error_text)}
-
-            if template:
-                return render(request, template, {'data': data})
-            else:
-                return render(request, 'error.html', {'data': data})
-        # --------------  END Public/private common code --------------
-    return public_view_wrapper
-
-# Private view
-def private_view(wrapped_view):
-    def private_view_wrapper(request, *argv, **kwargs):
-        if request.user.is_authenticated:
-            # -------------- START Public/private common code --------------
-            log_user_activity("DEBUG", "Called", request, wrapped_view.__name__)
-            try:
-
-                # Try to get the templates from view kwargs
-                # Todo: Python3 compatibility: https://stackoverflow.com/questions/2677185/how-can-i-read-a-functions-signature-including-default-argument-values
-
-                argSpec=inspect.getargspec(wrapped_view)
-
-                if 'template' in argSpec.args:
-                    template = argSpec.defaults[0]
-                else:
-                    template = None
-
-                # Call wrapped view
-                data = wrapped_view(request, *argv, **kwargs)
-
-                if not isinstance(data, HttpResponse):
-                    if template:
-                        #logger.debug('using template + data ("{}","{}")'.format(template,data))
-                        return render(request, template, {'data': data})
-                    else:
-                        raise ConsistencyException('Got plain "data" output but no template defined in view')
-                else:
-                    #logger.debug('using returned httpresponse')
-                    return data
-
-            except Exception as e:
-                if isinstance(e, ErrorMessage):
-                    error_text = str(e)
-                else:
-
-                    # Raise te exception if we are in debug mode
-                    if settings.DEBUG:
-                        raise
-
-                    # Otherwise,
-                    else:
-
-                        # first log the exception
-                        logger.error(format_exception(e))
-
-                        # and then mask it.
-                        error_text = 'something went wrong'
-
-                data = {'user': request.user,
-                        'title': 'Error',
-                        'error' : 'Error: "{}"'.format(error_text)}
-
-                if template:
-                    return render(request, template, {'data': data})
-                else:
-                    return render(request, 'error.html', {'data': data})
-            # --------------  END  Public/private common code --------------
-
-        else:
-            log_user_activity("DEBUG", "Redirecting to login since not authenticated", request)
-            return HttpResponseRedirect('/login')
-    return private_view_wrapper
-
-
-
-#------------------------------------------------------
-#   Helper functions
-#------------------------------------------------------
-
-def start_task(task):
-
-    if task.computing == 'local':
-
-        # Get our ip address
-        #import netifaces
-        #netifaces.ifaddresses('eth0')
-        #backend_ip = netifaces.ifaddresses('eth0')[netifaces.AF_INET][0]['addr']
-
-        # Init run command #--cap-add=NET_ADMIN --cap-add=NET_RAW
-        run_command  = 'sudo docker run  --network=rosetta_default --name rosetta-task-{}'.format( task.id)
-
-        # Data volume
-        run_command += ' -v {}/task-{}:/data'.format(TASK_DATA_DIR, task.id)
-
-        # Set registry string
-        if task.container.registry == 'local':
-            registry_string = 'localhost:5000/'
-        else:
-            registry_string  = ''
-
-        # Host name, image entry command
-        run_command += ' -h task-{} -d -t {}{}'.format(task.id, registry_string, task.container.image)
-
-        # Run the task Debug
-        logger.debug('Running new task with command="{}"'.format(run_command))
-        out = os_shell(run_command, capture=True)
-        if out.exit_code != 0:
-            raise Exception(out.stderr)
-        else:
-            task_tid = out.stdout
-            logger.debug('Created task with id: "{}"'.format(task_tid))
-
-
-            # Get task IP address
-            out = os_shell('sudo docker inspect --format \'{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}\' ' + task_tid + ' | tail -n1', capture=True)
-            if out.exit_code != 0:
-                raise Exception('Error: ' + out.stderr)
-            task_ip = out.stdout
-
-            # Set fields
-            task.tid    = task_tid
-            task.status = TaskStatuses.running
-            task.ip     = task_ip
-            task.port   = int(task.container.service_ports.split(',')[0])
-
-            # Save
-            task.save()
-
-    elif task.computing == 'demoremote':
-        logger.debug('Using Demo Remote as computing resource')
-
-
-        # 1) Run the singularity container on slurmclusterworker-one (non blocking)
-        run_command = 'ssh -4 -o StrictHostKeyChecking=no slurmclusterworker-one  "export SINGULARITY_NOHTTPS=true && exec nohup singularity run --pid --writable-tmpfs --containall --cleanenv docker://dregistry:5000/rosetta/metadesktop &> /tmp/{}.log & echo \$!"'.format(task.uuid)
-        out = os_shell(run_command, capture=True)
-        if out.exit_code != 0:
-            raise Exception(out.stderr)
-
-        # Save pid echoed by the command above
-        task_pid = out.stdout
-
-        # 2) Simulate the agent (i.e. report container IP and port port)
-
-        # Get task IP address
-        out = os_shell('sudo docker inspect --format \'{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}\' slurmclusterworker-one | tail -n1', capture=True)
-        if out.exit_code != 0:
-            raise Exception('Error: ' + out.stderr)
-        task_ip = out.stdout
-
-        # Set fields
-        task.tid    = task.uuid
-        task.status = TaskStatuses.running
-        task.ip     = task_ip
-        task.pid    = task_pid
-        task.port   = int(task.container.service_ports.split(',')[0])
-
-        # Save
-        task.save()
-
-
-    else:
-        raise Exception('Consistency exception: invalid computing resource "{}'.format(task.computing))
-
-
-def stop_task(task):
-
-    if task.computing == 'local':
-    
-        # Delete the Docker container
-        standby_supported = False
-        if standby_supported:
-            stop_command = 'sudo docker stop {}'.format(task.tid)
-        else:
-            stop_command = 'sudo docker stop {} && sudo docker rm {}'.format(task.tid,task.tid)
-    
-        out = os_shell(stop_command, capture=True)
-        if out.exit_code != 0:
-            raise Exception(out.stderr)
-    
-    elif task.computing == 'demoremote':
-    
-        # Stop the task remotely
-        stop_command = 'ssh -4 -o StrictHostKeyChecking=no slurmclusterworker-one  "kill -9 {}"'.format(task.pid)
-        logger.debug(stop_command)
-        out = os_shell(stop_command, capture=True)
-        if out.exit_code != 0:
-            if not 'No such process' in out.stderr:
-                raise Exception(out.stderr)
-    
-    raise Exception('Don\'t know how to stop tasks on "{}" computing resource.'.format(task.computing))
-    
-    # Ok, save status as deleted
-    task.status = 'stopped'
-    task.save()
-    
-    # Check if the tunnel is active and if so kill it
-    logger.debug('Checking if task "{}" has a running tunnel'.format(task.tid))
-    check_command = 'ps -ef | grep ":'+str(task.tunnel_port)+':'+str(task.ip)+':'+str(task.port)+'" | grep -v grep | awk \'{print $2}\''
-    logger.debug(check_command)
-    out = os_shell(check_command, capture=True)
-    logger.debug(out)
-    if out.exit_code == 0:
-        logger.debug('Task "{}" has a running tunnel, killing it'.format(task.tid))
-        tunnel_pid = out.stdout
-        # Kill Tunnel command
-        kill_tunnel_command= 'kill -9 {}'.format(tunnel_pid)
-    
-        # Log
-        logger.debug('Killing tunnel with command: {}'.format(kill_tunnel_command))
-    
-        # Execute
-        os_shell(kill_tunnel_command, capture=True)
-        if out.exit_code != 0:
-            raise Exception(out.stderr)
 
 @public_view
 def login_view(request):
@@ -544,6 +260,9 @@ def tasks(request):
                 raise ErrorMessage('Task does not exists or no access rights')
             data['task'] = task
     
+            # Attach user config to computing
+            task.computing.attach_user_conf_data(task.user)
+    
             #----------------
             #  Task actions
             #----------------
@@ -573,7 +292,7 @@ def tasks(request):
             elif action=='connect':
     
                 # Create task tunnel
-                if task.computing in ['local', 'demoremote']:
+                if task.computing.type in ['local', 'remote']:
     
                     # If there is no tunnel port allocated yet, find one
                     if not task.tunnel_port:
@@ -620,7 +339,6 @@ def tasks(request):
                     raise ErrorMessage('Connecting to tasks on computing "{}" is not supported yet'.format(task.computing))
     
                 # Ok, now redirect to the task through the tunnel
-                from django.shortcuts import redirect
                 return redirect('http://localhost:{}'.format(task.tunnel_port))
 
         except Exception as e:
@@ -668,12 +386,9 @@ def create_task(request):
     data['profile'] = Profile.objects.get(user=request.user)
     data['title']   = 'New Task'
 
-    # Get containers configured on the platform, both private to this user and public
-    data['user_containers'] = Container.objects.filter(user=request.user)
-    data['platform_containers'] = Container.objects.filter(user=None)
-
-    data['computing'] = Computing.objects.filter(user=None)
-
+    # Get containers and computings 
+    data['containers'] = list(Container.objects.filter(user=None)) + list(Container.objects.filter(user=request.user))
+    data['computings'] = list(Computing.objects.filter(user=None)) + list(Computing.objects.filter(user=request.user))
 
     # Step if any
     step = request.POST.get('step', None)
@@ -685,8 +400,6 @@ def create_task(request):
 
         # Task container
         task_container_uuid = request.POST.get('task_container_uuid', None)
-
-        # Get the container object, first try as public and then as private
         try:
             task_container = Container.objects.get(uuid=task_container_uuid, user=None)
         except Container.DoesNotExist:
@@ -695,10 +408,16 @@ def create_task(request):
             except Container.DoesNotExist:
                 raise Exception('Consistency error, container with uuid "{}" does not exists or user "{}" does not have access rights'.format(task_container_uuid, request.user.email))
 
-        # Compute
-        task_computing = request.POST.get('task_computing', None)
-        if task_computing not in ['local', 'demoremote']:
-            raise ErrorMessage('Unknown computing resource "{}')
+        # task computing
+        task_computing_uuid = request.POST.get('task_computing', None)
+        try:
+            task_computing = Computing.objects.get(uuid=task_computing_uuid, user=None)
+        except Computing.DoesNotExist:
+            try:
+                task_computing =  Computing.objects.get(uuid=task_computing_uuid, user=request.user)
+            except Computing.DoesNotExist:
+                raise Exception('Consistency error, computing with uuid "{}" does not exists or user "{}" does not have access rights'.format(task_computing_uuid, request.user.email))
+
 
         # Generate the task uuid
         task_uuid = str(uuid.uuid4())
@@ -714,8 +433,9 @@ def create_task(request):
         # Save the task in the cache
         _task_cache[task_uuid] = task
 
-        # Set step
+        # Set step and task uuid
         data['step'] = 'two'
+        data['task_uuid'] = task.uuid
         
     elif step == 'two':
         
@@ -723,13 +443,23 @@ def create_task(request):
         task_uuid = request.POST.get('task_uuid', None)
         task = _task_cache[task_uuid]
 
+        # Add auth
+        task.task_auth_user     = request.POST.get('auth_user', None)
+        task.task_auth_password = request.POST.get('auth_password', None)
+        task.task_access_method = request.POST.get('access_method', None)
+        
         
         # Add auth and/or computing parameters to the task if any
-
+        # TODO... (i..e num cores)
+        
         # Save the task in the DB
+        task.save()
+
+        # Attach user config to computing
+        task.computing.attach_user_conf_data(task.user)
 
         # Start the task
-        #start_task(task)
+        start_task(task)
 
         # Set step        
         data['step'] = 'created'
@@ -771,10 +501,13 @@ def task_log(request):
     data['task']    = task 
     data['refresh'] = refresh
 
+    # Attach user conf in any
+    task.computing.attach_user_conf_data(request.user) 
+
     # Get the log
     try:
 
-        if task.computing == 'local':
+        if task.computing.type == 'local':
 
             # View the Docker container log (attach)
             view_log_command = 'sudo docker logs {}'.format(task.tid,)
@@ -785,10 +518,16 @@ def task_log(request):
             else:
                 data['log'] = out.stdout
 
-        elif task.computing == 'demoremote':
+        elif task.computing.type == 'remote':
+
+            # Get computing host
+            host = task.computing.get_conf_param('host')
+    
+            # Get id_rsa
+            id_rsa_file = task.computing.get_conf_param('id_rsa')
 
             # View the Singularity container log
-            view_log_command = 'ssh -4 -o StrictHostKeyChecking=no slurmclusterworker-one  "cat /tmp/{}.log"'.format(task.uuid)
+            view_log_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}  "cat /tmp/{}.log"'.format(id_rsa_file, host, task.uuid)
             logger.debug(view_log_command)
             out = os_shell(view_log_command, capture=True)
             if out.exit_code != 0:
@@ -803,7 +542,7 @@ def task_log(request):
     except Exception as e:
         data['error'] = 'Error in viewing task log'
         logger.error('Error in viewing task log with uuid="{}": "{}"'.format(uuid, e))
-        return render(request, 'error.html', {'data': data})
+        raise
 
     return render(request, 'task_log.html', {'data': data})
 
@@ -859,9 +598,8 @@ def containers(request):
     # Container list
     #----------------
 
-    # Get containers configured on the platform, both private to this user and public
-    data['user_containers'] = Container.objects.filter(user=request.user)
-    data['platform_containers'] = Container.objects.filter(user=None)
+    # Get containers
+    data['containers'] = list(Container.objects.filter(user=None)) + list(Container.objects.filter(user=request.user))
 
     return render(request, 'containers.html', {'data': data})
 
@@ -903,9 +641,12 @@ def add_container(request):
         if container_type+':'+container_registry in UNSUPPORTED_TYPES_VS_REGISTRIES:
             raise ErrorMessage('Sorry, container type "{}" is not compatible with registry type "{}"'.format(container_type, container_registry))
 
+        # Container name
+        container_name = request.POST.get('container_name', None)
+
         # Container service ports. TODO: support multiple ports? 
         container_service_ports = request.POST.get('container_service_ports', None)
-
+        
         if container_service_ports:       
             try:
                 for container_service_port in container_service_ports.split(','):
@@ -919,6 +660,7 @@ def add_container(request):
         # Create
         Container.objects.create(user          = request.user,
                                  image         = container_image,
+                                 name          = container_name,
                                  type          = container_type,
                                  registry      = container_registry,
                                  service_ports = container_service_ports)
@@ -943,11 +685,11 @@ def computings(request):
     data['title']   = 'Add computing'
     data['name']    = request.POST.get('name',None)
     
-    data['platform_computings'] = Computing.objects.filter(user=None)
+    data['computings'] = list(Computing.objects.filter(user=None)) + Computing.objects.filter(user=request.user)
     
     # Attach user conf in any
-    for platform_computing in data['platform_computings']:
-        platform_computing.attach_user_conf_data(request.user)
+    for computing in data['computings']:
+        computing.attach_user_conf_data(request.user) 
 
     return render(request, 'computings.html', {'data': data})
 

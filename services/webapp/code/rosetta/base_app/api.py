@@ -1,19 +1,13 @@
 import logging
- 
-# Django imports
 from django.http import HttpResponse
 from django.utils import timezone
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User, Group
-
 from rest_framework.response import Response
 from rest_framework import status, serializers, viewsets
 from rest_framework.views import APIView
-
- 
-# Project imports
-from rosetta.common import format_exception
-from rosetta.base_app.models import Profile
+from .utils import format_exception
+from .models import Profile
  
 # Setup logging
 logger = logging.getLogger(__name__)

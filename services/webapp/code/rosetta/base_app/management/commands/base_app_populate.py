@@ -42,13 +42,23 @@ class Command(BaseCommand):
             
             # MetaDesktop Docker
             Container.objects.create(user          = None,
+                                     name          = 'MetaDesktop latest',
                                      image         = 'rosetta/metadesktop',
                                      type          = 'docker',
                                      registry      = 'docker_local',
                                      service_ports = '8590')
 
+            # MetaDesktop Singularity
+            Container.objects.create(user          = None,
+                                     name          = 'MetaDesktop latest',
+                                     image         = 'rosetta/metadesktop',
+                                     type          = 'singularity',
+                                     registry      = 'docker_local',
+                                     service_ports = '8590')
+
             # Astrocook
             Container.objects.create(user          = None,
+                                     name          = 'Astrocook b2b819e',
                                      image         = 'sarusso/astrocook:b2b819e',
                                      type          = 'docker',
                                      registry      = 'docker_local',
@@ -64,6 +74,7 @@ class Command(BaseCommand):
             
             # JuPyter
             Container.objects.create(user          = testuser,
+                                     name          = 'Jupyter Notebook latest',
                                      image         = 'jupyter/base-notebook',
                                      type          = 'docker',
                                      registry      = 'docker_hub',
@@ -90,9 +101,15 @@ class Command(BaseCommand):
     
             # Create demo remote sys computing conf
             ComputingSysConf.objects.create(computing = demo_remote_computing,
-                                            data      = {'host': 'slurmclusterworker-one',
-                                                         'user': 'rosetta',
-                                                         'identity': 'privkey?'})
+                                            data      = {'host': 'slurmclusterworker-one'})
+
+            # Create demo remote user computing conf
+            ComputingUserConf.objects.create(user      = testuser,
+                                             computing = demo_remote_computing,
+                                             data      = {'user': 'testuser',
+                                                          'id_rsa': '/rosetta/.ssh/id_rsa',
+                                                          'id_rsa.pub': 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC2n4wiLiRmE1sla5+w0IW3wwPW/mqhhkm7IyCBS+rGTgnts7xsWcxobvamNdD6KSLNnjFZbBb7Yaf/BvWrwQgdqIFVU3gRWHYzoU6js+lKtBjd0e2DAVGivWCKEkSGLx7zhx7uH/Jt8kyZ4NaZq0p5+SFHBzePdR/1rURd8G8+G3OaCPKqP+JQT4RMUQHC5SNRJLcK1piYdmhDiYEyuQG4FlStKCWLCXeUY2EVirNMeQIfOgbUHJsVjH07zm1y8y7lTWDMWVZOnkG6Ap5kB+n4l1eWbslOKgDv29JTFOMU+bvGvYZh70lmLK7Hg4CMpXVgvw5VF9v97YiiigLwvC7wasBHaASwH7wUqakXYhdGFxJ23xVMSLnvJn4S++4L8t8bifRIVqhT6tZCPOU4fdOvJKCRjKrf7gcW/E33ovZFgoOCJ2vBLIh9N9ME0v7tG15JpRtgIBsCXwLcl3tVyCZJ/eyYMbc3QJGsbcPGb2CYRjDbevPCQlNavcMdlyrNIke7VimM5aW8OBJKVh5wCNRpd9XylrKo1cZHYxu/c5Lr6VUZjLpxDlSz+IuTn4VE7vmgHNPnXdlxRKjLHG/FZrZTSCWFEBcRoSa/hysLSFwwDjKd9nelOZRNBvJ+NY48vA8ixVnk4WAMlR/5qhjTRam66BVysHeRcbjJ2IGjwTJC5Q== rosetta@rosetta.platform'})
+
 
 
             # Demo slurm computing resource

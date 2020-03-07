@@ -59,10 +59,7 @@ def send_email(to, subject, text):
         content = Content('text/plain', text)
         mail = Mail(from_email, subject, to_email, content)
         response = sg.client.mail.send.post(request_body=mail.get())
-
-        logger.critical(response.status_code)
-        logger.critical(response.body)
-        logger.critical(response.headers)
+        logger.debug(response)
     
 
 def format_exception(e, debug=False):
@@ -426,4 +423,9 @@ class dt_range(object):
     # Python 2.x
     def next(self):
         return self.__next__()
+
+
+def debug_param(**kwargs):
+    for item in kwargs:
+        logger.critical('Param "{}": "{}"'.format(item, kwargs[item]))
 

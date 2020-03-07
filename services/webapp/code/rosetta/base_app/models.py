@@ -1,11 +1,8 @@
 import uuid
-import enum
-
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-
 from .utils import os_shell
 
 if 'sqlite' in settings.DATABASES['default']['ENGINE']:
@@ -71,7 +68,8 @@ class Container(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE, null=True)  
     # If a container has no user, it will be available to anyone. Can be created, edited and deleted only by admins.
-    
+
+    name          = models.CharField('Container Name', max_length=255, blank=False, null=False)    
     image         = models.CharField('Container image', max_length=255, blank=False, null=False)
     type          = models.CharField('Container type', max_length=36, blank=False, null=False)
     registry      = models.CharField('Container registry', max_length=255, blank=False, null=False)
@@ -79,7 +77,7 @@ class Container(models.Model):
     #private       = models.BooleanField('Container is private and needs auth to be pulled from the registry')
 
     def __str__(self):
-        return str('Container of type "{}" with image "{}" from registry "{}" of user "{}"'.format(self.type, self.image, self.registry, self.user))
+        return str('Container of type "{}" with image "{}" with service ports "{}" from registry "{}" of user "{}"'.format(self.type, self.image, self.service_ports, self.registry, self.user))
 
     @property
     def id(self):
@@ -159,15 +157,39 @@ class Computing(models.Model):
     def sys_conf_data(self):          
         return ComputingSysConf.objects.get(computing=self).data
     
-    #@property    
-    #def user_conf_data(self):
-    #    return {'testuser':'ciao'}
+    @property    
+    def user_conf_data(self):
+        try:
+            return self._user_conf_data
+        except AttributeError:
+            raise AttributeError('User conf data is not yet attached, please attach it before accessing.')
     
     def attach_user_conf_data(self, user):
+        if self.user and self.user != user:
+            raise Exception('Cannot attach a conf data for another user (my user="{}", another user="{}"'.format(self.user, user)) 
         try:
-            self.user_conf_data = ComputingUserConf.objects.get(computing=self).data
+            self._user_conf_data = ComputingUserConf.objects.get(computing=self, user=user).data
         except ComputingUserConf.DoesNotExist:
-            self.user_conf_data = None
+            self._user_conf_data = None
+
+    # Get id_rsa file
+    #@property
+    #def id_rsa_file(self):
+    #    try:
+    #        id_rsa_file = self.user_conf_data['id_rsa']
+    #    except (TypeError, KeyError, AttributeError):
+    #        try:
+    #            id_rsa_file = self.sys_conf_data['id_rsa']
+    #        except:
+    #            id_rsa_file = None
+    #    return id_rsa_file
+
+    def get_conf_param(self, param):
+        try:
+            param_value = self.sys_conf_data[param]
+        except (TypeError, KeyError):
+            param_value = self.user_conf_data[param]
+        return param_value
 
 
 class ComputingSysConf(models.Model):
@@ -209,6 +231,11 @@ class Task(models.Model):
     # Links
     computing = models.ForeignKey(Computing, related_name='+', on_delete=models.CASCADE)
     container = models.ForeignKey('Container', on_delete=models.CASCADE, related_name='+')
+
+    # Auth
+    auth_user     = models.CharField('Task auth user', max_length=36, blank=True, null=True)
+    auth_password = models.CharField('Task auth password', max_length=36, blank=True, null=True)
+    access_method = models.CharField('Task access method', max_length=36, blank=True, null=True)
 
     def save(self, *args, **kwargs):
         

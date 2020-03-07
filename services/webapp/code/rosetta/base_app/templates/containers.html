@@ -19,19 +19,12 @@
 
       {% if data.container %}
       {% include "components/container.html" with container=data.container %}
-      {% else %}
-      
-      {% for container in data.platform_containers %}
+      {% else %} 
+      {% for container in data.containers %}
       {% include "components/container.html" with container=container %}
       <br />
       {% endfor %}
 
-
-      {% for container in data.user_containers %}
-      {% include "components/container.html" with container=container %}
-      <br />
-      {% endfor %}    
-      
       <br />
       <a href="/add_container">Add new...</a>
       

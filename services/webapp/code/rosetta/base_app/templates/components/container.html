@@ -6,6 +6,11 @@
        </tr>
 
        <tr>
+        <td><b>Name</b></td>
+        <td>{{ container.name }}</td>
+       </tr>
+
+       <tr>
         <td><b>Image</b></td>
         <td>{{ container.image }}</td>
        </tr>
@@ -17,7 +22,7 @@
 
        <tr>
         <td><b>Owner</b></td>
-        <td>{% if container.user %}{{ container.user }}{% else %}Platform{% endif %}</td>
+        <td>{% if container.user %}{{ container.user }}{% else %}platform{% endif %}</td>
        </tr>
 
        <tr>
