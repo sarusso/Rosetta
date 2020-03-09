@@ -4,7 +4,7 @@ DATE=$(date)
 
 echo ""
 echo "==================================================="
-echo "  Starting Backend @ $DATE"
+echo "  Starting Webapp @ $DATE"
 echo "==================================================="
 echo ""
 
