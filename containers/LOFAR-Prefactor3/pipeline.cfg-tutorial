@@ -1,0 +1,40 @@
+[DEFAULT]
+lofarroot = /opt/lofar-3.2.5
+casaroot = /opt/casacore-2.4.1/
+pyraproot =
+hdf5root = /opt/hdf5-1.8.21
+wcsroot = /opt/wcslib-6.2/
+aoflaggerroot=/opt/aoflagger-2.12.1/
+pythonpath = /opt/lofar-3.2.5/lib64/python2.7/site-packages
+recipe_directories = [%(pythonpath)s/lofarpipe/recipes,/local/work/lofaruser1/
+pf_tutorial/git/prefactor-master/prefactor]
+working_directory = /local/work/lofaruserN/pf_run/pipeline
+runtime_directory = /local/work/lofaruserN/pf_run/pipeline
+task_files = [%(lofarroot)s/share/pipeline/tasks.cfg]
+
+[layout]
+job_directory = %(runtime_directory)s/%(job_name)s
+
+[cluster]
+clusterdesc = %(lofarroot)s/share/cep2.clusterdesc
+
+[deploy]
+engine_ppath = %(pythonpath)s:%(pyraproot)s/lib:/opt/cep/pythonlibs/lib/python/site-packages
+engine_lpath = %(lofarroot)s/lib:%(casaroot)s/lib:%(pyraproot)s/lib:%(hdf5root)s/lib:%(wcsroot)s/lib
+
+[logging]
+log_file = %(runtime_directory)s/%(job_name)s/logs/%(start_time)s/pipeline.log
+
+xml_stat_file = %(runtime_directory)s/%(job_name)s/logs/%(start_time)s/statistics.xml
+
+[feedback]
+# Method of providing feedback to LOFAR.
+# Valid options:
+#   messagebus    Send feedback and status using LCS/MessageBus
+#   none          Do NOT send feedback and status
+method = none
+
+
+[remote]
+method = local
+max_per_node = 8

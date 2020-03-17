@@ -12,7 +12,7 @@ __pycache__/
 .DS_Store
 
 # Data
-data*
+data_*
 
 # DB conf
 services/webapp/db_conf.sh
