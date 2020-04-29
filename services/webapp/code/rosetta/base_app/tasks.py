@@ -1,4 +1,4 @@
-from .models import TaskStatuses
+from .models import TaskStatuses, Keys
 from .utils import os_shell
 from .exceptions import ErrorMessage, ConsistencyException
 
@@ -22,6 +22,10 @@ def start_task(task):
 
         # Init run command #--cap-add=NET_ADMIN --cap-add=NET_RAW
         run_command  = 'sudo docker run  --network=rosetta_default --name rosetta-task-{}'.format( task.id)
+
+        # Pass if any
+        if task.auth_pass:
+            run_command += ' -eAUTH_PASS={} '.format(task.auth_pass)
 
         # Data volume
         run_command += ' -v {}/task-{}:/data'.format(TASK_DATA_DIR, task.id)
@@ -67,16 +71,28 @@ def start_task(task):
         host = task.computing.get_conf_param('host')
 
         # Get id_rsa
-        id_rsa_file = task.computing.get_conf_param('id_rsa')
-        if not id_rsa_file: 
-            raise Exception('This computing requires an id_rsa file but cannot find any')
+        #id_rsa_file = task.computing.get_conf_param('id_rsa')
+        #if not id_rsa_file: 
+        #    raise Exception('This computing requires an id_rsa file but cannot find any')
+
+        # Get user keys
+        if task.computing.require_user_keys:
+            user_keys = Keys.objects.get(user=task.user, default=True)
+        else:
+            raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
 
         # 1) Run the container on the host (non blocking)
  
         if task.container.type == 'singularity':
-            
-            run_command  = 'ssh -i {} -4 -o StrictHostKeyChecking=no {} '.format(id_rsa_file, host)
-            run_command += '"export SINGULARITY_NOHTTPS=true && '
+
+            # Set pass if any
+            if task.auth_pass:
+                authstring = ' export SINGULARITYENV_AUTH_PASS={} && '.format(task.auth_pass)
+            else:
+                authstring = ''
+
+            run_command  = 'ssh -i {} -4 -o StrictHostKeyChecking=no {} '.format(user_keys.private_key_file, host)
+            run_command += '"export SINGULARITY_NOHTTPS=true && {} '.format(authstring)
             run_command += 'exec nohup singularity run --pid --writable-tmpfs --containall --cleanenv '
             
             # Set registry
@@ -139,14 +155,17 @@ def stop_task(task):
     
     elif task.computing.type == 'remote':
 
+        # Get user keys
+        if task.computing.require_user_keys:
+            user_keys = Keys.objects.get(user=task.user, default=True)
+        else:
+            raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
+
         # Get computing host
         host = task.computing.get_conf_param('host')
 
-        # Get id_rsa
-        id_rsa_file = task.computing.get_conf_param('id_rsa')
-
         # Stop the task remotely
-        stop_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {} "kill -9 {}"'.format(id_rsa_file, host, task.pid)
+        stop_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {} "kill -9 {}"'.format(user_keys.private_key_file, host, task.pid)
         logger.debug(stop_command)
         out = os_shell(stop_command, capture=True)
         if out.exit_code != 0:

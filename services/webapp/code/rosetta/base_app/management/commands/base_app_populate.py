@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from ...models import Profile, Container, Computing, ComputingSysConf, ComputingUserConf
+from ...models import Profile, Container, Computing, ComputingSysConf, ComputingUserConf, Keys
 
 class Command(BaseCommand):
     help = 'Adds the admin superuser with \'a\' password.'
@@ -31,6 +31,13 @@ class Command(BaseCommand):
             testuser.save() 
             print('Creating testuser profile')
             Profile.objects.create(user=testuser, authtoken='129aac94-284a-4476-953c-ffa4349b4a50')
+
+            # Create default keys
+            print('Creating testuser defualt keys')
+            Keys.objects.create(user = testuser,
+                                default = True,
+                                private_key_file = '/rosetta/.ssh/id_rsa',
+                                public_key_file = '/rosetta/.ssh/id_rsa.pub')
             
 
         # Public containers
@@ -46,7 +53,8 @@ class Command(BaseCommand):
                                      image         = 'rosetta/metadesktop',
                                      type          = 'docker',
                                      registry      = 'docker_local',
-                                     service_ports = '8590')
+                                     service_ports = '8590',
+                                     require_pass  = True)
 
             # MetaDesktop Singularity
             Container.objects.create(user          = None,
@@ -54,7 +62,8 @@ class Command(BaseCommand):
                                      image         = 'rosetta/metadesktop',
                                      type          = 'singularity',
                                      registry      = 'docker_local',
-                                     service_ports = '8590')
+                                     service_ports = '8590',
+                                     require_pass  = True)
 
             # Astrocook
             Container.objects.create(user          = None,
@@ -87,37 +96,57 @@ class Command(BaseCommand):
         else:
             print('Creating demo computing resources containers...')
 
-            # Local computing resource
+            #==============================
+            #  Local remote computing
+            #==============================
             Computing.objects.create(user = None,
                                      name = 'Local',
-                                     type = 'local')
-    
-            # Demo remote computing resource
+                                     type = 'local',
+                                     require_sys_conf  = False,
+                                     require_user_conf = False,
+                                     require_user_keys = False)
+
+
+            #==============================
+            #  Demo remote computing
+            #==============================
             demo_remote_computing = Computing.objects.create(user = None,
-                                     name = 'Demo remote',
-                                     type = 'remote',
-                                     requires_sys_conf  = True,
-                                     requires_user_conf = False)
-    
-            # Create demo remote sys computing conf
+                                                             name = 'Demo remote',
+                                                             type = 'remote',
+                                                             require_sys_conf  = True,
+                                                             require_user_conf = False,
+                                                             require_user_keys = False)    
             ComputingSysConf.objects.create(computing = demo_remote_computing,
                                             data      = {'host': 'slurmclusterworker-one'})
 
-            # Create demo remote user computing conf
+
+            #==============================
+            # Demo remote (auth) computing 
+            #==============================    
+            demo_remote_auth_computing = Computing.objects.create(user = None,
+                                                             name = 'Demo remote (auth)',
+                                                             type = 'remote',
+                                                             require_sys_conf  = True,
+                                                             require_user_conf = True,
+                                                             require_user_keys = True)
+    
+            ComputingSysConf.objects.create(computing = demo_remote_auth_computing,
+                                            data      = {'host': 'slurmclusterworker-one'})
+
             ComputingUserConf.objects.create(user      = testuser,
-                                             computing = demo_remote_computing,
-                                             data      = {'user': 'testuser',
-                                                          'id_rsa': '/rosetta/.ssh/id_rsa',
-                                                          'id_rsa.pub': 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC2n4wiLiRmE1sla5+w0IW3wwPW/mqhhkm7IyCBS+rGTgnts7xsWcxobvamNdD6KSLNnjFZbBb7Yaf/BvWrwQgdqIFVU3gRWHYzoU6js+lKtBjd0e2DAVGivWCKEkSGLx7zhx7uH/Jt8kyZ4NaZq0p5+SFHBzePdR/1rURd8G8+G3OaCPKqP+JQT4RMUQHC5SNRJLcK1piYdmhDiYEyuQG4FlStKCWLCXeUY2EVirNMeQIfOgbUHJsVjH07zm1y8y7lTWDMWVZOnkG6Ap5kB+n4l1eWbslOKgDv29JTFOMU+bvGvYZh70lmLK7Hg4CMpXVgvw5VF9v97YiiigLwvC7wasBHaASwH7wUqakXYhdGFxJ23xVMSLnvJn4S++4L8t8bifRIVqhT6tZCPOU4fdOvJKCRjKrf7gcW/E33ovZFgoOCJ2vBLIh9N9ME0v7tG15JpRtgIBsCXwLcl3tVyCZJ/eyYMbc3QJGsbcPGb2CYRjDbevPCQlNavcMdlyrNIke7VimM5aW8OBJKVh5wCNRpd9XylrKo1cZHYxu/c5Lr6VUZjLpxDlSz+IuTn4VE7vmgHNPnXdlxRKjLHG/FZrZTSCWFEBcRoSa/hysLSFwwDjKd9nelOZRNBvJ+NY48vA8ixVnk4WAMlR/5qhjTRam66BVysHeRcbjJ2IGjwTJC5Q== rosetta@rosetta.platform'})
+                                             computing = demo_remote_auth_computing,
+                                             data      = {'user': 'testuser'})
+         
 
-
-
-            # Demo slurm computing resource
+            #==============================
+            #  Demo Slurm computing
+            #==============================
             demo_slurm_computing = Computing.objects.create(user = None,
-                                     name = 'Demo Slurm',
-                                     type = 'slurm',
-                                     requires_sys_conf  = True,
-                                     requires_user_conf = True)
+                                                            name = 'Demo Slurm',
+                                                            type = 'slurm',
+                                                            require_sys_conf  = True,
+                                                            require_user_conf = True,
+                                                            require_user_keys = True)
     
             # Create demo slurm sys computing conf
             ComputingSysConf.objects.create(computing = demo_slurm_computing,
@@ -126,10 +155,6 @@ class Command(BaseCommand):
             # Create demo slurm user computing conf
             ComputingUserConf.objects.create(user      = testuser,
                                              computing = demo_slurm_computing,
-                                             data      = {'user': 'testuser',
-                                                          'id_rsa': '/rosetta/.ssh/id_rsa',
-                                                          'id_rsa.pub': 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC2n4wiLiRmE1sla5+w0IW3wwPW/mqhhkm7IyCBS+rGTgnts7xsWcxobvamNdD6KSLNnjFZbBb7Yaf/BvWrwQgdqIFVU3gRWHYzoU6js+lKtBjd0e2DAVGivWCKEkSGLx7zhx7uH/Jt8kyZ4NaZq0p5+SFHBzePdR/1rURd8G8+G3OaCPKqP+JQT4RMUQHC5SNRJLcK1piYdmhDiYEyuQG4FlStKCWLCXeUY2EVirNMeQIfOgbUHJsVjH07zm1y8y7lTWDMWVZOnkG6Ap5kB+n4l1eWbslOKgDv29JTFOMU+bvGvYZh70lmLK7Hg4CMpXVgvw5VF9v97YiiigLwvC7wasBHaASwH7wUqakXYhdGFxJ23xVMSLnvJn4S++4L8t8bifRIVqhT6tZCPOU4fdOvJKCRjKrf7gcW/E33ovZFgoOCJ2vBLIh9N9ME0v7tG15JpRtgIBsCXwLcl3tVyCZJ/eyYMbc3QJGsbcPGb2CYRjDbevPCQlNavcMdlyrNIke7VimM5aW8OBJKVh5wCNRpd9XylrKo1cZHYxu/c5Lr6VUZjLpxDlSz+IuTn4VE7vmgHNPnXdlxRKjLHG/FZrZTSCWFEBcRoSa/hysLSFwwDjKd9nelOZRNBvJ+NY48vA8ixVnk4WAMlR/5qhjTRam66BVysHeRcbjJ2IGjwTJC5Q== rosetta@rosetta.platform'})
-
-
+                                             data      = {'user': 'testuser'})
 
 

@@ -74,23 +74,28 @@
           <form action="/create_task/" method="POST">
           {% csrf_token %}
           <input type="hidden" name="step" value="two" />
-          <input type="hidden" name="task_uuid" value="{{ data.task_uuid }}" />
+          <input type="hidden" name="task_uuid" value="{{ data.task.uuid }}" />
 
           <table class="dashboard" style="max-width:700px">
- 
+
+           {% if data.task.container.require_user %}
            <tr>
             <td><b>Task user</b></td>
             <td>
              <input type="text" name="auth_user" value="" placeholder="" size="23" />
             </td>
            </tr>
-           
+           {% endif %}
+
+           {% if data.task.container.require_pass %}
            <tr>
-            <td><b>Task password</b></td>
+            <td valign="top"><b>Set task password</b></td>
             <td>
-             <input type="password" name="auth_password" value="" placeholder="" size="23" />
+             <input type="password" name="auth_password" value="" placeholder="" size="23" /><br>
+             <font size=-1>Use a non-sensitive password as it will be stored in plain text. 6 chars min.</font>
             </td>
            </tr>
+           {% endif %}
 
            <tr>
             <td><b>Access method</b></td><td>

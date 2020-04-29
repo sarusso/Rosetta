@@ -26,6 +26,12 @@
             <td>{{ task.created }}</td>
            </tr>
 
+
+           <tr>
+            <td><b>Running on</b></td>
+            <td>{{ task.computing }}</td>
+           </tr>
+
            <!-- <tr>
             <td><b>Task pid</b></td>
             <td>{{ task.pid}}</td>
@@ -45,7 +51,15 @@
             <td><b>Task tunnel port</b></td>
             <td>{{ task.tunnel_port }}</td>
            </tr>
+
+           {% if task.auth_pass %}
+           <tr>
+            <td><b>Task Auth pass</b></td>
+            <td>{{ task.auth_pass }}</td>
+           </tr>
+           {% endif %}
            
+
            <tr>
             <td><b>Operations</b></td>
             

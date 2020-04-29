@@ -75,6 +75,8 @@ class Container(models.Model):
     registry      = models.CharField('Container registry', max_length=255, blank=False, null=False)
     service_ports = models.CharField('Container service ports', max_length=36, blank=True, null=True)
     #private       = models.BooleanField('Container is private and needs auth to be pulled from the registry')
+    require_user  = models.BooleanField(default=False)
+    require_pass  = models.BooleanField(default=False)
 
     def __str__(self):
         return str('Container of type "{}" with image "{}" with service ports "{}" from registry "{}" of user "{}"'.format(self.type, self.image, self.service_ports, self.registry, self.user))
@@ -103,11 +105,17 @@ class Computing(models.Model):
     name = models.CharField('Computing Name', max_length=255, blank=False, null=False)
     type = models.CharField('Computing Type', max_length=255, blank=False, null=False)
 
-    requires_sys_conf  = models.BooleanField(default=False)
-    requires_user_conf = models.BooleanField(default=False)
+    require_sys_conf  = models.BooleanField(default=False)
+    require_user_conf = models.BooleanField(default=False)
+    require_user_keys = models.BooleanField(default=False)
+
 
     def __str__(self):
-        return str('Computing Resource "{}" of user "{}"'.format(self.name, self.user))
+        if self.user:
+            return str('Computing Resource "{}" of user "{}"'.format(self.name, self.user))
+        else:
+            return str('Computing Resource "{}"'.format(self.name))
+
 
     @property
     def id(self):
@@ -201,6 +209,10 @@ class ComputingSysConf(models.Model):
     def id(self):
         return str(self.uuid).split('-')[0]
 
+    def __str__(self):
+        return str('Computing sys conf for {} with id "{}"'.format(self.computing, self.id))
+
+
 
 class ComputingUserConf(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -210,7 +222,7 @@ class ComputingUserConf(models.Model):
 
     @property
     def id(self):
-        return str(self.uuid).split('-')[0]
+        return str('Computing sys conf for {} with id "{}" of user "{}"'.format(self.computing, self.id, self.user))
 
 
 #=========================
@@ -234,7 +246,7 @@ class Task(models.Model):
 
     # Auth
     auth_user     = models.CharField('Task auth user', max_length=36, blank=True, null=True)
-    auth_password = models.CharField('Task auth password', max_length=36, blank=True, null=True)
+    auth_pass     = models.CharField('Task auth pass', max_length=36, blank=True, null=True)
     access_method = models.CharField('Task access method', max_length=36, blank=True, null=True)
 
     def save(self, *args, **kwargs):
@@ -279,5 +291,23 @@ class Task(models.Model):
         return str(self.uuid).split('-')[0]
 
 
+#=========================
+#  Keys 
+#=========================
+class Keys(models.Model):
+
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE, null=False)  
+
+    private_key_file = models.CharField('Private key file', max_length=4096, blank=False, null=False)
+    public_key_file  = models.CharField('Public key file', max_length=4096, blank=False, null=False)
+
+    default = models.BooleanField('Default keys?', default=False)
 
 
+    def __str__(self):
+        return str('Keys with id "{}" of user "{}"'.format(self.id, self.user))
+
+    @property
+    def id(self):
+        return str(self.uuid).split('-')[0]

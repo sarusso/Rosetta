@@ -18,19 +18,14 @@
       <hr/>
 
       {% if data.computing %}
-      {% include "components/computing.html" with computing=data.computin %}
+      {% include "components/computing.html" with computing=data.computing %}
       {% else %}
       
-      {% for computing in data.platform_computings %}
+      {% for computing in data.computings %}
       {% include "components/computing.html" with computing=computing %}
       <br />
       {% endfor %}
-
-
-      {% for computing in data.user_computings %}
-      {% include "components/computing.html" with computing=computing %}
-      <br />
-      {% endfor %}    
+  
       
       <br />
       <a href="/add_computing">Add new...</a>

@@ -50,6 +50,22 @@ while read env_var; do
 done
 
 #---------------------
+#   Password
+#---------------------
+
+if [ "x$AUTH_PASS" != "x" ]; then
+    echo "[INFO] Setting up VNC password..."
+    mkdir -p /metauser/.vnc
+    /opt/tigervnc/usr/bin/vncpasswd -f <<< $AUTH_PASS > /metauser/.vnc/passwd
+    chmod 600 /metauser/.vnc/passwd
+    export VNC_AUTH=True
+else
+    echo "[INFO] Not setting up any VNC password"
+        
+fi
+
+
+#---------------------
 #  Entrypoint command
 #---------------------
 

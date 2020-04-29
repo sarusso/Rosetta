@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.models import User
 from django.shortcuts import redirect
-from .models import Profile, LoginToken, Task, TaskStatuses, Container, Computing
+from .models import Profile, LoginToken, Task, TaskStatuses, Container, Computing, Keys
 from .utils import send_email, format_exception, timezonize, os_shell, booleanize, debug_param
 from .decorators import public_view, private_view
 from .tasks import start_task, stop_task
@@ -435,7 +435,7 @@ def create_task(request):
 
         # Set step and task uuid
         data['step'] = 'two'
-        data['task_uuid'] = task.uuid
+        data['task'] = task
         
     elif step == 'two':
         
@@ -444,10 +444,13 @@ def create_task(request):
         task = _task_cache[task_uuid]
 
         # Add auth
-        task.task_auth_user     = request.POST.get('auth_user', None)
-        task.task_auth_password = request.POST.get('auth_password', None)
-        task.task_access_method = request.POST.get('access_method', None)
+        task.auth_user     = request.POST.get('auth_user', None)
+        task.auth_pass     = request.POST.get('auth_password', None)
+        task.access_method = request.POST.get('access_method', None)
         
+        # Cheks
+        if len(task.auth_pass) < 6:
+            raise ErrorMessage('Task password must be at least 6 chars') 
         
         # Add auth and/or computing parameters to the task if any
         # TODO... (i..e num cores)
@@ -524,7 +527,11 @@ def task_log(request):
             host = task.computing.get_conf_param('host')
     
             # Get id_rsa
-            id_rsa_file = task.computing.get_conf_param('id_rsa')
+            if task.computing.require_user_keys:
+                user_keys = Keys.objects.get(user=task.user, default=True)
+                id_rsa_file = user_keys.private_key_file
+            else:
+                raise NotImplementedError('temote with no keys not yet')
 
             # View the Singularity container log
             view_log_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}  "cat /tmp/{}.log"'.format(id_rsa_file, host, task.uuid)
@@ -682,10 +689,10 @@ def computings(request):
     data={}
     data['user']    = request.user
     data['profile'] = Profile.objects.get(user=request.user)
-    data['title']   = 'Add computing'
+    data['title']   = 'Computing resources'
     data['name']    = request.POST.get('name',None)
     
-    data['computings'] = list(Computing.objects.filter(user=None)) + Computing.objects.filter(user=request.user)
+    data['computings'] = list(Computing.objects.filter(user=None)) + list(Computing.objects.filter(user=request.user))
     
     # Attach user conf in any
     for computing in data['computings']:
