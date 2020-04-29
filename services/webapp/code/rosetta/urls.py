@@ -55,7 +55,10 @@ urlpatterns = [
     # ViewSet APIs
     path('api/v1/base/login/', base_app_api.login_api.as_view(), name='login_api'),
     path('api/v1/base/logout/', base_app_api.logout_api.as_view(), name='logout_api'),
-  
+
+    # Custom APIs
+    path('api/v1/base/agent/', base_app_api.agent_api.as_view(), name='agent_api'),
+ 
 ]
 
 # This message here is quite useful when developing in autoreload mode

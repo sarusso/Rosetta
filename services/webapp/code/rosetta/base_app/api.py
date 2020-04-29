@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status, serializers, viewsets
 from rest_framework.views import APIView
 from .utils import format_exception
-from .models import Profile
+from .models import Profile, Task, TaskStatuses
  
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -203,6 +203,125 @@ class UserViewSet(viewsets.ModelViewSet):
 
     queryset = User.objects.all().order_by('-date_joined')    
     serializer_class = UserSerializer
+
+
+class agent_api(PublicGETAPI):
+    
+    def _get(self, request):
+        try:
+            
+            task_uuid = request.GET.get('task_uuid', None)
+            if not task_uuid:
+                return HttpResponse('MISSING task_uuid')
+    
+            from django.core.exceptions import ValidationError
+    
+            try:
+                task = Task.objects.get(uuid=task_uuid)
+            except (Task.DoesNotExist, ValidationError):
+                return HttpResponse('Unknown task uuid "{}"'.format(task_uuid))
+                
+            host_conn_string = 'http://172.21.0.1:8080'
+            
+            action = request.GET.get('action', None)
+            
+            if not action:
+                # Return the agent code
+                agent_code='''
+import logging
+import socket
+try:
+    from urllib.request import urlopen
+except ImportError:
+    from urllib import urlopen
+
+# Setup logging
+logger = logging.getLogger('Agent')
+logging.basicConfig(level=logging.INFO)
+
+hostname = socket.gethostname()
+
+# Task id set by the API
+task_uuid = "'''+ task_uuid  +'''"
+
+# Log
+logger.info('Reporting for task uuid: "{}"'.format(task_uuid))
+
+# Get IP
+ip = socket.gethostbyname(hostname)
+logger.info(' - ip: "{}"'.format(ip))
+
+# Get port
+from random import randint
+while True:
+
+    # Get a random ephimeral port
+    port = randint(49152, 65535)
+
+    # Check port is available
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    result = sock.connect_ex(('127.0.0.1', port))
+    if result == 0:
+        print('Found not available ephimeral port ({}) , choosing another one...'.format(port))
+        import time
+        time.sleep(1)
+    else:
+        break
+logger.info(' - port: "{}"'.format(port))
+
+response = urlopen("'''+host_conn_string+'''/api/v1/base/agent/?task_uuid={}&action=set_ip_port&ip={}&port={}".format(task_uuid, ip, port))
+response_content = response.read() 
+if response_content != 'OK':
+    logger.error(response_content)
+    logger.info('Not everything OK, exiting with status code =1')
+    sys.exit(1)
+else:
+    logger.info('Everything OK')
+print(port)
+'''
+        
+                return HttpResponse(agent_code)
+    
+    
+            elif action=='set_ip_port':
+                
+                task_ip   = request.GET.get('ip', None)
+                if not task_ip:
+                    return HttpResponse('IP not valid (got "{}")'.format(task_ip))
+                
+                task_port = request.GET.get('port', None)
+                if not task_port:
+                    return HttpResponse('Port not valid (got "{}")'.format(task_port))
+                
+                try:
+                    int(task_port)
+                except (TypeError, ValueError):
+                    return HttpResponse('Port not valid (got "{}")'.format(task_port))
+                  
+                # Set fields
+                task.status = TaskStatuses.running
+                task.ip     = task_ip
+                #task.pid    = task_pid
+                task.port   = int(task_port)
+                task.save()
+                return HttpResponse('OK')
+                
+    
+            else:
+                return HttpResponse('Unknown action "{}"'.format(action))
+    
+
+        except Exception as e:
+            logger.error(e)
+
+
+
+
+
+
+
+
+
 
 
 
