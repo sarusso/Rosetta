@@ -220,8 +220,12 @@ class agent_api(PublicGETAPI):
                 task = Task.objects.get(uuid=task_uuid)
             except (Task.DoesNotExist, ValidationError):
                 return HttpResponse('Unknown task uuid "{}"'.format(task_uuid))
-                
-            host_conn_string = 'http://172.21.0.1:8080'
+
+            import socket
+            hostname = socket.gethostname()
+            webapp_ip = socket.gethostbyname(hostname)
+
+            host_conn_string = 'http://{}:8080'.format(webapp_ip)
             
             action = request.GET.get('action', None)
             
@@ -299,6 +303,7 @@ print(port)
                     return HttpResponse('Port not valid (got "{}")'.format(task_port))
                   
                 # Set fields
+                logger.info('Setting task "{}" to ip "{}" and port "{}"'.format(task.uuid, task_ip, task_port))
                 task.status = TaskStatuses.running
                 task.ip     = task_ip
                 #task.pid    = task_pid
