@@ -292,7 +292,7 @@ def tasks(request):
             elif action=='connect':
     
                 # Create task tunnel
-                if task.computing.type in ['local', 'remote']:
+                if task.computing.type in ['local', 'remote', 'slurm']:
     
                     # If there is no tunnel port allocated yet, find one
                     if not task.tunnel_port:
