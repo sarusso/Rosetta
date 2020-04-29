@@ -56,8 +56,9 @@ RUN cd /opt && wget https://bintray.com/tigervnc/stable/download_file?file_path=
 # Supervisord configuration
 COPY files/supervisord_vnc.conf /etc/supervisor/conf.d/
 COPY files/run_vnc.sh /etc/supervisor/conf.d/
+COPY files/run_novnc.sh /etc/supervisor/conf.d/
 RUN chmod 755 /etc/supervisor/conf.d/run_vnc.sh
-
+RUN chmod 755 /etc/supervisor/conf.d/run_novnc.sh
 
 # Web VNC (noVNC) v0.6.1.
 # NOTE: this is a custom version from Doro Wu (fcwu.tw@gmail.com).
@@ -69,7 +70,7 @@ COPY files/index.html /usr/lib/noVNC
 RUN apt-get install -y net-tools
 
 # Supervisord configuration
-COPY files/supervisord_webvnc.conf /etc/supervisor/conf.d/
+COPY files/supervisord_novnc.conf /etc/supervisor/conf.d/
 
 # X environment setup/startup
 RUN apt-get install fluxbox -y
