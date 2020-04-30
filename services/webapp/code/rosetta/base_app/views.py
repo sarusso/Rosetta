@@ -662,12 +662,12 @@ def computings(request):
     data['name']    = request.POST.get('name',None)
     
     data['computings'] = list(Computing.objects.filter(user=None)) + list(Computing.objects.filter(user=request.user))
-    
     # Attach user conf in any
     for computing in data['computings']:
         computing.attach_user_conf_data(request.user) 
 
     return render(request, 'computings.html', {'data': data})
+
 
 #=========================
 #  Add Compute view

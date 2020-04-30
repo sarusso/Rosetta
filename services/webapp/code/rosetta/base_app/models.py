@@ -31,23 +31,28 @@ class TaskStatuses(object):
     exited = 'exited'
 
 
+
 #=========================
 #  Profile 
 #=========================
 
 class Profile(models.Model):
+
     uuid      = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user      = models.OneToOneField(User, on_delete=models.CASCADE)
     timezone  = models.CharField('User Timezone', max_length=36, default='UTC')
     authtoken = models.CharField('User auth token', max_length=36, blank=True, null=True)
+
 
     def save(self, *args, **kwargs):
         if not self.authtoken:
             self.authtoken = str(uuid.uuid4())
         super(Profile, self).save(*args, **kwargs)
 
+
     def __unicode__(self):
         return str('Profile of user "{}"'.format(self.user.username))
+
 
 
 #=========================
@@ -55,6 +60,7 @@ class Profile(models.Model):
 #=========================
 
 class LoginToken(models.Model):
+
     uuid  = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user  = models.OneToOneField(User, on_delete=models.CASCADE)
     token = models.CharField('Login token', max_length=36)
@@ -79,23 +85,20 @@ class Container(models.Model):
     require_user  = models.BooleanField(default=False)
     require_pass  = models.BooleanField(default=False)
 
+
     def __str__(self):
         return str('Container of type "{}" with image "{}" with service ports "{}" from registry "{}" of user "{}"'.format(self.type, self.image, self.service_ports, self.registry, self.user))
+
 
     @property
     def id(self):
         return str(self.uuid).split('-')[0]
 
-    #@property
-    #def name(self):
-    #    return self.image.split(':')[0].replace('_',' ').replace('-', ' ').replace('/', ' ').title()
+
 
 #=========================
 #  Computing resources
 #=========================
-
-# TODO: this must be an abstract class. Or maybe not? Maybe Add ComputingConfiguration/Handler with the relevant fields and methods?
-#       ...so that can be used as foreign key in the tasks as well? Examples: ComputingConfiguration ComputingType ComputingHandler
 
 class Computing(models.Model):
 
@@ -122,49 +125,13 @@ class Computing(models.Model):
     def id(self):
         return str(self.uuid).split('-')[0]
 
-    # Validate conf
-    def validate_conf_data(self, sys_conf_data=None, user_conf_data=None):
-        
-        if self.type == 'local':
-            pass
-        
-        elif self.type == 'remote':
-            # Check that we have all the data for a remote computing resource
 
-            # Look for host:
-            host_found = False
-            if sys_conf_data  and 'host' in sys_conf_data  and sys_conf_data['host']:  host_found=True
-            if user_conf_data and 'host' in user_conf_data and user_conf_data['host']: host_found=True
-            if not host_found:
-                raise ConfigurationError('Missing host in conf')
-            
-            
-            # Look for user:
-            user_found = False
-            if sys_conf_data  and 'user' in sys_conf_data  and sys_conf_data['user']:  user_found=True
-            if user_conf_data and 'user' in user_conf_data and user_conf_data['user']: user_found=True
-            if not user_found:
-                raise ConfigurationError('Missing user in conf')               
-
-            # Look for password/identity:
-            password_found = False
-            identity_found = False
-            if sys_conf_data  and 'password' in sys_conf_data  and sys_conf_data['password']:  password_found=True
-            if user_conf_data and 'password' in user_conf_data and user_conf_data['password']: password_found=True
-            if sys_conf_data  and 'identity' in sys_conf_data  and sys_conf_data['identity']:  identity_found=True
-            if user_conf_data and 'identity' in user_conf_data and user_conf_data['identity']: identity_found=True       
-            if not password_found and not identity_found:
-                raise ConfigurationError('Missing password or identity in conf')
-
-        elif self.type == 'slurm':
-            raise NotImplementedError('Not yet implemented for Slurm')
-
-        else:
-            raise ConsistencyError('Unknown computing type "{}"'.format(self.type))
-    
     @property    
-    def sys_conf_data(self):          
-        return ComputingSysConf.objects.get(computing=self).data
+    def sys_conf_data(self):
+        try:
+            return ComputingSysConf.objects.get(computing=self).data
+        except ComputingSysConf.DoesNotExist:
+            return None
     
     @property    
     def user_conf_data(self):
@@ -172,6 +139,7 @@ class Computing(models.Model):
             return self._user_conf_data
         except AttributeError:
             raise AttributeError('User conf data is not yet attached, please attach it before accessing.')
+
     
     def attach_user_conf_data(self, user):
         if self.user and self.user != user:
@@ -181,17 +149,6 @@ class Computing(models.Model):
         except ComputingUserConf.DoesNotExist:
             self._user_conf_data = None
 
-    # Get id_rsa file
-    #@property
-    #def id_rsa_file(self):
-    #    try:
-    #        id_rsa_file = self.user_conf_data['id_rsa']
-    #    except (TypeError, KeyError, AttributeError):
-    #        try:
-    #            id_rsa_file = self.sys_conf_data['id_rsa']
-    #        except:
-    #            id_rsa_file = None
-    #    return id_rsa_file
 
     def get_conf_param(self, param):
         try:
@@ -200,6 +157,7 @@ class Computing(models.Model):
             param_value = self.user_conf_data[param]
         return param_value
 
+
     @property
     def manager(self):
         from . import computing_managers
@@ -207,14 +165,18 @@ class Computing(models.Model):
         return ComputingManager()
 
 
+
 class ComputingSysConf(models.Model):
+
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     computing = models.ForeignKey(Computing, related_name='+', on_delete=models.CASCADE)
     data = JSONField(blank=True, null=True)
 
+
     @property
     def id(self):
         return str(self.uuid).split('-')[0]
+
 
     def __str__(self):
         return str('Computing sys conf for {} with id "{}"'.format(self.computing, self.id))
@@ -222,20 +184,25 @@ class ComputingSysConf(models.Model):
 
 
 class ComputingUserConf(models.Model):
+
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE, null=True)
     computing = models.ForeignKey(Computing, related_name='+', on_delete=models.CASCADE)
     data = JSONField(blank=True, null=True)
+
 
     @property
     def id(self):
         return str('Computing sys conf for {} with id "{}" of user "{}"'.format(self.computing, self.id, self.user))
 
 
+
 #=========================
 #  Tasks 
 #=========================
+
 class Task(models.Model):
+
     uuid      = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user      = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE)
     tid       = models.CharField('Task ID', max_length=64, blank=False, null=False)
@@ -255,6 +222,7 @@ class Task(models.Model):
     auth_user     = models.CharField('Task auth user', max_length=36, blank=True, null=True)
     auth_pass     = models.CharField('Task auth pass', max_length=36, blank=True, null=True)
     access_method = models.CharField('Task access method', max_length=36, blank=True, null=True)
+
 
     def save(self, *args, **kwargs):
         
@@ -298,9 +266,11 @@ class Task(models.Model):
         return str(self.uuid).split('-')[0]
 
 
+
 #=========================
 #  Keys 
 #=========================
+
 class Keys(models.Model):
 
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -315,6 +285,16 @@ class Keys(models.Model):
     def __str__(self):
         return str('Keys with id "{}" of user "{}"'.format(self.id, self.user))
 
+
     @property
     def id(self):
         return str(self.uuid).split('-')[0]
+
+
+
+
+
+
+
+
+

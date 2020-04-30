@@ -26,22 +26,4 @@ class Modeltest(BaseAPITestCase):
         
         self.assertEqual(ComputingSysConf.objects.all()[0].data, {'myvar':42})
         
-        # Will raise, no host or user or pass/identity
-        with self.assertRaises(Exception):
-            computing.validate_conf_data(sys_conf_data=computingSysConf.data)
-
-        # Complete conf
-        computingSysConf_1 = ComputingSysConf.objects.create(computing=computing, data={'host':'localhost', 'user':'testuser', 'password':'testpass'})
-        
-        # Will not raise
-        computing.validate_conf_data(sys_conf_data=computingSysConf_1.data)
-
-
-        # Complete conf
-        #computingSysConf_1 = ComputingSysConf.objects.create(computing=computing, data={'host':'localhost', 'user':'testuser', 'password':'testpass'})
-        
-        # Will not raise
-        #computing.validate_conf_data(sys_conf_data=computingSysConf_1.data)
-
-
 
