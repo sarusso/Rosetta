@@ -276,7 +276,7 @@ class SlurmComputingManager(ComputingManager):
         logger.debug('Starting a remote task "{}"'.format(task.computing))
 
         # Get computing host #Key Error ATM
-        host = 'slurmclustermaster-main' #task.computing.get_conf_param('host')
+        host = task.computing.get_conf_param('master')
         user = task.computing.get_conf_param('user')
         
         # Get user keys
