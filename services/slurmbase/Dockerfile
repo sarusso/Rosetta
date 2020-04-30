@@ -25,5 +25,6 @@ RUN ln -s /var/log/slurm-llnl /var/log/slurm-wlm
 
 # Add slurmtestuser user
 RUN useradd slurmtestuser
-RUN cp -a /rosetta/.ssh /home/slurmtestuser
+RUN mkdir -p /home/slurmtestuser/.ssh
+RUN cat /rosetta/.ssh/id_rsa.pub >> /home/slurmtestuser/.ssh/authorized_keys
 RUN chown -R slurmtestuser:slurmtestuser /home/slurmtestuser   

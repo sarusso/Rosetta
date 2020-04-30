@@ -154,6 +154,7 @@ class RemoteComputingManager(ComputingManager):
 
         # Get computing host
         host = task.computing.get_conf_param('host')
+        user = task.computing.get_conf_param('user')
 
         # Get user keys
         if task.computing.require_user_keys:
@@ -178,8 +179,8 @@ class RemoteComputingManager(ComputingManager):
             hostname = socket.gethostname()
             webapp_ip = socket.gethostbyname(hostname)
 
-            run_command  = 'ssh -i {} -4 -o StrictHostKeyChecking=no {} '.format(user_keys.private_key_file, host)
-            run_command+= '"wget {}:8080/api/v1/base/agent/?task_uuid={} -O /tmp/agent_{}.py &> /dev/null && export BASE_PORT=\$(python /tmp/agent_{}.py 2> /tmp/{}.log) && '.format(webapp_ip, task.uuid, task.uuid, task.uuid, task.uuid)
+            run_command  = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, user, host)
+            run_command += '/bin/bash -c \'"wget {}:8080/api/v1/base/agent/?task_uuid={} -O /tmp/agent_{}.py &> /dev/null && export BASE_PORT=\$(python /tmp/agent_{}.py 2> /tmp/{}.log) && '.format(webapp_ip, task.uuid, task.uuid, task.uuid, task.uuid)
             run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\$BASE_PORT && {} '.format(authstring)
             run_command += 'exec nohup singularity run --pid --writable-tmpfs --containall --cleanenv '
             
@@ -198,7 +199,7 @@ class RemoteComputingManager(ComputingManager):
             else:
                 raise NotImplementedError('Registry {} not supported'.format(task.container.registry))
     
-            run_command+='{}{} &>> /tmp/{}.log & echo \$!"'.format(registry, task.container.image, task.uuid)
+            run_command+='{}{} &>> /tmp/{}.log & echo \$!"\''.format(registry, task.container.image, task.uuid)
             
         else:
             raise NotImplementedError('Container {} not supported'.format(task.container.type))
@@ -236,9 +237,10 @@ class RemoteComputingManager(ComputingManager):
 
         # Get computing host
         host = task.computing.get_conf_param('host')
+        user = task.computing.get_conf_param('user')
 
         # Stop the task remotely
-        stop_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {} "kill -9 {}"'.format(user_keys.private_key_file, host, task.pid)
+        stop_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "kill -9 {}"\''.format(user_keys.private_key_file, user, host, task.pid)
         logger.debug(stop_command)
         out = os_shell(stop_command, capture=True)
         if out.exit_code != 0:
@@ -255,10 +257,10 @@ class RemoteComputingManager(ComputingManager):
             user_keys = Keys.objects.get(user=task.user, default=True)
             id_rsa_file = user_keys.private_key_file
         else:
-            raise NotImplementedError('temote with no keys not yet')
+            raise NotImplementedError('Remote with no keys not yet')
 
         # View the Singularity container log
-        view_log_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}  "cat /tmp/{}.log"'.format(id_rsa_file, host, task.uuid)
+        view_log_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {} \'/bin/bash -c "cat /tmp/{}.log"\''.format(id_rsa_file, host, task.uuid)
         logger.debug(view_log_command)
         out = os_shell(view_log_command, capture=True)
         if out.exit_code != 0:
@@ -275,7 +277,8 @@ class SlurmComputingManager(ComputingManager):
 
         # Get computing host #Key Error ATM
         host = 'slurmclustermaster-main' #task.computing.get_conf_param('host')
-
+        user = task.computing.get_conf_param('user')
+        
         # Get user keys
         if task.computing.require_user_keys:
             user_keys = Keys.objects.get(user=task.user, default=True)
@@ -286,7 +289,7 @@ class SlurmComputingManager(ComputingManager):
  
         if task.container.type == 'singularity':
 
-            if not task.dynamic_ports:
+            if not task.container.dynamic_ports:
                 raise Exception('This task does not support dynamic port allocation and is therefore not supported using singularity on Slurm')
 
             # Set pass if any
@@ -299,9 +302,9 @@ class SlurmComputingManager(ComputingManager):
             hostname = socket.gethostname()
             webapp_ip = socket.gethostbyname(hostname)
 
-            run_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {} '.format(user_keys.private_key_file, host)
+            run_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, user, host)
 
-            run_command += '"echo \\"#!/bin/bash\nwget {}:8080/api/v1/base/agent/?task_uuid={} -O /tmp/agent_{}.py &> /dev/null && export BASE_PORT=\\\\\\$(python /tmp/agent_{}.py 2> /tmp/{}.log) && '.format(webapp_ip, task.uuid, task.uuid, task.uuid, task.uuid)
+            run_command += '\'bash -c "echo \\"#!/bin/bash\nwget {}:8080/api/v1/base/agent/?task_uuid={} -O /tmp/agent_{}.py &> /dev/null && export BASE_PORT=\\\\\\$(python /tmp/agent_{}.py 2> /tmp/{}.log) && '.format(webapp_ip, task.uuid, task.uuid, task.uuid, task.uuid)
             run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\\\\\\$BASE_PORT && {} '.format(authstring)
             run_command += 'exec nohup singularity run --pid --writable-tmpfs --containall --cleanenv '
 
@@ -321,7 +324,7 @@ class SlurmComputingManager(ComputingManager):
             else:
                 raise NotImplementedError('Registry {} not supported'.format(task.container.registry))
     
-            run_command+='{}{} &> /tmp/{}.log\\" > /tmp/{}.sh && sbatch -p partition1 /tmp/{}.sh"'.format(registry, task.container.image, task.uuid, task.uuid, task.uuid)
+            run_command+='{}{} &> /tmp/{}.log\\" > /tmp/{}.sh && sbatch -p partition1 /tmp/{}.sh"\''.format(registry, task.container.image, task.uuid, task.uuid, task.uuid)
 
             
         else:
