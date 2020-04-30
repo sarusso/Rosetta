@@ -108,23 +108,10 @@ class Command(BaseCommand):
 
 
             #==============================
-            #  Demo remote computing
-            #==============================
-            demo_remote_computing = Computing.objects.create(user = None,
-                                                             name = 'Demo remote',
-                                                             type = 'remote',
-                                                             require_sys_conf  = True,
-                                                             require_user_conf = False,
-                                                             require_user_keys = False)    
-            ComputingSysConf.objects.create(computing = demo_remote_computing,
-                                            data      = {'host': 'slurmclusterworker-one'})
-
-
-            #==============================
-            # Demo remote (auth) computing 
+            # Demo remote computing 
             #==============================    
             demo_remote_auth_computing = Computing.objects.create(user = None,
-                                                             name = 'Demo remote (auth)',
+                                                             name = 'Demo remote',
                                                              type = 'remote',
                                                              require_sys_conf  = True,
                                                              require_user_conf = True,

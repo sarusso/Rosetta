@@ -9,7 +9,6 @@ from django.shortcuts import redirect
 from .models import Profile, LoginToken, Task, TaskStatuses, Container, Computing, Keys
 from .utils import send_email, format_exception, timezonize, os_shell, booleanize, debug_param
 from .decorators import public_view, private_view
-from .tasks import start_task, stop_task
 from .exceptions import ErrorMessage
 
 # Setup logging
@@ -180,6 +179,10 @@ def account(request):
     if edit and edit.upper() == 'NONE':
         edit = None
 
+    # Set data.default_public_key
+    with open(Keys.objects.get(user=request.user, default=True).public_key_file) as f:
+        data['default_public_key'] = f.read()
+
     # Edit values
     if edit and value:
         try:
@@ -269,8 +272,10 @@ def tasks(request):
 
             if action=='delete':
                 if task.status not in [TaskStatuses.stopped, TaskStatuses.exited]:
-                    data['error'] = 'Can delete only tasks in the stopped state'
-                    return render(request, 'error.html', {'data': data})
+                    try:
+                        task.computing.manager.stop_task(task)
+                    except:
+                        pass
                 try:
                     # Get the task (raises if none available including no permission)
                     task = Task.objects.get(user=request.user, uuid=uuid)
@@ -287,57 +292,51 @@ def tasks(request):
                     return render(request, 'error.html', {'data': data})
     
             elif action=='stop': # or delete,a and if delete also remove object               
-                stop_task(task)
+                task.computing.manager.stop_task(task)
 
             elif action=='connect':
-    
-                # Create task tunnel
-                if task.computing.type in ['local', 'remote', 'slurm']:
-    
-                    # If there is no tunnel port allocated yet, find one
-                    if not task.tunnel_port:
-    
-                        # Get a free port fot the tunnel:
-                        allocated_tunnel_ports = []
-                        for other_task in Task.objects.all():
-                            if other_task.tunnel_port and not other_task.status in [TaskStatuses.exited, TaskStatuses.stopped]:
-                                allocated_tunnel_ports.append(other_task.tunnel_port)
-    
-                        for port in range(7000, 7006):
-                            if not port in allocated_tunnel_ports:
-                                tunnel_port = port
-                                break
-                        if not tunnel_port:
-                            logger.error('Cannot find a free port for the tunnel for task "{}"'.format(task.tid))
-                            raise ErrorMessage('Cannot find a free port for the tunnel to the task')
-    
-                        task.tunnel_port = tunnel_port
-                        task.save()
-    
-    
-                    # Check if the tunnel is active and if not create it
-                    logger.debug('Checking if task "{}" has a running tunnel'.format(task.tid))
-    
-                    out = os_shell('ps -ef | grep ":{}:{}:{}" | grep -v grep'.format(task.tunnel_port, task.ip, task.port), capture=True)
-    
-                    if out.exit_code == 0:
-                        logger.debug('Task "{}" has a running tunnel, using it'.format(task.tid))
-                    else:
-                        logger.debug('Task "{}" has no running tunnel, creating it'.format(task.tid))
-    
-                        # Tunnel command
-                        tunnel_command= 'ssh -4 -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} localhost & '.format(task.tunnel_port, task.ip, task.port)
-                        background_tunnel_command = 'nohup {} >/dev/null 2>&1 &'.format(tunnel_command)
-    
-                        # Log
-                        logger.debug('Opening tunnel with command: {}'.format(background_tunnel_command))
-    
-                        # Execute
-                        subprocess.Popen(background_tunnel_command, shell=True)
-    
+
+                # If there is no tunnel port allocated yet, find one
+                if not task.tunnel_port:
+
+                    # Get a free port fot the tunnel:
+                    allocated_tunnel_ports = []
+                    for other_task in Task.objects.all():
+                        if other_task.tunnel_port and not other_task.status in [TaskStatuses.exited, TaskStatuses.stopped]:
+                            allocated_tunnel_ports.append(other_task.tunnel_port)
+
+                    for port in range(7000, 7006):
+                        if not port in allocated_tunnel_ports:
+                            tunnel_port = port
+                            break
+                    if not tunnel_port:
+                        logger.error('Cannot find a free port for the tunnel for task "{}"'.format(task.tid))
+                        raise ErrorMessage('Cannot find a free port for the tunnel to the task')
+
+                    task.tunnel_port = tunnel_port
+                    task.save()
+
+
+                # Check if the tunnel is active and if not create it
+                logger.debug('Checking if task "{}" has a running tunnel'.format(task.tid))
+
+                out = os_shell('ps -ef | grep ":{}:{}:{}" | grep -v grep'.format(task.tunnel_port, task.ip, task.port), capture=True)
+
+                if out.exit_code == 0:
+                    logger.debug('Task "{}" has a running tunnel, using it'.format(task.tid))
                 else:
-                    raise ErrorMessage('Connecting to tasks on computing "{}" is not supported yet'.format(task.computing))
-    
+                    logger.debug('Task "{}" has no running tunnel, creating it'.format(task.tid))
+
+                    # Tunnel command
+                    tunnel_command= 'ssh -4 -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} localhost & '.format(task.tunnel_port, task.ip, task.port)
+                    background_tunnel_command = 'nohup {} >/dev/null 2>&1 &'.format(tunnel_command)
+
+                    # Log
+                    logger.debug('Opening tunnel with command: {}'.format(background_tunnel_command))
+
+                    # Execute
+                    subprocess.Popen(background_tunnel_command, shell=True)
+
                 # Ok, now redirect to the task through the tunnel
                 return redirect('http://localhost:{}'.format(task.tunnel_port))
 
@@ -462,7 +461,11 @@ def create_task(request):
         task.computing.attach_user_conf_data(task.user)
 
         # Start the task
-        start_task(task)
+        #try:
+        task.computing.manager.start_task(task)
+        #except:
+        #    task.delete()
+        #    raise
 
         # Set step        
         data['step'] = 'created'
@@ -510,41 +513,7 @@ def task_log(request):
     # Get the log
     try:
 
-        if task.computing.type == 'local':
-
-            # View the Docker container log (attach)
-            view_log_command = 'sudo docker logs {}'.format(task.tid,)
-            logger.debug(view_log_command)
-            out = os_shell(view_log_command, capture=True)
-            if out.exit_code != 0:
-                raise Exception(out.stderr)
-            else:
-                data['log'] = out.stdout
-
-        elif task.computing.type == 'remote':
-
-            # Get computing host
-            host = task.computing.get_conf_param('host')
-    
-            # Get id_rsa
-            if task.computing.require_user_keys:
-                user_keys = Keys.objects.get(user=task.user, default=True)
-                id_rsa_file = user_keys.private_key_file
-            else:
-                raise NotImplementedError('temote with no keys not yet')
-
-            # View the Singularity container log
-            view_log_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}  "cat /tmp/{}.log"'.format(id_rsa_file, host, task.uuid)
-            logger.debug(view_log_command)
-            out = os_shell(view_log_command, capture=True)
-            if out.exit_code != 0:
-                raise Exception(out.stderr)
-            else:
-                data['log'] = out.stdout
-
-        else:
-            data['error']= 'Don\'t know how to view task logs on "{}" computing resource.'.format(task.computing)
-            return render(request, 'error.html', {'data': data})
+        data['log'] = task.computing.manager.get_task_log(task)
 
     except Exception as e:
         data['error'] = 'Error in viewing task log'

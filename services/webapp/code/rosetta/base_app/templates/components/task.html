@@ -71,11 +71,7 @@
             <font color="#c0c0c0">Stop</font> | 
             
             {% endif %}
-            {% if task.status == "exited" or task.status == "stopped" %}
             <a href="?uuid={{task.uuid}}&action=delete&details=False">Delete</a>
-            {% else %}
-            <font color="#c0c0c0">Delete</font>
-            {% endif %}
             {% if task.status == "running" %}
              | <a href="?uuid={{task.uuid}}&action=connect">Connect</a>
              | <a href="/task_log/?uuid={{task.uuid}}&action=viewlog">View Log</a>

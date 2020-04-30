@@ -200,6 +200,12 @@ class Computing(models.Model):
             param_value = self.user_conf_data[param]
         return param_value
 
+    @property
+    def manager(self):
+        from . import computing_managers
+        ComputingManager = getattr(computing_managers, '{}ComputingManager'.format(self.type.title()))
+        return ComputingManager()
+
 
 class ComputingSysConf(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
