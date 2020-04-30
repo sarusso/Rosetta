@@ -240,9 +240,12 @@ def start_task(task):
 
             run_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {} '.format(user_keys.private_key_file, host)
 
-            run_command += '"echo \\"wget {}:8080/api/v1/base/agent/?task_uuid={} -O /tmp/agent_{}.py &> /dev/null && export TASK_PORT=\\\\\\$(python /tmp/agent_{}.py 2> /tmp/{}.log) && '.format(webapp_ip, task.uuid, task.uuid, task.uuid, task.uuid)
+            run_command += '"echo \\"#!/bin/bash\nwget {}:8080/api/v1/base/agent/?task_uuid={} -O /tmp/agent_{}.py &> /dev/null && export TASK_PORT=\\\\\\$(python /tmp/agent_{}.py 2> /tmp/{}.log) && '.format(webapp_ip, task.uuid, task.uuid, task.uuid, task.uuid)
             run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_TASK_PORT=\\\\\\$TASK_PORT && {} '.format(authstring)
             run_command += 'exec nohup singularity run --pid --writable-tmpfs --containall --cleanenv '
+
+
+            # Double to escape for python six for shell (double times three as \\\ escapes a single slash in shell)
 
             # ssh -i /rosetta/.ssh/id_rsa -4 -o StrictHostKeyChecking=no slurmclustermaster-main "echo \"wget 172.18.0.5:8080/api/v1/base/agent/?task_uuid=558c65c3-8b72-4d6b-8119-e1dcf6f81177 -O /tmp/agent_558c65c3-8b72-4d6b-8119-e1dcf6f81177.py &> /dev/null
             #  && export TASK_PORT=\\\$(python /tmp/agent_558c65c3-8b72-4d6b-8119-e1dcf6f81177.py 2> /tmp/558c65c3-8b72-4d6b-8119-e1dcf6f81177.log) && export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_TASK_PORT=\\\$TASK_PORT &&  export SINGULARITYENV_AUTH_PASS=testpass 
@@ -257,7 +260,7 @@ def start_task(task):
             else:
                 raise NotImplementedError('Registry {} not supported'.format(task.container.registry))
     
-            run_command+='{}{} &> /tmp/{}.log\\" > /tmp/{}.sh"'.format(registry, task.container.image, task.uuid, task.uuid)
+            run_command+='{}{} &> /tmp/{}.log\\" > /tmp/{}.sh && sbatch -p partition1 /tmp/{}.sh"'.format(registry, task.container.image, task.uuid, task.uuid, task.uuid)
 
             
         else:
