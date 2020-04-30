@@ -7,6 +7,12 @@ set -e
 echo ""
 echo "[INFO] Executing entrypoint..."
 
+if [ "x$BASE_PORT" == "x" ]; then
+    echo "[INFO] No task base port set, will set noVNC port 8590 and VNC port 5900 with desktop id \"0\""  
+else 
+    echo "[INFO] Task base port set, will set noVNC port $BASE_PORT and noVNC port $(($BASE_PORT+1)) with desktop id \"$(($BASE_PORT-5900+1))\""
+fi
+
 #---------------------
 #   Setup home
 #---------------------

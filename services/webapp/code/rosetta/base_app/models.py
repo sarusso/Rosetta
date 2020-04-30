@@ -80,14 +80,14 @@ class Container(models.Model):
     image         = models.CharField('Container image', max_length=255, blank=False, null=False)
     type          = models.CharField('Container type', max_length=36, blank=False, null=False)
     registry      = models.CharField('Container registry', max_length=255, blank=False, null=False)
-    service_ports = models.CharField('Container service ports', max_length=36, blank=True, null=True)
-    #private       = models.BooleanField('Container is private and needs auth to be pulled from the registry')
+    default_ports = models.CharField('Container service ports', max_length=36, blank=True, null=True)
+    dynamic_ports = models.BooleanField(default=False)
     require_user  = models.BooleanField(default=False)
     require_pass  = models.BooleanField(default=False)
 
 
     def __str__(self):
-        return str('Container of type "{}" with image "{}" with service ports "{}" from registry "{}" of user "{}"'.format(self.type, self.image, self.service_ports, self.registry, self.user))
+        return str('Container of type "{}" with image "{}" with service ports "{}" from registry "{}" of user "{}"'.format(self.type, self.image, self.default_ports, self.registry, self.user))
 
 
     @property

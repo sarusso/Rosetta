@@ -22,3 +22,8 @@ COPY slurm.conf /etc/slurm-llnl/slurm.conf
 # TODO: why do we need this?
 RUN ln -s /var/lib/slurm-llnl /var/lib/slurm-wlm 
 RUN ln -s /var/log/slurm-llnl /var/log/slurm-wlm
+
+# Add slurmtestuser user
+RUN useradd slurmtestuser
+RUN cp -a /rosetta/.ssh /home/slurmtestuser
+RUN chown -R slurmtestuser:slurmtestuser /home/slurmtestuser   

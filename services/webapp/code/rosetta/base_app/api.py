@@ -260,18 +260,20 @@ from random import randint
 while True:
 
     # Get a random ephimeral port
-    port = randint(49152, 65535)
+    port = randint(49152, 65535-2)
 
     # Check port is available
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    result = sock.connect_ex(('127.0.0.1', port))
-    if result == 0:
-        print('Found not available ephimeral port ({}) , choosing another one...'.format(port))
+    result1 = sock.connect_ex(('127.0.0.1', port))
+    result2 = sock.connect_ex(('127.0.0.1', port+1))
+    result3 = sock.connect_ex(('127.0.0.1', port+2))
+    if (result1 == 0) or (result2 == 0) or (result3 == 0):
+        logger.info('Found not available ephemeral port triplet ({},{},{}) , choosing another one...'.format(port,port+1,port+2))
         import time
         time.sleep(1)
     else:
         break
-logger.info(' - port: "{}"'.format(port))
+logger.info(' - ports: "{},{},{}"'.format(port, port+1, port+2))
 
 response = urlopen("'''+host_conn_string+'''/api/v1/base/agent/?task_uuid={}&action=set_ip_port&ip={}&port={}".format(task_uuid, ip, port))
 response_content = response.read() 

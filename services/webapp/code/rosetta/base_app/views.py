@@ -621,17 +621,17 @@ def add_container(request):
         container_name = request.POST.get('container_name', None)
 
         # Container service ports. TODO: support multiple ports? 
-        container_service_ports = request.POST.get('container_service_ports', None)
+        container_default_ports = request.POST.get('container_default_ports', None)
         
-        if container_service_ports:       
+        if container_default_ports:       
             try:
-                for container_service_port in container_service_ports.split(','):
+                for container_service_port in container_default_ports.split(','):
                     int(container_service_port)
             except:
-                raise ErrorMessage('Invalid service port(s) in "{}"'.format(container_service_ports))
+                raise ErrorMessage('Invalid service port(s) in "{}"'.format(container_default_ports))
 
         # Log
-        logger.debug('Creating new container object with image="{}", type="{}", registry="{}", service_ports="{}"'.format(container_image, container_type, container_registry, container_service_ports))
+        logger.debug('Creating new container object with image="{}", type="{}", registry="{}", default_ports="{}"'.format(container_image, container_type, container_registry, container_default_ports))
 
         # Create
         Container.objects.create(user          = request.user,
@@ -639,7 +639,7 @@ def add_container(request):
                                  name          = container_name,
                                  type          = container_type,
                                  registry      = container_registry,
-                                 service_ports = container_service_ports)
+                                 default_ports = container_default_ports)
         # Set added switch
         data['added'] = True
 

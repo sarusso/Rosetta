@@ -53,7 +53,8 @@ class Command(BaseCommand):
                                      image         = 'rosetta/metadesktop',
                                      type          = 'docker',
                                      registry      = 'docker_local',
-                                     service_ports = '8590',
+                                     default_ports = '8590',
+                                     dynamic_ports = True,
                                      require_pass  = True)
 
             # MetaDesktop Singularity
@@ -62,7 +63,8 @@ class Command(BaseCommand):
                                      image         = 'rosetta/metadesktop',
                                      type          = 'singularity',
                                      registry      = 'docker_local',
-                                     service_ports = '8590',
+                                     default_ports = '8590',
+                                     dynamic_ports = True,
                                      require_pass  = True)
 
             # Astrocook
@@ -71,15 +73,16 @@ class Command(BaseCommand):
                                      image         = 'sarusso/astrocook:b2b819e',
                                      type          = 'docker',
                                      registry      = 'docker_local',
-                                     service_ports = '8590')
+                                     dynamic_ports = False,
+                                     default_ports = '8590')
 
 
-        # Public containers
+        # Private containers
         testuser_containers = Container.objects.filter(user=testuser)
         if testuser_containers:
-            print('Not creating testuser containers as they already exist')
+            print('Not creating testuser private containers as they already exist')
         else:
-            print('Creating testuser containers...')
+            print('Creating testuser private containers...')
             
             # JuPyter
             Container.objects.create(user          = testuser,
@@ -87,7 +90,8 @@ class Command(BaseCommand):
                                      image         = 'jupyter/base-notebook',
                                      type          = 'docker',
                                      registry      = 'docker_hub',
-                                     service_ports = '8888')
+                                     dynamic_ports = False,
+                                     default_ports = '8888')
 
         # Computing resources
         computing_resources = Computing.objects.all()
@@ -122,7 +126,7 @@ class Command(BaseCommand):
 
             ComputingUserConf.objects.create(user      = testuser,
                                              computing = demo_remote_auth_computing,
-                                             data      = {'user': 'testuser'})
+                                             data      = {'user': 'slurmtestuser'})
          
 
             #==============================
@@ -142,6 +146,6 @@ class Command(BaseCommand):
             # Create demo slurm user computing conf
             ComputingUserConf.objects.create(user      = testuser,
                                              computing = demo_slurm_computing,
-                                             data      = {'user': 'testuser'})
+                                             data      = {'user': 'slurmtestuser'})
 
 

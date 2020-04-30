@@ -2,11 +2,11 @@
 
 # Exec TigerVNC server 
 
-if [ "x$TASK_PORT" == "x" ]; then
+if [ "x$BASE_PORT" == "x" ]; then
     /usr/lib/noVNC/utils/launch.sh --listen 8590
-    echo "Running noVN on port 8590"
+    echo "Running noVNC on port 8590"
 else
-    /usr/lib/noVNC/utils/launch.sh --listen $TASK_PORT
-    echo "Running noVN on port $TASK_PORT"
+    /usr/lib/noVNC/utils/launch.sh --listen $BASE_PORT --vnc localhost:$(($BASE_PORT+1))
+    echo "Running noVNC on port $BASE_PORT and connecting to VNC on port $(($BASE_PORT+1))"
 
 fi
