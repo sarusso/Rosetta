@@ -74,11 +74,12 @@
             <a href="?uuid={{task.uuid}}&action=delete&details=False">Delete</a>
             {% if task.status == "running" %}
              | <a href="?uuid={{task.uuid}}&action=connect">Connect</a>
-             | <a href="/task_log/?uuid={{task.uuid}}&action=viewlog">View Log</a>
             {% else %}
              | <font color="#c0c0c0">Connect</font>
-             | <font color="#c0c0c0">View Log</font>
             {% endif%}
+             
+            | <a href="/task_log/?uuid={{task.uuid}}&action=viewlog">View Log</a>
+
             </td>
   
            </tr>

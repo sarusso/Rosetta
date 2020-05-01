@@ -412,7 +412,25 @@ class SlurmComputingManager(ComputingManager):
 
 
     def _get_task_log(self, task, **kwargs):
-        raise NotImplementedError('Not implemented')
+        
+        # Get user keys
+        if task.computing.require_user_auth_keys:
+            user_keys = Keys.objects.get(user=task.user, default=True)
+        else:
+            raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
+
+        # Get computing host
+        host = task.computing.get_conf_param('master')
+        user = task.computing.get_conf_param('user')
+
+        # Stop the task remotely
+        view_log_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "cat \$HOME/{}.log"\''.format(user_keys.private_key_file, user, host, task.uuid)
+
+        out = os_shell(view_log_command, capture=True)
+        if out.exit_code != 0:
+            raise Exception(out.stderr)
+        else:
+            return out.stdout
 
 
 
