@@ -775,7 +775,7 @@ def edit_computing_conf(request):
             raise Exception('Unknown computing "{}"'.format(computing_uuid))
         
         # Get computing conf
-        computingSysConf = ComputingSysConf.objects.get(computing=computing)   
+        computingSysConf, _ = ComputingSysConf.objects.get_or_create(computing=computing)   
         
         # Edit conf?
         if new_conf:
@@ -785,8 +785,9 @@ def edit_computing_conf(request):
             computingSysConf.save()
             data['saved'] = True
 
-        # Dump conf data for the webpage            
-        data['computing_conf_data'] = json.dumps(computingSysConf.data)
+        # Dump conf data for the webpage
+        if computingSysConf.data:
+            data['computing_conf_data'] = json.dumps(computingSysConf.data)
     
     elif computing_conf_type == 'user':
 
@@ -800,7 +801,7 @@ def edit_computing_conf(request):
             raise Exception('Unknown computing "{}"'.format(computing_uuid))
 
         # Get computing conf
-        computingUserConf = ComputingUserConf.objects.get(computing=computing)
+        computingUserConf, _ = ComputingUserConf.objects.get_or_create(computing=computing, user=request.user)
 
         # Edit conf?
         if new_conf:
@@ -811,7 +812,8 @@ def edit_computing_conf(request):
             data['saved'] = True
         
         # Dump conf data for the webpage
-        data['computing_conf_data'] = json.dumps(computingUserConf.data) 
+        if computingUserConf.data:
+            data['computing_conf_data'] = json.dumps(computingUserConf.data)
 
            
     else:
