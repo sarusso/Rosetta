@@ -164,7 +164,7 @@ class RemoteComputingManager(ComputingManager):
         user = task.computing.get_conf_param('user')
 
         # Get user keys
-        if task.computing.require_user_auth_keys:
+        if task.computing.require_user_keys:
             user_keys = Keys.objects.get(user=task.user, default=True)
         else:
             raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
@@ -237,7 +237,7 @@ class RemoteComputingManager(ComputingManager):
     def _stop_task(self, task, **kwargs):
 
         # Get user keys
-        if task.computing.require_user_auth_keys:
+        if task.computing.require_user_keys:
             user_keys = Keys.objects.get(user=task.user, default=True)
         else:
             raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
@@ -264,7 +264,7 @@ class RemoteComputingManager(ComputingManager):
         host = task.computing.get_conf_param('host')
 
         # Get id_rsa
-        if task.computing.require_user_auth_keys:
+        if task.computing.require_user_keys:
             user_keys = Keys.objects.get(user=task.user, default=True)
             id_rsa_file = user_keys.private_key_file
         else:
@@ -291,7 +291,7 @@ class SlurmComputingManager(ComputingManager):
         user = task.computing.get_conf_param('user')
         
         # Get user keys
-        if task.computing.require_user_auth_keys:
+        if task.computing.require_user_keys:
             user_keys = Keys.objects.get(user=task.user, default=True)
         else:
             raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
@@ -390,7 +390,7 @@ class SlurmComputingManager(ComputingManager):
     def _stop_task(self, task, **kwargs):
         
         # Get user keys
-        if task.computing.require_user_auth_keys:
+        if task.computing.require_user_keys:
             user_keys = Keys.objects.get(user=task.user, default=True)
         else:
             raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
@@ -414,7 +414,7 @@ class SlurmComputingManager(ComputingManager):
     def _get_task_log(self, task, **kwargs):
         
         # Get user keys
-        if task.computing.require_user_auth_keys:
+        if task.computing.require_user_keys:
             user_keys = Keys.objects.get(user=task.user, default=True)
         else:
             raise NotImplementedError('Remote tasks not requiring keys are not yet supported')

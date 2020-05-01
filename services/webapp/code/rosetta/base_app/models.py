@@ -112,8 +112,8 @@ class Computing(models.Model):
     type = models.CharField('Computing Type', max_length=255, blank=False, null=False)
 
     require_sys_conf  = models.BooleanField(default=False)
-    require_user_auth_conf = models.BooleanField(default=False)
-    require_user_auth_keys = models.BooleanField(default=False)
+    require_user_conf = models.BooleanField(default=False)
+    require_user_keys = models.BooleanField(default=False)
 
 
     def __str__(self):
