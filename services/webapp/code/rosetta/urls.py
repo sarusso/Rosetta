@@ -45,6 +45,7 @@ urlpatterns = [
     url(r'^task_log/$', base_app_views.task_log),
     url(r'^computings/$', base_app_views.computings),
     url(r'^add_computing/$', base_app_views.add_computing),
+    url(r'^edit_computing_conf/$', base_app_views.edit_computing_conf),
     url(r'^containers/$', base_app_views.containers),
     url(r'^add_container/$', base_app_views.add_container),
 

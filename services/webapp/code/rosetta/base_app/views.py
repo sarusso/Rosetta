@@ -1,4 +1,5 @@
 import uuid
+import json
 import subprocess
 from django.conf import settings
 from django.shortcuts import render
@@ -6,7 +7,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.models import User
 from django.shortcuts import redirect
-from .models import Profile, LoginToken, Task, TaskStatuses, Container, Computing, Keys
+from .models import Profile, LoginToken, Task, TaskStatuses, Container, Computing, Keys, ComputingSysConf, ComputingUserConf
 from .utils import send_email, format_exception, timezonize, os_shell, booleanize, debug_param
 from .decorators import public_view, private_view
 from .exceptions import ErrorMessage
@@ -715,7 +716,7 @@ def computings(request):
 
 
 #=========================
-#  Add Compute view
+#  Add Computing view
 #=========================
 
 @private_view
@@ -730,3 +731,119 @@ def add_computing(request):
 
 
     return render(request, 'add_computing.html', {'data': data})
+
+
+
+#=========================
+# Edit Computing conf view
+#=========================
+
+@private_view
+def edit_computing_conf(request):
+
+    # Init data
+    data={}
+    data['user']    = request.user
+    data['profile'] = Profile.objects.get(user=request.user)
+    data['title']   = 'Add computing'
+
+    # Get computing conf type
+    computing_conf_type = request.GET.get('type', request.POST.get('type', None))
+    if not computing_conf_type:
+        raise Exception('Missing type')
+    
+    # Get computing uuid
+    computing_uuid = request.GET.get('computing_uuid', request.POST.get('computing_uuid', None))
+    if not computing_uuid:
+        raise Exception('Missing computing_uuid')
+
+    new_conf = request.POST.get('new_conf', None)
+
+
+    if computing_conf_type == 'sys':
+        
+        data['type'] = 'sys'
+        
+        if not request.user.is_superuser:
+            raise Exception('Cannot edit sys conf as not superuser')
+    
+        # Get computing
+        try:
+            computing = Computing.objects.get(uuid=computing_uuid)
+            data['computing'] = computing
+        except ComputingSysConf.DoesNotExist:
+            raise Exception('Unknown computing "{}"'.format(computing_uuid))
+        
+        # Get computing conf
+        computingSysConf = ComputingSysConf.objects.get(computing=computing)   
+        
+        # Edit conf?
+        if new_conf:
+            new_conf_data = json.loads(new_conf)
+            logger.debug('Setting new conf data for sys conf "{}": "{}"'.format(computingSysConf.uuid, new_conf_data))
+            computingSysConf.data = new_conf_data
+            computingSysConf.save()
+            data['saved'] = True
+
+        # Dump conf data for the webpage            
+        data['computing_conf_data'] = json.dumps(computingSysConf.data)
+    
+    elif computing_conf_type == 'user':
+
+        data['type'] = 'user'
+        
+        # Get computing
+        try:
+            computing = Computing.objects.get(uuid=computing_uuid)
+            data['computing'] = computing
+        except ComputingUserConf.DoesNotExist:
+            raise Exception('Unknown computing "{}"'.format(computing_uuid))
+
+        # Get computing conf
+        computingUserConf = ComputingUserConf.objects.get(computing=computing)
+
+        # Edit conf?
+        if new_conf:
+            new_conf_data = json.loads(new_conf)
+            logger.debug('Setting new conf data for user conf "{}": "{}"'.format(computingUserConf.uuid, new_conf_data))
+            computingUserConf.data = new_conf_data
+            computingUserConf.save()
+            data['saved'] = True
+        
+        # Dump conf data for the webpage
+        data['computing_conf_data'] = json.dumps(computingUserConf.data) 
+
+           
+    else:
+        raise Exception('Unknown computing conf type "{}"'.format(computing_conf_type))
+    
+
+    return render(request, 'edit_computing_conf.html', {'data': data})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
