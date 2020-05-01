@@ -339,7 +339,9 @@ def tasks(request):
                     subprocess.Popen(background_tunnel_command, shell=True)
 
                 # Ok, now redirect to the task through the tunnel
-                return redirect('http://localhost:{}'.format(task.tunnel_port))
+                from utils import get_tunnel_host
+                tunnel_host = get_tunnel_host()
+                return redirect('http://{}:{}'.format(tunnel_host,task.tunnel_port))
 
         except Exception as e:
             data['error'] = 'Error in getting the task or performing the required action'

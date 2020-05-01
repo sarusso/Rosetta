@@ -452,7 +452,9 @@ def get_local_docker_registry_conn_string():
     local_docker_registry_conn_string = '{}:{}'.format(local_docker_registry_host, local_docker_registry_port)
     return local_docker_registry_conn_string
     
-
+def get_tunnel_host():
+    tunnel_host = os.environ.get('ROSETTA_TUNNEL_HOST', 'localhost')
+    return tunnel_host
 
 
 
