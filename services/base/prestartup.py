@@ -34,7 +34,9 @@ def shell(command, interactive=False):
 prestartup_scripts_path='/prestartup'
 def sorted_ls(path):
     mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
-    return list(sorted(os.listdir(path), key=mtime))
+    file_list = list(sorted(os.listdir(path), key=mtime))
+    file_list.reverse()
+    return file_list
 
 for item in sorted_ls(prestartup_scripts_path):
     if item.endswith('.sh'):

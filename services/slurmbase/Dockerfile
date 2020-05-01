@@ -28,3 +28,6 @@ RUN useradd slurmtestuser
 RUN mkdir -p /home/slurmtestuser/.ssh
 RUN cat /rosetta/.ssh/id_rsa.pub >> /home/slurmtestuser/.ssh/authorized_keys
 RUN chown -R slurmtestuser:slurmtestuser /home/slurmtestuser   
+
+# Add prestartup
+COPY prestartup_slurmbase.sh /prestartup/

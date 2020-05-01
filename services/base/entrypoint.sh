@@ -88,7 +88,7 @@ fi
 #---------------------
 
 if [ "x$SAFEMODE" == "xFalse" ]; then
-    echo "[INFO] Executing  prestartup scripts (current + parents):"
+    echo "[INFO] Executing  prestartup scripts (parents + current):"
     python /prestartup.py
 else
     echo "[INFO] Not executing prestartup scripts as we are in safemode"
