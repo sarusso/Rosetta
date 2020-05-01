@@ -8,7 +8,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.models import User
 from django.shortcuts import redirect
 from .models import Profile, LoginToken, Task, TaskStatuses, Container, Computing, Keys, ComputingSysConf, ComputingUserConf
-from .utils import send_email, format_exception, timezonize, os_shell, booleanize, debug_param
+from .utils import send_email, format_exception, timezonize, os_shell, booleanize, debug_param, get_tunnel_host
 from .decorators import public_view, private_view
 from .exceptions import ErrorMessage
 
@@ -339,7 +339,6 @@ def tasks(request):
                     subprocess.Popen(background_tunnel_command, shell=True)
 
                 # Ok, now redirect to the task through the tunnel
-                from utils import get_tunnel_host
                 tunnel_host = get_tunnel_host()
                 return redirect('http://{}:{}'.format(tunnel_host,task.tunnel_port))
 
