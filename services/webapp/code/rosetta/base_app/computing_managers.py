@@ -169,6 +169,11 @@ class RemoteComputingManager(ComputingManager):
         else:
             raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
 
+        # Get webapp conn string
+        from.utils import get_webapp_conn_string
+        webapp_conn_string = get_webapp_conn_string()
+            
+
         # 1) Run the container on the host (non blocking)
  
         if task.container.type == 'singularity':
@@ -182,12 +187,8 @@ class RemoteComputingManager(ComputingManager):
             else:
                 authstring = ''
 
-            import socket
-            hostname = socket.gethostname()
-            webapp_ip = socket.gethostbyname(hostname)
-
             run_command  = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, user, host)
-            run_command += '/bin/bash -c \'"wget {}:8080/api/v1/base/agent/?task_uuid={} -O /tmp/agent_{}.py &> /dev/null && export BASE_PORT=\$(python /tmp/agent_{}.py 2> /tmp/{}.log) && '.format(webapp_ip, task.uuid, task.uuid, task.uuid, task.uuid)
+            run_command += '/bin/bash -c \'"wget {}/api/v1/base/agent/?task_uuid={} -O /tmp/agent_{}.py &> /dev/null && export BASE_PORT=\$(python /tmp/agent_{}.py 2> /tmp/{}.log) && '.format(webapp_conn_string, task.uuid, task.uuid, task.uuid, task.uuid)
             run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\$BASE_PORT && {} '.format(authstring)
             run_command += 'exec nohup singularity run --pid --writable-tmpfs --containall --cleanenv '
             
@@ -295,6 +296,10 @@ class SlurmComputingManager(ComputingManager):
         else:
             raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
 
+        # Get webapp conn string
+        from.utils import get_webapp_conn_string
+        webapp_conn_string = get_webapp_conn_string()
+            
         # Get task computing parameters and set sbatch args
         sbatch_args = ''
         if task.computing_options:
@@ -314,6 +319,7 @@ class SlurmComputingManager(ComputingManager):
         # Set output and error files
         sbatch_args += ' --output=\$HOME/{}.log --error=\$HOME/{}.log '.format(task.uuid, task.uuid)
 
+
         # 1) Run the container on the host (non blocking)
         if task.container.type == 'singularity':
 
@@ -326,13 +332,10 @@ class SlurmComputingManager(ComputingManager):
             else:
                 authstring = ''
 
-            import socket
-            hostname = socket.gethostname()
-            webapp_ip = socket.gethostbyname(hostname)
 
             run_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, user, host)
 
-            run_command += '\'bash -c "echo \\"#!/bin/bash\nwget {}:8080/api/v1/base/agent/?task_uuid={} -O \$HOME/agent_{}.py &> /dev/null && export BASE_PORT=\\\\\\$(python \$HOME/agent_{}.py 2> \$HOME/{}.log) && '.format(webapp_ip, task.uuid, task.uuid, task.uuid, task.uuid)
+            run_command += '\'bash -c "echo \\"#!/bin/bash\nwget {}/api/v1/base/agent/?task_uuid={} -O \$HOME/agent_{}.py &> \$HOME/{}.log && export BASE_PORT=\\\\\\$(python \$HOME/agent_{}.py 2> \$HOME/{}.log) && '.format(webapp_conn_string, task.uuid, task.uuid, task.uuid, task.uuid, task.uuid)
             run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\\\\\\$BASE_PORT && {} '.format(authstring)
             run_command += 'exec nohup singularity run --pid --writable-tmpfs --containall --cleanenv '
             
@@ -340,7 +343,10 @@ class SlurmComputingManager(ComputingManager):
 
             # Set registry
             if task.container.registry == 'docker_local':
-                registry = 'docker://dregistry:5000/'
+                # Get local Docker registry conn string
+                from.utils import get_local_docker_registry_conn_string
+                local_docker_registry_conn_string = get_local_docker_registry_conn_string()
+                registry = 'docker://{}/'.format(local_docker_registry_conn_string)
             elif task.container.registry == 'docker_hub':
                 registry = 'docker://'
             else:

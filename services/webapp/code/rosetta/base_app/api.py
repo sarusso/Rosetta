@@ -221,11 +221,9 @@ class agent_api(PublicGETAPI):
             except (Task.DoesNotExist, ValidationError):
                 return HttpResponse('Unknown task uuid "{}"'.format(task_uuid))
 
-            import socket
-            hostname = socket.gethostname()
-            webapp_ip = socket.gethostbyname(hostname)
 
-            host_conn_string = 'http://{}:8080'.format(webapp_ip)
+            from.utils import get_webapp_conn_string
+            webapp_conn_string = get_webapp_conn_string()
             
             action = request.GET.get('action', None)
             
@@ -275,7 +273,7 @@ while True:
         break
 logger.info(' - ports: "{},{},{}"'.format(port, port+1, port+2))
 
-response = urlopen("'''+host_conn_string+'''/api/v1/base/agent/?task_uuid={}&action=set_ip_port&ip={}&port={}".format(task_uuid, ip, port))
+response = urlopen("'''+webapp_conn_string+'''/api/v1/base/agent/?task_uuid={}&action=set_ip_port&ip={}&port={}".format(task_uuid, ip, port))
 response_content = response.read() 
 if response_content != 'OK':
     logger.error(response_content)

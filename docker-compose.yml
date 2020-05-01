@@ -9,7 +9,7 @@ services:
       - SAFEMODE=False
     privileged: true
     volumes:
-      - ./data/shared:/shared
+      - ./data_rosetta/shared:/shared
       # - ./data/singularity_cache:/rosetta/.singularity/cache # Not working, check permissions...
     ports:
       - "8590:8590"
@@ -23,7 +23,7 @@ services:
       - SAFEMODE=False
     privileged: true
     volumes:
-      - ./data/shared:/shared
+      - ./data_rosetta/shared:/shared
     ports:
       - "8591:8590"
       - "5901:5900"
@@ -33,7 +33,7 @@ services:
     hostname: dregistry
     image: "rosetta/dregistry"
     volumes:
-      - ./data/dregistry:/var/lib/registry
+      - ./data_rosetta/dregistry:/var/lib/registry
     ports:
       - "5000:5000"
 
@@ -45,6 +45,10 @@ services:
       - SAFEMODE=False
       - DJANGO_LOG_LEVEL=CRITICAL
       - ROSETTA_LOG_LEVEL=DEBUG
+      #- ROSETTA_WEBAPP_HOST=
+      #- ROSETTA_WEBAPP_PORT=8080
+      #- LOCAL_DOCKER_REGISTRY_HOST=
+      #- LOCAL_DOCKER_REGISTRY_PORT=5000
     ports:
       - "8080:8080"
       - "8000:8590"

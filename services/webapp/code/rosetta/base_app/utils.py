@@ -1,3 +1,4 @@
+import os
 import traceback
 import hashlib
 import random
@@ -425,7 +426,43 @@ class dt_range(object):
         return self.__next__()
 
 
+#================================
+#  Others
+#================================
+
 def debug_param(**kwargs):
     for item in kwargs:
         logger.critical('Param "{}": "{}"'.format(item, kwargs[item]))
+
+def get_my_ip():
+    import socket
+    hostname = socket.gethostname()
+    my_ip = socket.gethostbyname(hostname)
+    return my_ip
+
+def get_webapp_conn_string():
+    webapp_host = os.environ.get('ROSETTA_WEBAPP_HOST', get_my_ip())
+    webapp_port = os.environ.get('ROSETTA_WEBAPP_PORT', '8080')
+    webapp_conn_string = 'http://{}:{}'.format(webapp_host, webapp_port)
+    return webapp_conn_string
+
+def get_local_docker_registry_conn_string():
+    local_docker_registry_host = os.environ.get('LOCAL_DOCKER_REGISTRY_HOST', 'dregistry')
+    local_docker_registry_port = os.environ.get('LOCAL_DOCKER_REGISTRY_PORT', '5000')
+    local_docker_registry_conn_string = '{}:{}'.format(local_docker_registry_host, local_docker_registry_port)
+    return local_docker_registry_conn_string
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
 
