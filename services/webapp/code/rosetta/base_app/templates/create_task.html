@@ -23,7 +23,8 @@
 
 
           <table class="dashboard" style="max-width:700px">
-    
+          <tr><td></td></tr>
+
            <tr>
             <td><b>Task name </b></td>
             <td>
@@ -68,17 +69,29 @@
       {% elif data.step == 'two' %}
 
           <h3>Step 2: authentication and computing details</h3> 
-          
+
           <br/>
           
+          {% if data.task.container.type == 'singularity' and not data.task.container.supports_dynamic_ports %}
+          <div> <p style="font-size:15px; max-width:700px; margin-bottom:20px">
+          <i class="fa fa-exclamation-triangle" style="color:orange"></i> This container does not support dynamic ports and you are running it with Singularity, without network insulation. This means that if the container port is already occupied, it will not be able to start.
+          </p></div>
+          {% endif %}
+          
+          {% if data.task.container.ports and not data.task.container.supports_pass_auth %}
+          <div> <p style="font-size:15px; max-width:700px; margin-bottom:20px">
+          <i class="fa fa-exclamation-triangle" style="color:orange"></i> This container does not support any authentication. This means that anyone running on the same network will be able to access it services.
+          </p></div>
+          {% endif %}
+        
           <form action="/create_task/" method="POST">
           {% csrf_token %}
           <input type="hidden" name="step" value="two" />
           <input type="hidden" name="task_uuid" value="{{ data.task.uuid }}" />
 
           <table class="dashboard" style="max-width:700px">
-
-           {% if data.task.container.require_user %}
+          <tr><td></td></tr>
+           {% if data.task.container.supports_user_auth %}
            <tr>
             <td><b>Task user</b></td>
             <td>
@@ -87,7 +100,7 @@
            </tr>
            {% endif %}
 
-           {% if data.task.container.require_pass %}
+           {% if data.task.container.supports_pass_auth %}
            <tr>
             <td valign="top"><b>Set task password</b></td>
             <td>
@@ -100,7 +113,7 @@
            <tr>
             <td><b>Access method</b></td><td>
               <select name="access_method" >
-              <option value="http_proxy" disabled>HTTP proxy</option>
+              <option value="https_proxy" disabled>HTTPS proxy</option>
               <option value="direct_tunnel" selected>Direct tunnel</option>
               <option value="None">None</option>
               </select>
@@ -115,7 +128,20 @@
               </select>
             </td>
            </tr>  -->
-                     
+           
+           {% if data.task.computing.type == 'slurm' %}
+           <tr>
+            <td><b>Computing options</b></td>
+            <td>
+            <table>
+             <tr><td>Partition</td><td><input type="text" name="computing_partition" value="" placeholder="" size="20" /></td></tr>
+             <tr><td>Cpus</td><td><input type="text" name="computing_cpus" value="" placeholder="" size="5" /></td></tr>
+             <tr><td>Memory</td><td><input type="text" name="computing_memory" value="" placeholder="" size="5" /></td></tr>
+             </table>
+            </td>
+           </tr>
+           {% endif %}
+             
            <tr><td colspan=2>
            <table><tr><td  style="border: 1px solid lightgray;" >
            I understand that files saved or modified in this container, if not explicitly saved to a persistent storage, will be LOST when the task ends.

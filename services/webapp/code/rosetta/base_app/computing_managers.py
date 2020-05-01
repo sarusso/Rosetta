@@ -72,6 +72,7 @@ class ComputingManager(object):
         return self._get_task_log(task, **kwargs)
 
 
+
 class LocalComputingManager(ComputingManager):
     
     def _start_task(self, task):
@@ -134,6 +135,11 @@ class LocalComputingManager(ComputingManager):
         out = os_shell(stop_command, capture=True)
         if out.exit_code != 0:
             raise Exception(out.stderr)
+ 
+        # Set task as stopped
+        task.status = TaskStatuses.stopped
+        task.save()
+
     
     def _get_task_log(self, task, **kwargs):
 
@@ -147,6 +153,7 @@ class LocalComputingManager(ComputingManager):
             return out.stdout
 
 
+
 class RemoteComputingManager(ComputingManager):
     
     def _start_task(self, task, **kwargs):
@@ -157,7 +164,7 @@ class RemoteComputingManager(ComputingManager):
         user = task.computing.get_conf_param('user')
 
         # Get user keys
-        if task.computing.require_user_keys:
+        if task.computing.require_user_auth_keys:
             user_keys = Keys.objects.get(user=task.user, default=True)
         else:
             raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
@@ -219,9 +226,8 @@ class RemoteComputingManager(ComputingManager):
         task_pid = out.stdout
 
         # Set fields
-
-        #task.status = TaskStatuses.sumbitted
-        task.pid    = task_pid
+        #task.status = TaskStatuses.running
+        task.pid = task_pid
  
         # Save
         task.save()
@@ -230,7 +236,7 @@ class RemoteComputingManager(ComputingManager):
     def _stop_task(self, task, **kwargs):
 
         # Get user keys
-        if task.computing.require_user_keys:
+        if task.computing.require_user_auth_keys:
             user_keys = Keys.objects.get(user=task.user, default=True)
         else:
             raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
@@ -247,13 +253,17 @@ class RemoteComputingManager(ComputingManager):
             if not 'No such process' in out.stderr:
                 raise Exception(out.stderr)
 
+        # Set task as stopped
+        task.status = TaskStatuses.stopped
+        task.save()
+
 
     def _get_task_log(self, task, **kwargs):
         # Get computing host
         host = task.computing.get_conf_param('host')
 
         # Get id_rsa
-        if task.computing.require_user_keys:
+        if task.computing.require_user_auth_keys:
             user_keys = Keys.objects.get(user=task.user, default=True)
             id_rsa_file = user_keys.private_key_file
         else:
@@ -280,16 +290,34 @@ class SlurmComputingManager(ComputingManager):
         user = task.computing.get_conf_param('user')
         
         # Get user keys
-        if task.computing.require_user_keys:
+        if task.computing.require_user_auth_keys:
             user_keys = Keys.objects.get(user=task.user, default=True)
         else:
             raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
 
+        # Get task computing parameters and set sbatch args
+        sbatch_args = ''
+        if task.computing_options:
+            task_partition = task.computing_options.get('partition', None)
+            task_cpus = task.computing_options.get('cpus', None)
+            task_memory = task.computing_options.get('memory', None)
+
+            # Set sbatch args
+            sbatch_args = ''
+            if task_partition:
+                sbatch_args += '-p {} '.format(task_partition)
+            #if task_cpus:
+            #    sbatch_args += '-c {} '.format()
+            #if task_memory:
+            #    sbatch_args += '-m {} '.format()
+        
+        # Set output and error files
+        sbatch_args += ' --output=\$HOME/{}.log --error=\$HOME/{}.log '.format(task.uuid, task.uuid)
+
         # 1) Run the container on the host (non blocking)
- 
         if task.container.type == 'singularity':
 
-            if not task.container.dynamic_ports:
+            if not task.container.supports_dynamic_ports:
                 raise Exception('This task does not support dynamic port allocation and is therefore not supported using singularity on Slurm')
 
             # Set pass if any
@@ -304,18 +332,12 @@ class SlurmComputingManager(ComputingManager):
 
             run_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, user, host)
 
-            run_command += '\'bash -c "echo \\"#!/bin/bash\nwget {}:8080/api/v1/base/agent/?task_uuid={} -O /tmp/agent_{}.py &> /dev/null && export BASE_PORT=\\\\\\$(python /tmp/agent_{}.py 2> /tmp/{}.log) && '.format(webapp_ip, task.uuid, task.uuid, task.uuid, task.uuid)
+            run_command += '\'bash -c "echo \\"#!/bin/bash\nwget {}:8080/api/v1/base/agent/?task_uuid={} -O \$HOME/agent_{}.py &> /dev/null && export BASE_PORT=\\\\\\$(python \$HOME/agent_{}.py 2> \$HOME/{}.log) && '.format(webapp_ip, task.uuid, task.uuid, task.uuid, task.uuid)
             run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\\\\\\$BASE_PORT && {} '.format(authstring)
             run_command += 'exec nohup singularity run --pid --writable-tmpfs --containall --cleanenv '
-
-
+            
             # Double to escape for python six for shell (double times three as \\\ escapes a single slash in shell)
 
-            # ssh -i /rosetta/.ssh/id_rsa -4 -o StrictHostKeyChecking=no slurmclustermaster-main "echo \"wget 172.18.0.5:8080/api/v1/base/agent/?task_uuid=558c65c3-8b72-4d6b-8119-e1dcf6f81177 -O /tmp/agent_558c65c3-8b72-4d6b-8119-e1dcf6f81177.py &> /dev/null
-            #  && export BASE_PORT=\\\$(python /tmp/agent_558c65c3-8b72-4d6b-8119-e1dcf6f81177.py 2> /tmp/558c65c3-8b72-4d6b-8119-e1dcf6f81177.log) && export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\\\$BASE_PORT &&  export SINGULARITYENV_AUTH_PASS=testpass 
-            #  && exec nohup singularity run --pid --writable-tmpfs --containall --cleanenv docker://dregistry:5000/rosetta/metadesktop &> /tmp/558c65c3-8b72-4d6b-8119-e1dcf6f81177.log\" > /tmp/558c65c3-8b72-4d6b-8119-e1dcf6f81177.sh"
-
-            
             # Set registry
             if task.container.registry == 'docker_local':
                 registry = 'docker://dregistry:5000/'
@@ -324,7 +346,7 @@ class SlurmComputingManager(ComputingManager):
             else:
                 raise NotImplementedError('Registry {} not supported'.format(task.container.registry))
     
-            run_command+='{}{} &> /tmp/{}.log\\" > /tmp/{}.sh && sbatch -p partition1 /tmp/{}.sh"\''.format(registry, task.container.image, task.uuid, task.uuid, task.uuid)
+            run_command+='{}{} &> \$HOME/{}.log\\" > \$HOME/{}.sh && sbatch {} \$HOME/{}.sh"\''.format(registry, task.container.image, task.uuid, task.uuid, sbatch_args, task.uuid)
 
             
         else:
@@ -334,9 +356,53 @@ class SlurmComputingManager(ComputingManager):
         if out.exit_code != 0:
             raise Exception(out.stderr)
 
+        # Log        
+        logger.debug('Shell exec output: "{}"'.format(out))
+
+        # Parse sbatch output. Example: Output(stdout='Submitted batch job 3', stderr='', exit_code=0)
+        job_id = out.stdout.split(' ')[-1]
+        try:
+            int(job_id)
+        except:
+            raise Exception('Cannot find int job id from output string "{}"'.format(out.stdout))
+        
+        # Load back the task to avoid concurrency problems in the agent call
+        task_uuid = task.uuid
+        task = Task.objects.get(uuid=task_uuid)
+
+        # Save job id as task pid
+        task.pid = job_id
+        
+        # Set status (only fi we get here before the agent which sets the status as running via the API)
+        if task.status != TaskStatuses.running:
+            task.status = TaskStatuses.sumbitted
+        
+        # Save
+        task.save()
+
 
     def _stop_task(self, task, **kwargs):
-        raise NotImplementedError('Not implemented')
+        
+        # Get user keys
+        if task.computing.require_user_auth_keys:
+            user_keys = Keys.objects.get(user=task.user, default=True)
+        else:
+            raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
+
+        # Get computing host
+        host = task.computing.get_conf_param('master')
+        user = task.computing.get_conf_param('user')
+
+        # Stop the task remotely
+        stop_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "scancel {}"\''.format(user_keys.private_key_file, user, host, task.pid)
+        logger.debug(stop_command)
+        out = os_shell(stop_command, capture=True)
+        if out.exit_code != 0:
+            raise Exception(out.stderr)
+        
+        # Set task as topped
+        task.status = TaskStatuses.stopped
+        task.save()
 
 
     def _get_task_log(self, task, **kwargs):

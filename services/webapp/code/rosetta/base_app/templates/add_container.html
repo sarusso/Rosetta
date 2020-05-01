@@ -23,7 +23,7 @@
           <table class="dashboard" style="max-width:430px">
 
            <tr>
-            <td><b>Container name</b></td>
+            <td><b>Name</b></td>
             <td>
              <input type="text" name="container_name" value="" placeholder="" size="23" required />
             </td>
@@ -49,18 +49,40 @@
            </tr>
 
            <tr>
-            <td><b>Container image</b></td>
+            <td><b>Image</b></td>
             <td>
              <input type="text" name="container_image" value="" placeholder="" size="23" required />
             </td>
            </tr>
 
            <tr>
-            <td><b>Service port</b></td>
+            <td><b>Ports</b></td>
             <td>
-             <input type="text" name="container_service_port" value="" placeholder="" size="5" />
+             <input type="text" name="container_ports" value="" placeholder="" size="5" />
             </td>
            </tr>
+
+           <tr>
+            <td colspan=2>
+             <b>Supports dynamic ports</b> &nbsp; 
+             <input type="checkbox" name="container_supports_dynamic_ports" value="True" />
+            </td>
+           </tr>
+
+           <tr>
+            <td colspan=2>
+             <b>Supports user auth</b> &nbsp; 
+             <input type="checkbox" name="container_supports_user_auth" value="True" />
+            </td>
+           </tr>
+
+           <tr>
+            <td colspan=2>
+             <b>Supports pass auth</b> &nbsp; 
+             <input type="checkbox" name="container_supports_pass_auth" value="True" />
+            </td>
+           </tr>
+
 
            <tr>
            <td colspan=2 align=center style="padding:20px">

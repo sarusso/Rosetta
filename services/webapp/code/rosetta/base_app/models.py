@@ -76,18 +76,20 @@ class Container(models.Model):
     user = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE, null=True)  
     # If a container has no user, it will be available to anyone. Can be created, edited and deleted only by admins.
 
-    name          = models.CharField('Container Name', max_length=255, blank=False, null=False)    
-    image         = models.CharField('Container image', max_length=255, blank=False, null=False)
-    type          = models.CharField('Container type', max_length=36, blank=False, null=False)
-    registry      = models.CharField('Container registry', max_length=255, blank=False, null=False)
-    default_ports = models.CharField('Container service ports', max_length=36, blank=True, null=True)
-    dynamic_ports = models.BooleanField(default=False)
-    require_user  = models.BooleanField(default=False)
-    require_pass  = models.BooleanField(default=False)
+    name     = models.CharField('Container Name', max_length=255, blank=False, null=False)    
+    image    = models.CharField('Container image', max_length=255, blank=False, null=False)
+    type     = models.CharField('Container type', max_length=36, blank=False, null=False)
+    registry = models.CharField('Container registry', max_length=255, blank=False, null=False)
+    ports    = models.CharField('Container service ports', max_length=36, blank=True, null=True)
+
+    # Capabilities
+    supports_dynamic_ports = models.BooleanField(default=False)
+    supports_user_auth = models.BooleanField(default=False)
+    supports_pass_auth = models.BooleanField(default=False)
 
 
     def __str__(self):
-        return str('Container of type "{}" with image "{}" with service ports "{}" from registry "{}" of user "{}"'.format(self.type, self.image, self.default_ports, self.registry, self.user))
+        return str('Container of type "{}" with image "{}" and  ports "{}" from registry "{}" of user "{}"'.format(self.type, self.image, self.ports, self.registry, self.user))
 
 
     @property
@@ -110,8 +112,8 @@ class Computing(models.Model):
     type = models.CharField('Computing Type', max_length=255, blank=False, null=False)
 
     require_sys_conf  = models.BooleanField(default=False)
-    require_user_conf = models.BooleanField(default=False)
-    require_user_keys = models.BooleanField(default=False)
+    require_user_auth_conf = models.BooleanField(default=False)
+    require_user_auth_keys = models.BooleanField(default=False)
 
 
     def __str__(self):
@@ -223,6 +225,8 @@ class Task(models.Model):
     auth_pass     = models.CharField('Task auth pass', max_length=36, blank=True, null=True)
     access_method = models.CharField('Task access method', max_length=36, blank=True, null=True)
 
+    # Computing options
+    computing_options = JSONField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
         
@@ -233,11 +237,6 @@ class Task(models.Model):
 
         # Call parent save
         super(Task, self).save(*args, **kwargs)
-
-
-    def __str__(self):
-        return str('Task "{}" of user "{}" in status "{}" (TID "{}")'.format(self.name, self.user.email, self.status, self.tid))
-
 
     def update_status(self):
         if self.computing == 'local':
@@ -264,6 +263,10 @@ class Task(models.Model):
     @property
     def id(self):
         return str(self.uuid).split('-')[0]
+
+
+    def __str__(self):
+        return str('Task "{}" of user "{}" running on "{}" in status "{}" created at "{}"'.format(self.name, self.user, self.computing, self.status, self.created))
 
 
 

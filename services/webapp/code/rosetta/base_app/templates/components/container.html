@@ -31,9 +31,41 @@
        </tr>
 
        <tr>
-        <td><b>Service port(s)</b></td>
-        <td>{{ container.default_ports}}</td>
+        <td><b>Ports</b></td>
+        <td>{{ container.ports }}</td>
        </tr>
+
+       <tr>
+        <td colspan=2>
+         <b>Supports dynamic ports</b> &nbsp; 
+         {% if container.supports_dynamic_ports %}
+           <input type="checkbox" name="container_supports_user_auth" checked disabled/> 
+         {% else %}
+           <input type="checkbox" name="container_supports_user_auth" disabled/> 
+         {% endif %}
+        </td>
+       </tr>
+
+       <tr>
+        <td colspan=2>
+         <b>Supports user auth</b> &nbsp; 
+         {% if container.supports_user_auth %}
+           <input type="checkbox" name="supports_user_auth" checked disabled/> 
+         {% else %}
+           <input type="checkbox" name="supports_user_auth" disabled/> 
+         {% endif %}        </td>
+       </tr>
+
+       <tr>
+        <td colspan=2>
+         <b>Supports pass auth</b> &nbsp; 
+         {% if container.supports_pass_auth %}
+           <input type="checkbox" name="supports_pass_auth" checked disabled/> 
+         {% else %}
+           <input type="checkbox" name="supports_pass_auth" disabled/> 
+         {% endif %}        </td>
+       </tr>
+
        
        {% if container.user %}
        <tr>

@@ -48,33 +48,37 @@ class Command(BaseCommand):
             print('Creating public containers...')
             
             # MetaDesktop Docker
-            Container.objects.create(user          = None,
-                                     name          = 'MetaDesktop latest',
-                                     image         = 'rosetta/metadesktop',
-                                     type          = 'docker',
-                                     registry      = 'docker_local',
-                                     default_ports = '8590',
-                                     dynamic_ports = True,
-                                     require_pass  = True)
+            Container.objects.create(user     = None,
+                                     name     = 'MetaDesktop latest',
+                                     image    = 'rosetta/metadesktop',
+                                     type     = 'docker',
+                                     registry = 'docker_local',
+                                     ports    = '8590',
+                                     supports_dynamic_ports = True,
+                                     supports_user_auth     = False,
+                                     supports_pass_auth     = True)
 
             # MetaDesktop Singularity
-            Container.objects.create(user          = None,
-                                     name          = 'MetaDesktop latest',
-                                     image         = 'rosetta/metadesktop',
-                                     type          = 'singularity',
-                                     registry      = 'docker_local',
-                                     default_ports = '8590',
-                                     dynamic_ports = True,
-                                     require_pass  = True)
+            Container.objects.create(user     = None,
+                                     name     = 'MetaDesktop latest',
+                                     image    = 'rosetta/metadesktop',
+                                     type     = 'singularity',
+                                     registry = 'docker_local',
+                                     ports    = '8590',
+                                     supports_dynamic_ports = True,
+                                     supports_user_auth     = False,
+                                     supports_pass_auth     = True)
 
             # Astrocook
-            Container.objects.create(user          = None,
-                                     name          = 'Astrocook b2b819e',
-                                     image         = 'sarusso/astrocook:b2b819e',
-                                     type          = 'docker',
-                                     registry      = 'docker_local',
-                                     dynamic_ports = False,
-                                     default_ports = '8590')
+            Container.objects.create(user     = None,
+                                     name     = 'Astrocook b2b819e',
+                                     image    = 'sarusso/astrocook:b2b819e',
+                                     type     = 'docker',
+                                     registry = 'docker_local',
+                                     ports    = '8590',
+                                     supports_dynamic_ports = False,
+                                     supports_user_auth     = False,
+                                     supports_pass_auth     = False)
 
 
         # Private containers
@@ -85,13 +89,15 @@ class Command(BaseCommand):
             print('Creating testuser private containers...')
             
             # JuPyter
-            Container.objects.create(user          = testuser,
-                                     name          = 'Jupyter Notebook latest',
-                                     image         = 'jupyter/base-notebook',
-                                     type          = 'docker',
-                                     registry      = 'docker_hub',
-                                     dynamic_ports = False,
-                                     default_ports = '8888')
+            Container.objects.create(user     = testuser,
+                                     name     = 'Jupyter Notebook latest',
+                                     image    = 'jupyter/base-notebook',
+                                     type     = 'docker',
+                                     registry = 'docker_hub',
+                                     ports    = '8888', 
+                                     supports_dynamic_ports = False,
+                                     supports_user_auth     = False,
+                                     supports_pass_auth     = False)
 
         # Computing resources
         computing_resources = Computing.objects.all()
@@ -107,8 +113,8 @@ class Command(BaseCommand):
                                      name = 'Local',
                                      type = 'local',
                                      require_sys_conf  = False,
-                                     require_user_conf = False,
-                                     require_user_keys = False)
+                                     require_user_auth_conf = False,
+                                     require_user_auth_keys = False)
 
 
             #==============================
@@ -118,8 +124,8 @@ class Command(BaseCommand):
                                                              name = 'Demo remote',
                                                              type = 'remote',
                                                              require_sys_conf  = True,
-                                                             require_user_conf = True,
-                                                             require_user_keys = True)
+                                                             require_user_auth_conf = True,
+                                                             require_user_auth_keys = True)
     
             ComputingSysConf.objects.create(computing = demo_remote_auth_computing,
                                             data      = {'host': 'slurmclusterworker-one'})
@@ -136,12 +142,12 @@ class Command(BaseCommand):
                                                             name = 'Demo Slurm',
                                                             type = 'slurm',
                                                             require_sys_conf  = True,
-                                                            require_user_conf = True,
-                                                            require_user_keys = True)
+                                                            require_user_auth_conf = True,
+                                                            require_user_auth_keys = True)
     
             # Create demo slurm sys computing conf
             ComputingSysConf.objects.create(computing = demo_slurm_computing,
-                                            data      = {'master': 'slurmclusterworker-master'})
+                                            data      = {'master': 'slurmclustermaster-main'})
 
             # Create demo slurm user computing conf
             ComputingUserConf.objects.create(user      = testuser,

@@ -308,7 +308,6 @@ print(port)
                 logger.info('Setting task "{}" to ip "{}" and port "{}"'.format(task.uuid, task_ip, task_port))
                 task.status = TaskStatuses.running
                 task.ip     = task_ip
-                #task.pid    = task_pid
                 task.port   = int(task_port)
                 task.save()
                 return HttpResponse('OK')

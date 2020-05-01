@@ -310,7 +310,7 @@ def tasks(request):
                             tunnel_port = port
                             break
                     if not tunnel_port:
-                        logger.error('Cannot find a free port for the tunnel for task "{}"'.format(task.tid))
+                        logger.error('Cannot find a free port for the tunnel for task "{}"'.format(task))
                         raise ErrorMessage('Cannot find a free port for the tunnel to the task')
 
                     task.tunnel_port = tunnel_port
@@ -318,14 +318,14 @@ def tasks(request):
 
 
                 # Check if the tunnel is active and if not create it
-                logger.debug('Checking if task "{}" has a running tunnel'.format(task.tid))
+                logger.debug('Checking if task "{}" has a running tunnel'.format(task))
 
                 out = os_shell('ps -ef | grep ":{}:{}:{}" | grep -v grep'.format(task.tunnel_port, task.ip, task.port), capture=True)
 
                 if out.exit_code == 0:
-                    logger.debug('Task "{}" has a running tunnel, using it'.format(task.tid))
+                    logger.debug('Task "{}" has a running tunnel, using it'.format(task))
                 else:
-                    logger.debug('Task "{}" has no running tunnel, creating it'.format(task.tid))
+                    logger.debug('Task "{}" has no running tunnel, creating it'.format(task))
 
                     # Tunnel command
                     tunnel_command= 'ssh -4 -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} localhost & '.format(task.tunnel_port, task.ip, task.port)
@@ -451,8 +451,29 @@ def create_task(request):
         if len(task.auth_pass) < 6:
             raise ErrorMessage('Task password must be at least 6 chars') 
         
-        # Add auth and/or computing parameters to the task if any
-        # TODO... (i..e num cores)
+        # Computing options # TODO: This is hardcoded thinking about Slurm
+        computing_cpus = request.POST.get('computing_cpus', None)
+        computing_memory = request.POST.get('computing_memory', None)
+        computing_partition = request.POST.get('computing_partition', None)
+        
+        computing_options = {}
+        if computing_cpus:
+            try:
+                int(computing_cpus)
+            except:
+                raise Exception('Cannot convert computing_cpus to int')
+            computing_options['cpus'] = int(computing_cpus)
+
+        if computing_memory:
+            computing_options['memory'] = computing_memory
+
+        if computing_partition:
+            computing_options['partition'] = computing_partition        
+        
+        if computing_options:
+            task.computing_options = computing_options
+        
+        logger.debug('computing_options="{}"'.format(computing_options))
         
         # Save the task in the DB
         task.save()
@@ -621,25 +642,49 @@ def add_container(request):
         container_name = request.POST.get('container_name', None)
 
         # Container service ports. TODO: support multiple ports? 
-        container_default_ports = request.POST.get('container_default_ports', None)
+        container_ports = request.POST.get('container_ports', None)
         
-        if container_default_ports:       
+        if container_ports:       
             try:
-                for container_service_port in container_default_ports.split(','):
+                for container_service_port in container_ports.split(','):
                     int(container_service_port)
             except:
-                raise ErrorMessage('Invalid service port(s) in "{}"'.format(container_default_ports))
+                raise ErrorMessage('Invalid container port(s) in "{}"'.format(container_ports))
+
+
+        # Capabilities
+        container_supports_dynamic_ports = request.POST.get('container_supports_dynamic_ports', None)
+        if container_supports_dynamic_ports and container_supports_dynamic_ports == 'True':
+            container_supports_dynamic_ports = True
+        else:
+            container_supports_dynamic_ports = False
+
+        container_supports_user_auth = request.POST.get('container_supports_user_auth', None)
+        if container_supports_user_auth and container_supports_user_auth == 'True':
+            container_supports_user_auth = True
+        else:
+            container_supports_user_auth = False
+
+        container_supports_pass_auth = request.POST.get('container_supports_pass_auth', None)
+        if container_supports_pass_auth and container_supports_pass_auth == 'True':
+            container_supports_pass_auth = True
+        else:
+            container_supports_pass_auth = False
 
         # Log
-        logger.debug('Creating new container object with image="{}", type="{}", registry="{}", default_ports="{}"'.format(container_image, container_type, container_registry, container_default_ports))
+        logger.debug('Creating new container object with image="{}", type="{}", registry="{}", ports="{}"'.format(container_image, container_type, container_registry, container_ports))
 
         # Create
-        Container.objects.create(user          = request.user,
-                                 image         = container_image,
-                                 name          = container_name,
-                                 type          = container_type,
-                                 registry      = container_registry,
-                                 default_ports = container_default_ports)
+        Container.objects.create(user     = request.user,
+                                 image    = container_image,
+                                 name     = container_name,
+                                 type     = container_type,
+                                 registry = container_registry,
+                                 ports    = container_ports,
+                                 supports_dynamic_ports = container_supports_dynamic_ports,
+                                 supports_user_auth     = container_supports_user_auth,
+                                 supports_pass_auth     = container_supports_pass_auth,
+                                 )
         # Set added switch
         data['added'] = True
 
