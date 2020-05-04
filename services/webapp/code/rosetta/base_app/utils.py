@@ -59,8 +59,17 @@ def send_email(to, subject, text):
         subject = subject
         content = Content('text/plain', text)
         mail = Mail(from_email, subject, to_email, content)
-        response = sg.client.mail.send.post(request_body=mail.get())
-        logger.debug(response)
+        
+        try:
+            response = sg.client.mail.send.post(request_body=mail.get())
+
+            #logger.debug(response.status_code)
+            #logger.debug(response.body)
+            #logger.debug(response.headers)
+        except Exception as e:
+            logger.error(e)
+        
+        #logger.debug(response)
     
 
 def format_exception(e, debug=False):

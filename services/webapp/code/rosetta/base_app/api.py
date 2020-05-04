@@ -3,10 +3,11 @@ from django.http import HttpResponse
 from django.utils import timezone
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User, Group
+from django.conf import settings
 from rest_framework.response import Response
 from rest_framework import status, serializers, viewsets
 from rest_framework.views import APIView
-from .utils import format_exception
+from .utils import format_exception, send_email
 from .models import Profile, Task, TaskStatuses
  
 # Setup logging
@@ -308,6 +309,15 @@ print(port)
                 task.ip     = task_ip
                 task.port   = int(task_port)
                 task.save()
+                        
+                # Notify the user that the task called back home
+                logger.info('Sending task ready mail notification to "{}"'.format(task.user.email))
+                mail_subject = 'Your Task "{}" is up and running'.format(task.container.name)
+                mail_text = 'Hello,\n\nyour Task "{}" on {} is up and running: {}/tasks/?uuid={}\n\nThe Rosetta notifications bot.'.format(task.container.name, task.computing, settings.DJANGO_PUBLIC_HTTP_HOST, task.uuid)
+                try:
+                    send_email(to=task.user.email, subject=mail_subject, text=mail_text)
+                except Exception as e:
+                    logger.error('Cannot send task ready email: "{}"'.format(e))
                 return HttpResponse('OK')
                 
     
