@@ -332,12 +332,17 @@ class SlurmComputingManager(ComputingManager):
             else:
                 authstring = ''
 
+            bindings = task.computing.get_conf_param('bindings', from_sys_only=True )
+            if not bindings:
+                bindings = ''
+            else:
+                bindings = '-B {}'.format(bindings)
 
             run_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, user, host)
 
             run_command += '\'bash -c "echo \\"#!/bin/bash\nwget {}/api/v1/base/agent/?task_uuid={} -O \$HOME/agent_{}.py &> \$HOME/{}.log && export BASE_PORT=\\\\\\$(python \$HOME/agent_{}.py 2> \$HOME/{}.log) && '.format(webapp_conn_string, task.uuid, task.uuid, task.uuid, task.uuid, task.uuid)
             run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\\\\\\$BASE_PORT && {} '.format(authstring)
-            run_command += 'exec nohup singularity run --pid --writable-tmpfs --containall --cleanenv '
+            run_command += 'exec nohup singularity run {} --pid --writable-tmpfs --containall --cleanenv '.format(bindings)
             
             # Double to escape for python six for shell (double times three as \\\ escapes a single slash in shell)
 

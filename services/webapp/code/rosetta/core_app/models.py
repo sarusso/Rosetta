@@ -152,11 +152,17 @@ class Computing(models.Model):
             self._user_conf_data = None
 
 
-    def get_conf_param(self, param):
+    def get_conf_param(self, param, from_sys_only=False):
         try:
             param_value = self.sys_conf_data[param]
         except (TypeError, KeyError):
-            param_value = self.user_conf_data[param]
+            if not from_sys_only:
+                try:
+                    param_value = self.user_conf_data[param]
+                except (TypeError, KeyError):
+                    return None
+            else:
+                return None
         return param_value
 
 
