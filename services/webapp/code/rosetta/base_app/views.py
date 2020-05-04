@@ -450,7 +450,7 @@ def create_task(request):
         task.access_method = request.POST.get('access_method', None)
         
         # Cheks
-        if len(task.auth_pass) < 6:
+        if task.auth_pass and len(task.auth_pass) < 6:
             raise ErrorMessage('Task password must be at least 6 chars') 
         
         # Computing options # TODO: This is hardcoded thinking about Slurm
