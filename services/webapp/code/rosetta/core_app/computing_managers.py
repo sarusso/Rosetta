@@ -260,19 +260,20 @@ class RemoteComputingManager(ComputingManager):
 
 
     def _get_task_log(self, task, **kwargs):
-        # Get computing host
-        host = task.computing.get_conf_param('host')
-
-        # Get id_rsa
+        
+        # Get user keys
         if task.computing.require_user_keys:
             user_keys = Keys.objects.get(user=task.user, default=True)
-            id_rsa_file = user_keys.private_key_file
         else:
-            raise NotImplementedError('Remote with no keys not yet')
+            raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
 
-        # View the Singularity container log
-        view_log_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {} \'/bin/bash -c "cat /tmp/{}.log"\''.format(id_rsa_file, host, task.uuid)
-        logger.debug(view_log_command)
+        # Get computing host
+        host = task.computing.get_conf_param('master')
+        user = task.computing.get_conf_param('user')
+
+        # Stop the task remotely
+        view_log_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "cat /tmp/{}.log"\''.format(user_keys.private_key_file, user, host, task.uuid)
+
         out = os_shell(view_log_command, capture=True)
         if out.exit_code != 0:
             raise Exception(out.stderr)
