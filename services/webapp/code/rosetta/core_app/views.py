@@ -780,7 +780,10 @@ def computings(request):
     data['computings'] = list(Computing.objects.filter(user=None)) + list(Computing.objects.filter(user=request.user))
     # Attach user conf in any
     for computing in data['computings']:
-        computing.attach_user_conf_data(request.user) 
+        computing.attach_user_conf_data(request.user)
+        computing.user_conf_data_json = json.dumps(computing.user_conf_data)
+        computing.sys_conf_data_json = json.dumps(computing.sys_conf_data)
+
 
     return render(request, 'computings.html', {'data': data})
 
@@ -857,7 +860,8 @@ def edit_computing_conf(request):
 
         # Dump conf data for the webpage
         if computingSysConf.data:
-            data['computing_conf_data'] = json.dumps(computingSysConf.data)
+            data['computing_conf_data'] = computingSysConf.data
+            data['computing_conf_data_json'] = json.dumps(computingSysConf.data)
     
     elif computing_conf_type == 'user':
 
@@ -883,7 +887,8 @@ def edit_computing_conf(request):
         
         # Dump conf data for the webpage
         if computingUserConf.data:
-            data['computing_conf_data'] = json.dumps(computingUserConf.data)
+            data['computing_conf_data'] = computingUserConf.data
+            data['computing_conf_data_json'] = json.dumps(computingUserConf.data)
 
            
     else:
