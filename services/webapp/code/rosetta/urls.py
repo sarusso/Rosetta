@@ -21,44 +21,44 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Base App
-from rosetta.base_app import api as base_app_api
-from rosetta.base_app import views as base_app_views
+from rosetta.core_app import api as core_app_api
+from rosetta.core_app import views as core_app_views
 
 # REST Framework & Swagger
 from rest_framework import routers
 from rest_framework.documentation import include_docs_urls
 from rest_framework_swagger.views import get_swagger_view
 
-base_app_api_router = routers.DefaultRouter()
-base_app_api_router.register(r'users', base_app_api.UserViewSet)
+core_app_api_router = routers.DefaultRouter()
+core_app_api_router.register(r'users', core_app_api.UserViewSet)
 
 urlpatterns = [
                
     # Webpages
-    url(r'^$', base_app_views.entrypoint),
-    path('main/', base_app_views.main_view),
-    path('login/', base_app_views.login_view),
-    path('logout/', base_app_views.logout_view),
-    url(r'^account/$', base_app_views.account),
-    url(r'^tasks/$', base_app_views.tasks),
-    url(r'^create_task/$', base_app_views.create_task),
-    url(r'^task_log/$', base_app_views.task_log),
-    url(r'^computings/$', base_app_views.computings),
-    url(r'^add_computing/$', base_app_views.add_computing),
-    url(r'^edit_computing_conf/$', base_app_views.edit_computing_conf),
-    url(r'^containers/$', base_app_views.containers),
-    url(r'^add_container/$', base_app_views.add_container),
+    url(r'^$', core_app_views.entrypoint),
+    path('main/', core_app_views.main_view),
+    path('login/', core_app_views.login_view),
+    path('logout/', core_app_views.logout_view),
+    url(r'^account/$', core_app_views.account),
+    url(r'^tasks/$', core_app_views.tasks),
+    url(r'^create_task/$', core_app_views.create_task),
+    url(r'^task_log/$', core_app_views.task_log),
+    url(r'^computings/$', core_app_views.computings),
+    url(r'^add_computing/$', core_app_views.add_computing),
+    url(r'^edit_computing_conf/$', core_app_views.edit_computing_conf),
+    url(r'^containers/$', core_app_views.containers),
+    url(r'^add_container/$', core_app_views.add_container),
 
     # Modules
     path('admin/', admin.site.urls),
     path('api/v1/doc/', get_swagger_view(title="Swagger Documentation")),
     
     # ViewSet APIs
-    path('api/v1/base/login/', base_app_api.login_api.as_view(), name='login_api'),
-    path('api/v1/base/logout/', base_app_api.logout_api.as_view(), name='logout_api'),
+    path('api/v1/base/login/', core_app_api.login_api.as_view(), name='login_api'),
+    path('api/v1/base/logout/', core_app_api.logout_api.as_view(), name='logout_api'),
 
     # Custom APIs
-    path('api/v1/base/agent/', base_app_api.agent_api.as_view(), name='agent_api'),
+    path('api/v1/base/agent/', core_app_api.agent_api.as_view(), name='agent_api'),
  
 ]
 

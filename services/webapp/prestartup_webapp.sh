@@ -32,17 +32,17 @@ fi
 #-----------------------------
 	
 # Remove potential leftovers
-rm -f /opt/webapp_code/rosetta/base_app/migrations
+rm -f /opt/webapp_code/rosetta/core_app/migrations
 
 # If migrations were not already initialized, do it now
-if [ ! -d "$MIGRATIONS_DATA_FOLDER/base_app" ] ; then
-    echo "Initializing migrations for base_app"...
-    mkdir $MIGRATIONS_DATA_FOLDER/base_app && chown rosetta:rosetta $MIGRATIONS_DATA_FOLDER/base_app
-    touch $MIGRATIONS_DATA_FOLDER/base_app/__init__.py && chown rosetta:rosetta $MIGRATIONS_DATA_FOLDER/base_app/__init__.py
+if [ ! -d "$MIGRATIONS_DATA_FOLDER/core_app" ] ; then
+    echo "Initializing migrations for core_app"...
+    mkdir $MIGRATIONS_DATA_FOLDER/core_app && chown rosetta:rosetta $MIGRATIONS_DATA_FOLDER/core_app
+    touch $MIGRATIONS_DATA_FOLDER/core_app/__init__.py && chown rosetta:rosetta $MIGRATIONS_DATA_FOLDER/core_app/__init__.py
 fi
 
 # Use the right migrations folder
-ln -s $MIGRATIONS_DATA_FOLDER/base_app /opt/webapp_code/rosetta/base_app/migrations
+ln -s $MIGRATIONS_DATA_FOLDER/core_app /opt/webapp_code/rosetta/core_app/migrations
 
 
 

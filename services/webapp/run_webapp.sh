@@ -68,8 +68,8 @@ if [[ "x$EXIT_CODE" != "x0" ]] ; then
 fi
 echo ""
 
-echo "4) Populating base app..."
-cd /opt/webapp_code && $DJANGO_PYTHON manage.py base_app_populate  
+echo "4) Populating core app..."
+cd /opt/webapp_code && $DJANGO_PYTHON manage.py core_app_populate  
 EXIT_CODE=$?
 echo "Exit code: $EXIT_CODE"
 if [[ "x$EXIT_CODE" != "x0" ]] ; then
@@ -80,5 +80,5 @@ fi
 echo ""
 
 # Run the (development) server
-echo "6) Now starting the server and logging in /var/log/cloud_server.log."
+echo "5) Now starting the server and logging in /var/log/cloud_server.log."
 exec $DJANGO_PYTHON manage.py runserver 0.0.0.0:8080 2>> /var/log/webapp/server.log
