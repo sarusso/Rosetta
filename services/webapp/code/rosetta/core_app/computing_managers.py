@@ -268,7 +268,7 @@ class RemoteComputingManager(ComputingManager):
             raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
 
         # Get computing host
-        host = task.computing.get_conf_param('master')
+        host = task.computing.get_conf_param('host')
         user = task.computing.get_conf_param('user')
 
         # Stop the task remotely
