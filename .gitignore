@@ -16,3 +16,4 @@ data*
 
 # DB conf
 services/webapp/db_conf.sh
+services/proxy/certificates

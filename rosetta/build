@@ -36,7 +36,8 @@ if [[ "x$SERVICE" == "x" ]] ; then
     $BUILD_COMMAND services/slurmclusterworker -t rosetta/slurmclusterworker    
     $BUILD_COMMAND services/dregistry -t rosetta/dregistry
     $BUILD_COMMAND services/webapp -t rosetta/webapp
-
+    $BUILD_COMMAND services/postgres -t rosetta/postgres
+    $BUILD_COMMAND services/proxy -t rosetta/proxy
     
 else
 

@@ -37,6 +37,15 @@ services:
     ports:
       - "5000:5000"
 
+  postgres:
+    image: "rosetta/postgres"
+    container_name: postgres
+    hostname: postgres
+    environment:
+      - SAFEMODE=False
+    volumes:
+      - ./data_rosetta/postgres/data:/data    
+
   webapp:
     image: "rosetta/webapp"
     container_name: webapp
@@ -50,6 +59,9 @@ services:
       #- ROSETTA_WEBAPP_PORT=8080
       #- LOCAL_DOCKER_REGISTRY_HOST=
       #- LOCAL_DOCKER_REGISTRY_PORT=5000
+      #- DJANGO_EMAIL_APIKEY=""
+      #- DJANGO_EMAIL_FROM="Rosetta Platform <notifications@rosetta.platform>"
+      #- DJANGO_PUBLIC_HTTP_HOST=http://localhost:8080
     ports:
       - "8080:8080"
       - "8000:8590"
@@ -59,7 +71,19 @@ services:
       - ./data_rosetta/webapp/data:/data
       - ./data_rosetta/webapp/log:/var/log/webapp
       - /var/run/docker.sock:/var/run/docker.sock
-      #- ./services/webapp/code:/opt/webapp_code
+      - ./services/webapp/code:/opt/webapp_code
+
+  proxy:
+    image: "rosetta/proxy"
+    container_name: proxy
+    hostname: proxy
+    environment:
+      - SAFEMODE=False
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./data_rosetta/proxy/data:/data    
 
 
 

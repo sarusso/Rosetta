@@ -7,3 +7,12 @@ if [ ! -f services/webapp/db_conf.sh ]; then
 else
     echo "Not using dev webapp database settings as settings are already present."
 fi
+
+
+# Use dev (local) database for backend
+if [ ! -d services/proxy/certificates ]; then
+    echo "Using dev certificates."
+    cp -a services/proxy/certificates-dev  services/proxy/certificates
+else
+    echo "Not using dev certificates as certificates are already present."
+fi
