@@ -207,7 +207,7 @@ class Task(models.Model):
 
     uuid      = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user      = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE)
-    tid       = models.CharField('Task ID', max_length=64, blank=False, null=False)
+    tid       = models.CharField('Task ID', max_length=64, blank=True, null=True)
     name      = models.CharField('Task name', max_length=36, blank=False, null=False)
     status    = models.CharField('Task status', max_length=36, blank=True, null=True)
     created   = models.DateTimeField('Created on', default=timezone.now)
