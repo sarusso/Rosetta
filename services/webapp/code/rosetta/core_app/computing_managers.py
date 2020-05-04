@@ -201,7 +201,10 @@ class RemoteComputingManager(ComputingManager):
             
             # Set registry
             if task.container.registry == 'docker_local':
-                registry = 'docker://dregistry:5000/'
+                # Get local Docker registry conn string
+                from.utils import get_local_docker_registry_conn_string
+                local_docker_registry_conn_string = get_local_docker_registry_conn_string()
+                registry = 'docker://{}/'.format(local_docker_registry_conn_string)
             elif task.container.registry == 'docker_hub':
                 registry = 'docker://'
             else:
