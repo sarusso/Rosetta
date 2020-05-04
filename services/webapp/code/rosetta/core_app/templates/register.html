@@ -9,7 +9,7 @@
   <div class="dashboard">
     <div class="span8 offset2" style="font-size:18px">
     
-      <h1>Sign up</h1>
+      <h1>Register</h1>
       <hr>
       
       {% if data.status == "wrong_invite" %}   
@@ -39,9 +39,10 @@
       Start by clicking on the top-right menu icon.
       {% else %}
 
-      <p><b>Welcome to Dropely!</b></p>
+      <p><b>Welcome to Rosetta!</b></p>
       
-      <p>We are now in closed beta testing, which means that we can only accept invite-based new users. If you have an invitation code, you can sign up right now. Otherwise, <a href="/newsletter">leave your email</a> to reserve your spot in the queue and we will let you know as soon as you can sign up.</p>
+      <p>We are now in closed beta testing, which means that we can only accept invite-based new users. If you have an invitation code, you can sign up right now. Otherwise, please contact the support ot get one.
+      
       <br/>
       <br/>
       
@@ -50,8 +51,8 @@
           {% csrf_token %}
           <input type="email" class="form-control" placeholder="Email" name='email' required autofocus>
           <input type="password" class="form-control" placeholder="Password" name='password' required>
-          <input type="text" class="form-control" placeholder="Invitation code" name='invitation' value='Invite: {{ data.invite }}' required autofocus>
-          <input type='submit' class="btn btn-lg ha-btn-lg" value='Sign up' />
+          <input type="text" class="form-control" placeholder="Invitation code" name='invitation' value='' required autofocus>
+          <input type='submit' class="btn btn-lg ha-btn-lg" value='Go' />
           </form>
       </div>
       <br /></br>

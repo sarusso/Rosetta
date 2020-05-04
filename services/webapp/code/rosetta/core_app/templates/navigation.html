@@ -4,7 +4,6 @@
     <nav id="sidebar-wrapper">
         <ul class="sidebar-nav">
             <a id="menu-close" href="#" class="btn btn-light btn-lg pull-right toggle"><i class="fa fa-times"></i></a>      
-            {% if not data.dedicated %}
             <br/>
             <br/>
             <li class="sidebar-brand">
@@ -13,28 +12,27 @@
             <li>
                 <a href="/main/#top" onclick = $("#menu-close").click(); >Home</a>
             </li>
-
+            {% if not user.is_authenticated %}
+            <li>
+                <a href="/register" onclick = $("#menu-close").click(); >Register</a>
+            </li>
+            {% endif %}
             <br/>
             <hr>
-            {% else %}
-            <br/><br/>
-            {% endif %}
 
             {% if user.is_authenticated %}
-
+            <li>
+                <a href="/account" onclick = $("#menu-close").click(); >Account</a>
+            </li>        
+            <li>
+                <a href="/tasks" onclick = $("#menu-close").click(); >Tasks</a>
+            </li>
             <li>
                 <a href="/computings" onclick = $("#menu-close").click(); >Computing</a>
             </li>
             <li>
                 <a href="/containers" onclick = $("#menu-close").click(); >Containers</a>
-            </li>
-            <li>
-                <a href="/tasks" onclick = $("#menu-close").click(); >Tasks</a>
-            </li>
-            <li>
-                <a href="/account" onclick = $("#menu-close").click(); >Account</a>
-            </li>            
-           
+            </li>           
             {% else %}
             <li>
               <center>

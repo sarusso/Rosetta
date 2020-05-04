@@ -1,3 +1,4 @@
+import os
 import uuid
 import json
 import subprocess
@@ -8,7 +9,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.models import User
 from django.shortcuts import redirect
 from .models import Profile, LoginToken, Task, TaskStatuses, Container, Computing, Keys, ComputingSysConf, ComputingUserConf
-from .utils import send_email, format_exception, timezonize, os_shell, booleanize, debug_param, get_tunnel_host
+from .utils import send_email, format_exception, timezonize, os_shell, booleanize, debug_param, get_tunnel_host, random_username
 from .decorators import public_view, private_view
 from .exceptions import ErrorMessage
 
@@ -134,6 +135,74 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return HttpResponseRedirect('/')
+
+
+@public_view
+def register_view(request):
+
+    data = {}
+    data['title'] = "{} - Register".format(settings.DJANGO_PROJECT_NAME)
+
+    # If authenticated user reloads the main URL
+    if request.method == 'GET' and request.user.is_authenticated:
+        return HttpResponseRedirect('/main/')
+
+    # If unauthenticated register if post
+    if request.method == 'POST':
+        if not request.user.is_authenticated:
+            email    = request.POST.get('email')
+            password = request.POST.get('password')
+            invitation = request.POST.get('invitation')
+            
+            if invitation != os.environ.get('INVITATION_CODE', 'Rosetta'):
+                raise ErrorMessage('Wrong invitation code')
+
+            if '@' not in email:
+                raise ErrorMessage('Detected invalid email address')
+            
+            # Register the user
+            user = User.objects.create_user(random_username(), password=password, email=email)
+
+            # Is this necessary?
+            user.save()
+            
+            data['user'] = user
+
+            # Create profile
+            logger.debug('Creating user profile for user "{}"'.format(user.email))
+            Profile.objects.create(user=user)
+
+            # Generate user keys
+            out = os_shell('mkdir -p /data/resources/keys/', capture=True)
+            if not out.exit_code == 0:
+                logger.error(out)
+                raise ErrorMessage('Something went wrong in creating user keys folder. Please contact support')
+                
+            command= "/bin/bash -c \"ssh-keygen -q -t rsa -N '' -f /data/resources/keys/{}_id_rsa 2>/dev/null <<< y >/dev/null\"".format(user.username)                        
+            out = os_shell(command, capture=True)
+            if not out.exit_code == 0:
+                logger.error(out)
+                raise ErrorMessage('Something went wrong in creating user keys. Please contact support')
+                
+            
+            # Create key objects
+            Keys.objects.create(user = user,
+                                default = True,
+                                private_key_file = '/data/resources/keys/{}_id_rsa'.format(user.username),
+                                public_key_file = '/data/resources/keys/{}_id_rsa.pub'.format(user.username))
+            
+
+            # Manually set the auth backend for the user
+            user.backend = 'django.contrib.auth.backends.ModelBackend'
+            login(request, user)
+            
+            data['status'] = 'activated'
+
+    # All other cases, render the login page again with no other data than title
+    return render(request, 'register.html', {'data': data})
+
+
+
 
 @public_view
 def entrypoint(request):
