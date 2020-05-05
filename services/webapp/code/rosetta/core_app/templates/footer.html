@@ -31,8 +31,24 @@
             }
         });
     });
-    </script>
 
+    function stringToColour(str) {
+
+        // str to hash
+        for (var i = 0, hash = 0; i < str.length; hash = str.charCodeAt(i++) + ((hash << 5) - hash));
+
+        // int/hash to hex
+        for (var i = 0, colour = "#"; i < 3; colour += ("00" + ((hash >> i++ * 8) & 0xFF).toString(16)).slice(-2));
+
+        colour_rgb = hexToRgb(colour)
+
+        return "rgba(" + colour_rgb.r + "," + colour_rgb.g + "," + colour_rgb.b + ",0.3)"    
+        
+    }
+
+    </script>
+    
+    
 </body>
 
 </html>

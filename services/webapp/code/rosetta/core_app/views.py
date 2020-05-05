@@ -8,7 +8,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.models import User
 from django.shortcuts import redirect
-from .models import Profile, LoginToken, Task, TaskStatuses, Container, Computing, Keys, ComputingSysConf, ComputingUserConf
+from .models import Profile, LoginToken, Task, TaskStatuses, Container, Computing, KeyPair, ComputingSysConf, ComputingUserConf
 from .utils import send_email, format_exception, timezonize, os_shell, booleanize, debug_param, get_tunnel_host, random_username
 from .decorators import public_view, private_view
 from .exceptions import ErrorMessage
@@ -186,7 +186,7 @@ def register_view(request):
                 
             
             # Create key objects
-            Keys.objects.create(user = user,
+            KeyPair.objects.create(user = user,
                                 default = True,
                                 private_key_file = '/data/resources/keys/{}_id_rsa'.format(user.username),
                                 public_key_file = '/data/resources/keys/{}_id_rsa.pub'.format(user.username))
@@ -250,7 +250,7 @@ def account(request):
         edit = None
 
     # Set data.default_public_key
-    with open(Keys.objects.get(user=request.user, default=True).public_key_file) as f:
+    with open(KeyPair.objects.get(user=request.user, default=True).public_key_file) as f:
         data['default_public_key'] = f.read()
 
     # Edit values
@@ -456,12 +456,24 @@ def create_task(request):
     data['profile'] = Profile.objects.get(user=request.user)
     data['title']   = 'New Task'
 
-    # Get containers and computings 
-    data['containers'] = list(Container.objects.filter(user=None)) + list(Container.objects.filter(user=request.user))
-    data['computings'] = list(Computing.objects.filter(user=None)) + list(Computing.objects.filter(user=request.user))
-
     # Step if any
     step = request.POST.get('step', None)
+
+    # Container uuid if any
+    container_uuid = request.GET.get('container_uuid', None)
+    if container_uuid:
+        try:
+            data['container'] = Container.objects.get(uuid=container_uuid, user=request.user)
+        except Container.DoesNotExist:
+            data['container'] = Container.objects.get(uuid=container_uuid, user=None)
+    else:
+        # Get containers
+        data['containers'] = list(Container.objects.filter(user=None)) + list(Container.objects.filter(user=request.user))
+    
+    # Get computings 
+    data['computings'] = list(Computing.objects.filter(user=None)) + list(Computing.objects.filter(user=request.user))
+
+        
 
     if step == 'one':
 
@@ -857,6 +869,8 @@ def edit_computing_conf(request):
             computingSysConf.data = new_conf_data
             computingSysConf.save()
             data['saved'] = True
+            return HttpResponseRedirect('/computings')
+
 
         # Dump conf data for the webpage
         if computingSysConf.data:

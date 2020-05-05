@@ -3,7 +3,7 @@ from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-from .utils import os_shell
+from .utils import os_shell, color_map, hash_string_to_int
 
 if 'sqlite' in settings.DATABASES['default']['ENGINE']:
     from .fields import JSONField
@@ -96,7 +96,11 @@ class Container(models.Model):
     def id(self):
         return str(self.uuid).split('-')[0]
 
-
+    @ property
+    def color(self):
+        string_int_hash = hash_string_to_int(self.name + self.type + self.image)
+        color_map_index = string_int_hash % len(color_map)
+        return color_map[color_map_index]
 
 #=========================
 #  Computing resources
@@ -111,16 +115,19 @@ class Computing(models.Model):
     name = models.CharField('Computing Name', max_length=255, blank=False, null=False)
     type = models.CharField('Computing Type', max_length=255, blank=False, null=False)
 
-    require_sys_conf  = models.BooleanField(default=False)
-    require_user_conf = models.BooleanField(default=False)
-    require_user_keys = models.BooleanField(default=False)
+    requires_sys_conf  = models.BooleanField(default=False)
+    requires_user_conf = models.BooleanField(default=False)
+    requires_user_keys = models.BooleanField(default=False)
+
+    supports_docker  = models.BooleanField(default=False)
+    supports_singularity  = models.BooleanField(default=False)
 
 
     def __str__(self):
         if self.user:
-            return str('Computing Resource "{}" of user "{}"'.format(self.name, self.user))
+            return str('Computing "{}" of user "{}"'.format(self.name, self.user))
         else:
-            return str('Computing Resource "{}"'.format(self.name))
+            return str('Computing "{}"'.format(self.name))
 
 
     @property
@@ -172,6 +179,12 @@ class Computing(models.Model):
         ComputingManager = getattr(computing_managers, '{}ComputingManager'.format(self.type.title()))
         return ComputingManager()
 
+    @ property
+    def color(self):
+        string_int_hash = hash_string_to_int(self.name)
+        color_map_index = string_int_hash % len(color_map)
+        return color_map[color_map_index]
+
 
 
 class ComputingSysConf(models.Model):
@@ -201,7 +214,7 @@ class ComputingUserConf(models.Model):
 
     @property
     def id(self):
-        return str('Computing sys conf for {} with id "{}" of user "{}"'.format(self.computing, self.id, self.user))
+        return str('Computing user conf for {} with id "{}" of user "{}"'.format(self.computing, self.id, self.user))
 
 
 
@@ -274,13 +287,19 @@ class Task(models.Model):
     def __str__(self):
         return str('Task "{}" of user "{}" running on "{}" in status "{}" created at "{}"'.format(self.name, self.user, self.computing, self.status, self.created))
 
+    @ property
+    def color(self):
+        string_int_hash = hash_string_to_int(self.name)
+        color_map_index = string_int_hash % len(color_map)
+        return color_map[color_map_index]
+
 
 
 #=========================
-#  Keys 
+#  KeyPair 
 #=========================
 
-class Keys(models.Model):
+class KeyPair(models.Model):
 
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE, null=False)  
@@ -292,7 +311,7 @@ class Keys(models.Model):
 
 
     def __str__(self):
-        return str('Keys with id "{}" of user "{}"'.format(self.id, self.user))
+        return str('KeyPair with id "{}" of user "{}"'.format(self.id, self.user))
 
 
     @property

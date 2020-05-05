@@ -1274,10 +1274,10 @@
                 var handler = null,
                     index,
                     index2,
-                    pressedKeys = [],
+                    pressedKeyPair = [],
                     pressedModifiers = {},
                     currentKey = e.which,
-                    keyBindKeys,
+                    keyBindKeyPair,
                     allModifiersPressed,
                     pressed = 'p';
 
@@ -1285,7 +1285,7 @@
 
                 for (index in keyState) {
                     if (keyState.hasOwnProperty(index) && keyState[index] === pressed) {
-                        pressedKeys.push(index);
+                        pressedKeyPair.push(index);
                         if (parseInt(index, 10) !== currentKey) {
                             pressedModifiers[index] = true;
                         }
@@ -1294,11 +1294,11 @@
 
                 for (index in options.keyBinds) {
                     if (options.keyBinds.hasOwnProperty(index) && typeof (options.keyBinds[index]) === 'function') {
-                        keyBindKeys = index.split(' ');
-                        if (keyBindKeys.length === pressedKeys.length && keyMap[currentKey] === keyBindKeys[keyBindKeys.length - 1]) {
+                        keyBindKeyPair = index.split(' ');
+                        if (keyBindKeyPair.length === pressedKeyPair.length && keyMap[currentKey] === keyBindKeyPair[keyBindKeyPair.length - 1]) {
                             allModifiersPressed = true;
-                            for (index2 = keyBindKeys.length - 2; index2 >= 0; index2--) {
-                                if (!(keyMap[keyBindKeys[index2]] in pressedModifiers)) {
+                            for (index2 = keyBindKeyPair.length - 2; index2 >= 0; index2--) {
+                                if (!(keyMap[keyBindKeyPair[index2]] in pressedModifiers)) {
                                     allModifiersPressed = false;
                                     break;
                                 }

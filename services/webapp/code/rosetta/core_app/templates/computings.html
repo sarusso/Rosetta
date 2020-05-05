@@ -10,31 +10,32 @@
     <div class="span8 offset2">
       
       {% if data.computing %}
-      <h1><a href="/computings">Computing List</a> &gt; {{ data.computing.id }}  </h1>      
+      <h1><a href="/computings">Computing</a> &gt; {{ data.computing.id }}  </h1>      
       {% else %}
-      <h1>Computing List</h1>
+      <h1>Computing</h1>
       {% endif %}
       
       <hr/>
-
+      <div class="row" style="padding:5px">
       {% if data.computing %}
-      {% include "components/computing.html" with computing=data.computing %}
-      {% else %}
-      
+      {% include "components/computing.html" with computing=data.computing details=True %}
+      {% else %}      
       {% for computing in data.computings %}
       {% include "components/computing.html" with computing=computing %}
-      <br />
       {% endfor %}
-  
-      
-      <!-- <br />
-      <a href="/add_computing">Add new...</a> -->
-      
       {% endif %}
-      <br />
-      <br />
-      <br />
-      <br />
+      </div>
+      
+      <!-- <div class="row" style="padding:10px; padding-left:15px">   
+      <a href="/add_container">Add new...</a>
+      </div> -->
+
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
 
     </div>
   </div>

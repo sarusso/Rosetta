@@ -34,16 +34,18 @@
 
           <tr>
             <td><b>Task container</b></td><td>
+              {% if data.container %}
+              <select name="task_container_uuid">
+              <option value="{{data.container.uuid}}" selected>{{data.container.name}} ({{data.container.type}})</option>
+              </select>
+              {% else %}
               <select name="task_container_uuid" >
-              <!-- <option value="metadesktop" selected>Meta Desktop</option>
-              <option value="astroccok">Astrocook</option>
-              <option value="gadgetviewer">Gadget Viewer</option> -->
               {% for container in data.containers %}
               <option value="{{container.uuid}}">{{container.name}} ({{container.type}})</option>
-              {% endfor %}              
-              
+              {% endfor %}
               </select>
-              &nbsp; | <a href="/add_container">Add new...</a>          
+              {% endif %}
+              <!--  &nbsp; | <a href="/add_container">Add new...</a>  -->  
             </td>
            </tr>
            
@@ -51,10 +53,10 @@
             <td><b>Computing resource</b></td><td>
               <select name="task_computing" >
               {% for computing in data.computings %}}
-              <option value="{{ computing.uuid }}">{{ computing.name}} ({% if computing.user %}{{ computing.user }}{% else %}platform{% endif %})</option>
+              <option value="{{ computing.uuid }}">{{ computing.name}}</option>  <!--  ({% if computing.user %}{{ computing.user }}{% else %}platform{% endif %})  -->
               {% endfor %}
               </select>
-              &nbsp; | <a href="/add_computing">Add new...</a>
+              <!--  &nbsp; | <a href="/add_computing">Add new...</a>-->
             </td>
            </tr>
 

@@ -1,4 +1,4 @@
-from .models import TaskStatuses, Keys, Task
+from .models import TaskStatuses, KeyPair, Task
 from .utils import os_shell
 from .exceptions import ErrorMessage, ConsistencyException
 
@@ -164,8 +164,8 @@ class RemoteComputingManager(ComputingManager):
         user = task.computing.get_conf_param('user')
 
         # Get user keys
-        if task.computing.require_user_keys:
-            user_keys = Keys.objects.get(user=task.user, default=True)
+        if task.computing.requires_user_keys:
+            user_keys = KeyPair.objects.get(user=task.user, default=True)
         else:
             raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
 
@@ -173,9 +173,7 @@ class RemoteComputingManager(ComputingManager):
         from.utils import get_webapp_conn_string
         webapp_conn_string = get_webapp_conn_string()
             
-
-        # 1) Run the container on the host (non blocking)
- 
+        # Run the container on the host (non blocking)
         if task.container.type == 'singularity':
 
             task.tid    = task.uuid
@@ -188,16 +186,9 @@ class RemoteComputingManager(ComputingManager):
                 authstring = ''
 
             run_command  = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, user, host)
-            run_command += '/bin/bash -c \'"wget {}/api/v1/base/agent/?task_uuid={} -O /tmp/agent_{}.py &> /dev/null && export BASE_PORT=\$(python /tmp/agent_{}.py 2> /tmp/{}.log) && '.format(webapp_conn_string, task.uuid, task.uuid, task.uuid, task.uuid)
+            run_command += '/bin/bash -c \'"wget {}/api/v1/base/agent/?task_uuid={} -O \$HOME/agent_{}.py &> /dev/null && export BASE_PORT=\$(python \$HOME/agent_{}.py 2> \$HOME/{}.log) && '.format(webapp_conn_string, task.uuid, task.uuid, task.uuid, task.uuid)
             run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\$BASE_PORT && {} '.format(authstring)
             run_command += 'exec nohup singularity run --pid --writable-tmpfs --containall --cleanenv '
-            
-            # ssh -i /rosetta/.ssh/id_rsa -4 -o StrictHostKeyChecking=no slurmclusterworker-one
-            # "wget 172.21.0.2:8080/api/v1/base/agent/?task_uuid=15a4320a-88b6-4ffc-8dd0-c80f9d18b292 -O /tmp/agent_15a4320a-88b6-4ffc-8dd0-c80f9d18b292.py &> /dev/null &&
-            # export BASE_PORT=\$(python /tmp/agent_15a4320a-88b6-4ffc-8dd0-c80f9d18b292.py) && export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\$BASE_PORT &&  export SINGULARITYENV_AUTH_PASS=testpass &&  
-            # exec nohup singularity run --pid --writable-tmpfs --containall --cleanenv
-            # docker://dregistry:5000/rosetta/metadesktop &> /tmp/15a4320a-88b6-4ffc-8dd0-c80f9d18b292.log & echo $!"
-            
             
             # Set registry
             if task.container.registry == 'docker_local':
@@ -210,7 +201,7 @@ class RemoteComputingManager(ComputingManager):
             else:
                 raise NotImplementedError('Registry {} not supported'.format(task.container.registry))
     
-            run_command+='{}{} &>> /tmp/{}.log & echo \$!"\''.format(registry, task.container.image, task.uuid)
+            run_command+='{}{} &>> \$HOME/{}.log & echo \$!"\''.format(registry, task.container.image, task.uuid)
             
         else:
             raise NotImplementedError('Container {} not supported'.format(task.container.type))
@@ -240,8 +231,8 @@ class RemoteComputingManager(ComputingManager):
     def _stop_task(self, task, **kwargs):
 
         # Get user keys
-        if task.computing.require_user_keys:
-            user_keys = Keys.objects.get(user=task.user, default=True)
+        if task.computing.requires_user_keys:
+            user_keys = KeyPair.objects.get(user=task.user, default=True)
         else:
             raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
 
@@ -265,8 +256,8 @@ class RemoteComputingManager(ComputingManager):
     def _get_task_log(self, task, **kwargs):
         
         # Get user keys
-        if task.computing.require_user_keys:
-            user_keys = Keys.objects.get(user=task.user, default=True)
+        if task.computing.requires_user_keys:
+            user_keys = KeyPair.objects.get(user=task.user, default=True)
         else:
             raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
 
@@ -275,7 +266,7 @@ class RemoteComputingManager(ComputingManager):
         user = task.computing.get_conf_param('user')
 
         # Stop the task remotely
-        view_log_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "cat /tmp/{}.log"\''.format(user_keys.private_key_file, user, host, task.uuid)
+        view_log_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "cat \$HOME/{}.log"\''.format(user_keys.private_key_file, user, host, task.uuid)
 
         out = os_shell(view_log_command, capture=True)
         if out.exit_code != 0:
@@ -290,13 +281,13 @@ class SlurmComputingManager(ComputingManager):
     def _start_task(self, task, **kwargs):
         logger.debug('Starting a remote task "{}"'.format(task.computing))
 
-        # Get computing host #Key Error ATM
+        # Get computing host
         host = task.computing.get_conf_param('master')
         user = task.computing.get_conf_param('user')
         
         # Get user keys
-        if task.computing.require_user_keys:
-            user_keys = Keys.objects.get(user=task.user, default=True)
+        if task.computing.requires_user_keys:
+            user_keys = KeyPair.objects.get(user=task.user, default=True)
         else:
             raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
 
@@ -323,8 +314,7 @@ class SlurmComputingManager(ComputingManager):
         # Set output and error files
         sbatch_args += ' --output=\$HOME/{}.log --error=\$HOME/{}.log '.format(task.uuid, task.uuid)
 
-
-        # 1) Run the container on the host (non blocking)
+        # Submit the job
         if task.container.type == 'singularity':
 
             if not task.container.supports_dynamic_ports:
@@ -348,7 +338,7 @@ class SlurmComputingManager(ComputingManager):
             run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\\\\\\$BASE_PORT && {} '.format(authstring)
             run_command += 'exec nohup singularity run {} --pid --writable-tmpfs --containall --cleanenv '.format(bindings)
             
-            # Double to escape for python six for shell (double times three as \\\ escapes a single slash in shell)
+            # Double to escape for Pythom, six for shell (double times three as \\\ escapes a single slash in shell)
 
             # Set registry
             if task.container.registry == 'docker_local':
@@ -399,8 +389,8 @@ class SlurmComputingManager(ComputingManager):
     def _stop_task(self, task, **kwargs):
         
         # Get user keys
-        if task.computing.require_user_keys:
-            user_keys = Keys.objects.get(user=task.user, default=True)
+        if task.computing.requires_user_keys:
+            user_keys = KeyPair.objects.get(user=task.user, default=True)
         else:
             raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
 
@@ -423,8 +413,8 @@ class SlurmComputingManager(ComputingManager):
     def _get_task_log(self, task, **kwargs):
         
         # Get user keys
-        if task.computing.require_user_keys:
-            user_keys = Keys.objects.get(user=task.user, default=True)
+        if task.computing.requires_user_keys:
+            user_keys = KeyPair.objects.get(user=task.user, default=True)
         else:
             raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
 

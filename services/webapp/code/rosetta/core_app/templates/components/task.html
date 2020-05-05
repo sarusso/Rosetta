@@ -1,14 +1,18 @@
-          
-          <table class="dashboard">
 
-           <tr>
-            <td><b>ID</b></td>
-            <td><a href="?uuid={{ task.uuid }}">{{ task.id }}</a></td>
-           </tr>
+
+          {% if details %}      
+
+         
+          <table class="dashboard">
 
            <tr>
             <td><b>Name</b></td>
             <td>{{ task.name }}</td>
+           </tr>
+
+           <tr>
+            <td><b>ID</b></td>
+            <td>{{ task.id }}</td>
            </tr>
 
            <tr>
@@ -85,4 +89,50 @@
            </tr>
 
           </table>
-          <br/>
+          
+          {% else %}
+          <div style="width:300px; float:left; border: #e0e0e0 solid 1px; margin:10px; background:#f8f8f8; margin-bottom:20px">
+            <!-- <div>
+            <div style="background:{{task.container.color}}; height:24px; width:149px; float:left"></div>
+            <div style="background:{{task.computing.color}}; height:24px; width:149px; float:left"></div>
+            </div> -->
+            
+            <!-- <div style="background:{{task.color}}; height:24px;"></div> -->
+            
+            <div style="padding:10px; text-align:center; border-bottom: #e0e0e0 solid 1px; ">
+            <a href="?uuid={{ task.uuid }}"><b>{{ task.name }}</b></a>
+            </div>
+            
+            <div style="padding:10px;">
+            <!-- <b>Container:</b> {{ task.container.name }} <span style="font-size:14px; background-color:{{task.container.color}}">&nbsp;&nbsp;&nbsp;&nbsp;</span> <br/>
+            <b>Computing:</b> {{ task.computing.name }} <span style="font-size:14px; background-color:{{task.computing.color}}">&nbsp;&nbsp;&nbsp;&nbsp;</span><br/> -->
+
+            <b>Container:</b> {{ task.container.name }}
+            <a href="/containers/?uuid={{ task.container.uuid }}" style="color:{{task.container.color}}"><i class="fa fa-external-link" ></i></a> <br/>
+            
+            <b>Computing:</b> {{ task.computing.name }}
+            <a href="/computings/" style="color:{{task.computing.color}}"><i class="fa fa-external-link" ></i></a><br/>            
+            
+            
+            {% if task.status == "running" %}
+             <b>Status:</b> <font color="green">running</font>
+            {% else %}
+             <b>Status:</b> {{ task.status }}
+            {% endif %}
+            </div>
+            
+            <div style="margin-bottom:10px; text-align:center; padding:5px">
+            {% if task.status == "running" %}
+            <a href="?uuid={{task.uuid}}&action=connect" class="btn btn-connect">Connect</a>
+            {% else %}
+            <a href="?uuid={{task.uuid}}&action=connect" class="btn btn-disabled">Connect</a>
+            {% endif %}            
+            
+            
+            </div>    
+          
+          
+          
+          </div>
+          
+          {% endif  %}

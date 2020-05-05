@@ -9,24 +9,29 @@
   <div class="dashboard">
     <div class="span8 offset2">
       
-
       {% if data.task %}
-      <h1><a href="/tasks">Task List</a> &gt; {{ data.task.id }}  </h1>      
+      <h1><a href="/tasks">Tasks</a> <span style="font-size:18px"> / {{ data.task.name }}</span></h1>      
       {% else %}
-      <h1>Task List</h1>
+      <h1>Tasks</h1>
       {% endif %}
 
       <hr>
+      <div class="row" style="padding:5px">
       {% if data.task %}
       {% include "components/task.html" with task=data.task details=True %}
       {% else %}
       {% for task in data.tasks %}
       {% include "components/task.html" with task=task %}
       {% endfor %}
-      <br />
-      <a href="/create_task">Create new...</a>
       {% endif %}
-           
+      </div>
+
+      {% if not data.task %}
+      <div class="row" style="padding:10px; padding-left:15px">   
+      <a href="/create_task">Create new...</a>
+      </div>
+      {% endif %}
+
       <br/>
       <br/>
       <br/>

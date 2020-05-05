@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from ...models import Profile, Container, Computing, ComputingSysConf, ComputingUserConf, Keys
+from ...models import Profile, Container, Computing, ComputingSysConf, ComputingUserConf, KeyPair
 
 class Command(BaseCommand):
     help = 'Adds the admin superuser with \'a\' password.'
@@ -34,7 +34,7 @@ class Command(BaseCommand):
 
             # Create default keys
             print('Creating testuser defualt keys')
-            Keys.objects.create(user = testuser,
+            KeyPair.objects.create(user = testuser,
                                 default = True,
                                 private_key_file = '/rosetta/.ssh/id_rsa',
                                 public_key_file = '/rosetta/.ssh/id_rsa.pub')
@@ -112,9 +112,9 @@ class Command(BaseCommand):
             Computing.objects.create(user = None,
                                      name = 'Local',
                                      type = 'local',
-                                     require_sys_conf  = False,
-                                     require_user_conf = False,
-                                     require_user_keys = False)
+                                     requires_sys_conf  = False,
+                                     requires_user_conf = False,
+                                     requires_user_keys = False)
 
 
             #==============================
@@ -123,9 +123,9 @@ class Command(BaseCommand):
             demo_remote_auth_computing = Computing.objects.create(user = None,
                                                              name = 'Demo remote',
                                                              type = 'remote',
-                                                             require_sys_conf  = True,
-                                                             require_user_conf = True,
-                                                             require_user_keys = True)
+                                                             requires_sys_conf  = True,
+                                                             requires_user_conf = True,
+                                                             requires_user_keys = True)
     
             ComputingSysConf.objects.create(computing = demo_remote_auth_computing,
                                             data      = {'host': 'slurmclusterworker-one'})
@@ -141,9 +141,9 @@ class Command(BaseCommand):
             demo_slurm_computing = Computing.objects.create(user = None,
                                                             name = 'Demo Slurm',
                                                             type = 'slurm',
-                                                            require_sys_conf  = True,
-                                                            require_user_conf = True,
-                                                            require_user_keys = True)
+                                                            requires_sys_conf  = True,
+                                                            requires_user_conf = True,
+                                                            requires_user_keys = True)
     
             # Create demo slurm sys computing conf
             ComputingSysConf.objects.create(computing = demo_slurm_computing,

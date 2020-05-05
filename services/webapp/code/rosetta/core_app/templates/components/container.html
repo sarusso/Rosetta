@@ -1,13 +1,22 @@
-      <table class="dashboard">
 
+
+      {% if details %}      
+
+      <table class="dashboard" style="margin:10px">
+        
        <tr>
-        <td><b>ID</b></td>
-        <td><a href="?uuid={{ container.uuid }}">{{ container.id }}</a></td>
+        <td colspan="2" style="background:{{ container.color }}; height:25px">
+        </td>
        </tr>
 
        <tr>
         <td><b>Name</b></td>
         <td>{{ container.name }}</td>
+       </tr>
+
+       <tr>
+        <td><b>ID</b></td>
+        <td>{{ container.id }}</td>
        </tr>
 
        <tr>
@@ -75,3 +84,35 @@
        {% endif %}
       </table>
       <br/>
+      
+      
+      {% else %}
+      <div style="width:300px; float:left; border: #e0e0e0 solid 1px; margin:10px; background:#f8f8f8; margin-bottom:20px">
+        <div style="background:{{container.color}}; height:24px"></div>
+        
+        <div style="padding:10px; text-align:center; border-bottom: #e0e0e0 solid 1px; ">
+        <a href="?uuid={{ container.uuid }}">{{ container.name }}</a>
+        &nbsp; <a href="/create_task?container_uuid={{ container.uuid }}"><i class="fa fa-play" style="color:green"></i></a>
+        </div>
+        
+        <div style="padding:10px;">
+        Type: {{ container.type }}<br/>
+        Image: {{ container.image }}
+        </div>
+        
+        <div style="margin-bottom:10px; text-align:center">
+        
+        </div>    
+      
+      
+      
+      </div>
+      
+      {% endif  %}
+
+
+
+
+
+
+      

@@ -1,13 +1,20 @@
-      <table class="dashboard" style="max-width:500px">
+
+      <div style="float:left; width:500px; margin:10px; margin-bottom:20px">
+      <table class="dashboard" style="width:100%">
 
        <tr>
-        <td><b>ID</b></td>
-        <td><a href="?uuid={{ computing.uuid }}">{{ computing.id }}</a></td>
+        <td colspan="2" style="background:{{ computing.color }}; height:30px">
+        </td>
        </tr>
 
        <tr>
         <td><b>Name</b></td>
         <td>{{ computing.name }}</td>
+       </tr>
+
+       <tr>
+        <td width="110px"><b>ID</b></td>
+        <td>{{ computing.id }}</a></td>
        </tr>
 
        <tr>
@@ -18,6 +25,23 @@
        <tr>
         <td><b>Owner</b></td>
         <td>{% if computing.user %}{{ computing.user }}{% else %}platform{% endif %}</td>
+       </tr>
+
+       <tr>
+        <td><b>Require</b></td>
+        <td>
+          Sys conf: {{ computing.requires_sys_conf }} <br/>
+          User conf: {{ computing.requires_user_conf }} <br/>
+          User keys: {{ computing.requires_user_keys }}
+        </td>
+       </tr>
+
+       <tr>
+        <td><b>Supports</b></td>
+        <td>
+          Docker: {{ computing.supports_docker }} <br/>
+          Singularity: {{ computing.supports_singularity }}
+        </td>
        </tr>
 
        <tr>
@@ -38,4 +62,4 @@
        </tr>
        {% endif %}
       </table>
-      <br/>
+      </div>

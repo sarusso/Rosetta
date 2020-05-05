@@ -10,29 +10,32 @@
     <div class="span8 offset2">
       
       {% if data.container %}
-      <h1><a href="/containers">Container List</a> &gt; {{ data.container.id }}  </h1>      
+      <h1><a href="/containers">Containers</a> <span style="font-size:18px"> / {{ data.container.name }}</span></h1>
       {% else %}
-      <h1>Container List</h1>
+      <h1>Containers</h1>
       {% endif %}
       
       <hr/>
-
+      <div class="row" style="padding:5px">
       {% if data.container %}
-      {% include "components/container.html" with container=data.container %}
+      {% include "components/container.html" with container=data.container details=True %}
       {% else %} 
       {% for container in data.containers %}
       {% include "components/container.html" with container=container %}
-      <br />
       {% endfor %}
-
-      <br />
-      <a href="/add_container">Add new...</a>
-      
       {% endif %}
-      <br />
-      <br />
-      <br />
-      <br />
+      </div>
+      
+      <div class="row" style="padding:10px; padding-left:15px">   
+      <a href="/add_container">Add new...</a>
+      </div>
+        
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
 
     </div>
   </div>
