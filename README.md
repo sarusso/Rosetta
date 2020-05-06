@@ -1,4 +1,4 @@
-# Rosetta 💁🏽
+# Rosetta 🛰️
 
 
 _A container-centric Science Platform_
@@ -30,11 +30,31 @@ Run
 
 Play
 
-    You can now point your browser to http://localhost:8080
+    You can now point your browser to http://localhost:8080.
+    
+    To run Slurm jobs use partition "partition1"
 
 Clean
 
 	# rosetta/clean
+
+### Configuration
+
+Example Webapp configuraion
+
+      - SAFEMODE=False
+      - DJANGO_LOG_LEVEL=CRITICAL
+      - ROSETTA_LOG_LEVEL=ERROR
+      - ROSETTA_TUNNEL_HOST=localhost # Not http or https
+      - ROSETTA_WEBAPP_HOST= 
+      - ROSETTA_WEBAPP_PORT=8080
+      - LOCAL_DOCKER_REGISTRY_HOST=
+      - LOCAL_DOCKER_REGISTRY_PORT=5000
+      - DJANGO_EMAIL_APIKEY="<API KEY>"
+      - DJANGO_EMAIL_FROM="Rosetta Platform <notifications@rosetta.platform>
+      - DJANGO_PUBLIC_HTTP_HOST=http://localhost:8080 # Public facing, with shttp or https
+
+
 
 ### Extras
 
