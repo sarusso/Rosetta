@@ -88,6 +88,10 @@ class Container(models.Model):
     supports_pass_auth = models.BooleanField(default=False)
 
 
+    class Meta:
+        ordering = ['name']
+
+
     def __str__(self):
         return str('Container of type "{}" with image "{}" and  ports "{}" from registry "{}" of user "{}"'.format(self.type, self.image, self.ports, self.registry, self.user))
 
@@ -101,6 +105,8 @@ class Container(models.Model):
         string_int_hash = hash_string_to_int(self.name + self.type + self.image)
         color_map_index = string_int_hash % len(color_map)
         return color_map[color_map_index]
+
+
 
 #=========================
 #  Computing resources
@@ -121,6 +127,10 @@ class Computing(models.Model):
 
     supports_docker  = models.BooleanField(default=False)
     supports_singularity  = models.BooleanField(default=False)
+
+
+    class Meta:
+        ordering = ['name']
 
 
     def __str__(self):
@@ -246,6 +256,9 @@ class Task(models.Model):
 
     # Computing options
     computing_options = JSONField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-created']
 
     def save(self, *args, **kwargs):
         

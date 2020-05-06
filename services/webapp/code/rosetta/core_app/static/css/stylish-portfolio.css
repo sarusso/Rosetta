@@ -86,7 +86,20 @@ body {
 
 .btn-connect:hover {
     color: #fff;
-    background-color: rgba(0,95,144,1.0);
+    /*background-color: rgba(0,135,184,1.0);*/
+    background-color: rgba(0,145,194,1.0);
+}
+
+.btn-action {
+    border-radius: 0;
+    color: rgba(0,95,144,0.8);
+    border: #c0c0c0 1px solid;
+    background-color: rgba(250,248,250,1.0);
+}
+
+.btn-action:hover {
+    color: rgba(0,95,144,0.9);
+    background-color: rgba(255,255,255,1.0);
 }
 
 .btn-disabled:hover {

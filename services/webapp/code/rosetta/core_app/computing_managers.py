@@ -117,7 +117,7 @@ class LocalComputingManager(ComputingManager):
             task.tid    = task_tid
             task.status = TaskStatuses.running
             task.ip     = task_ip
-            task.port   = int(task.container.default_ports.split(',')[0])
+            task.port   = int(task.container.ports.split(',')[0])
 
             # Save
             task.save()

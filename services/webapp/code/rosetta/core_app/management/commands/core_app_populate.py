@@ -114,7 +114,9 @@ class Command(BaseCommand):
                                      type = 'local',
                                      requires_sys_conf  = False,
                                      requires_user_conf = False,
-                                     requires_user_keys = False)
+                                     requires_user_keys = False,
+                                     supports_docker = True,
+                                     supports_singularity = False)
 
 
             #==============================
@@ -125,7 +127,9 @@ class Command(BaseCommand):
                                                              type = 'remote',
                                                              requires_sys_conf  = True,
                                                              requires_user_conf = True,
-                                                             requires_user_keys = True)
+                                                             requires_user_keys = True,
+                                                             supports_docker = True,
+                                                             supports_singularity = True)
     
             ComputingSysConf.objects.create(computing = demo_remote_auth_computing,
                                             data      = {'host': 'slurmclusterworker-one'})
@@ -143,7 +147,9 @@ class Command(BaseCommand):
                                                             type = 'slurm',
                                                             requires_sys_conf  = True,
                                                             requires_user_conf = True,
-                                                            requires_user_keys = True)
+                                                            requires_user_keys = True,
+                                                            supports_docker = False,
+                                                            supports_singularity = True)
     
             # Create demo slurm sys computing conf
             ComputingSysConf.objects.create(computing = demo_slurm_computing,

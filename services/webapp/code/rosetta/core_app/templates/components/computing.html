@@ -1,65 +1,97 @@
 
+      {% if data.computing %}  
+
       <div style="float:left; width:500px; margin:10px; margin-bottom:20px">
       <table class="dashboard" style="width:100%">
 
        <tr>
-        <td colspan="2" style="background:{{ computing.color }}; height:30px">
+        <td colspan="2" style="background:{{ data.computing.color }}; height:25px">
         </td>
        </tr>
 
        <tr>
         <td><b>Name</b></td>
-        <td>{{ computing.name }}</td>
+        <td>{{ data.computing.name }}</td>
        </tr>
 
        <tr>
         <td width="110px"><b>ID</b></td>
-        <td>{{ computing.id }}</a></td>
+        <td>{{ data.computing.id }}</a></td>
        </tr>
 
        <tr>
         <td><b>Type</b></td>
-        <td>{{ computing.type }}</td>
+        <td>{{ data.computing.type }}</td>
        </tr>
 
        <tr>
         <td><b>Owner</b></td>
-        <td>{% if computing.user %}{{ computing.user }}{% else %}platform{% endif %}</td>
+        <td>{% if data.computing.user %}{{ data.computing.user }}{% else %}platform{% endif %}</td>
        </tr>
 
        <tr>
         <td><b>Require</b></td>
         <td>
-          Sys conf: {{ computing.requires_sys_conf }} <br/>
-          User conf: {{ computing.requires_user_conf }} <br/>
-          User keys: {{ computing.requires_user_keys }}
+          Sys conf: {{ data.computing.requires_sys_conf }} <br/>
+          User conf: {{ data.computing.requires_user_conf }} <br/>
+          User keys: {{ data.computing.requires_user_keys }}
         </td>
        </tr>
 
        <tr>
         <td><b>Supports</b></td>
         <td>
-          Docker: {{ computing.supports_docker }} <br/>
-          Singularity: {{ computing.supports_singularity }}
+          Docker: {{ data.computing.supports_docker }} <br/>
+          Singularity: {{ data.computing.supports_singularity }}
         </td>
        </tr>
 
        <tr>
         <td><b>Sys Conf</b></td>
-        <td>{{ computing.sys_conf_data_json }} {% if request.user.is_superuser %} &nbsp;[<a href="/edit_computing_conf?type=sys&computing_uuid={{ computing.uuid}}">Edit</a>] {% endif %}</td>
+        <td>{{ data.computing.sys_conf_data_json }} {% if request.user.is_superuser %} &nbsp;[<a href="/edit_computing_conf?type=sys&computing_uuid={{ data.computing.uuid}}">Edit</a>] {% endif %}</td>
        </tr>
 
        <tr>
         <td><b>User Conf</b></td>
-        <td>{{ computing.user_conf_data_json }} &nbsp;[<a href="/edit_computing_conf?type=user&computing_uuid={{ computing.uuid}}">Edit</a>]</td>
+        <td>{{ data.computing.user_conf_data_json }} &nbsp;[<a href="/edit_computing_conf?type=user&computing_uuid={{ data.computing.uuid}}">Edit</a>]</td>
        </tr>
 
        
-       {% if computing.user %}
+       {% if data.computing.user %}
        <tr>
         <td><b>Operations</b></td>
-        <td><a href="?action=delete&uuid={{ computing.uuid }}">Delete</a></td>
+        <td><a href="?action=delete&uuid={{ data.computing.uuid }}">Delete</a></td>
        </tr>
        {% endif %}
       </table>
       </div>
+      
+      {% else %}
+
+      <div style="width:300px; float:left; border: #e0e0e0 solid 1px; margin:10px; background:#f8f8f8; margin-bottom:15px">
+        <div style="background:{{computing.color}}; height:24px"></div>
+        
+        <div style="padding:10px; margin-top:5px; text-align:center; border-bottom: #e0e0e0 solid 1px; ">
+        <a href="?uuid={{ computing.uuid }}&details=True">{{ computing.name }}</a>
+        </div>
+        
+        <div style="padding:10px;">
+        <b>Type:</b> {{ computing.type.title }}<br/>
+        <b>Owner:</b> {% if computing.user %}{{ data.computing.user }}{% else %}Platform{% endif %}<br/>
+        <b>Supports:</b>
+        {% if computing.supports_docker %}Docker <img src="/static/img/docker-logo.svg" style="height:18px; width:18px; margin-bottom:2px" />{% endif %}
+        {% if computing.supports_singularity %}Singularity <img src="/static/img/singularity-logo.svg" style="height:18px; width:18px; margin-bottom:2px" />{% endif %}
+        </div>
+        
+
+      
+      
+      
+      </div>
+      
+
+      
+      {% endif %}
+      
+      
+      

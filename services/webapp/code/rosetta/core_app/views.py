@@ -211,12 +211,8 @@ def entrypoint(request):
 @public_view
 def main_view(request):
 
-    # Get action
-    action = request.POST.get('action', None)
-
-    # Set data
+    # Set data & render
     data = {}
-    data['action'] = action
     return render(request, 'main.html', {'data': data})
 
 
@@ -316,10 +312,9 @@ def tasks(request):
     # Get action if any
     action  = request.GET.get('action', None)
     uuid    = request.GET.get('uuid', None)
+    fromlist = request.GET.get('fromlist', False)
     details = booleanize(request.GET.get('details', None))
     
-    # Setting var
-    standby_supported = False
 
     # Do we have to operate on a specific task?
     if uuid:
@@ -415,6 +410,17 @@ def tasks(request):
             data['error'] = 'Error in getting the task or performing the required action'
             logger.error('Error in getting the task with uuid="{}" or performing the required action: "{}"'.format(uuid, e))
             return render(request, 'error.html', {'data': data})
+
+        # Ok, redirect if there was an action
+        if action:
+            if fromlist:
+                return redirect('/tasks')
+            else:
+                if not task.uuid:
+                    # it has just been deleted
+                    return redirect('/tasks')
+                else:
+                    return redirect('/tasks/?uuid={}'.format(task.uuid))
 
 
     # Do we have to list all the tasks?
@@ -643,8 +649,8 @@ def containers(request):
     data['profile'] = Profile.objects.get(user=request.user)
 
     # Get action if any
-    action = request.GET.get('action', None)
     uuid   = request.GET.get('uuid', None)
+    action = request.GET.get('action', None)
 
     # Do we have to operate on a specific container?
     if uuid:
@@ -788,14 +794,29 @@ def computings(request):
     data['profile'] = Profile.objects.get(user=request.user)
     data['title']   = 'Computing resources'
     data['name']    = request.POST.get('name',None)
-    
-    data['computings'] = list(Computing.objects.filter(user=None)) + list(Computing.objects.filter(user=request.user))
-    # Attach user conf in any
-    for computing in data['computings']:
-        computing.attach_user_conf_data(request.user)
-        computing.user_conf_data_json = json.dumps(computing.user_conf_data)
-        computing.sys_conf_data_json = json.dumps(computing.sys_conf_data)
 
+    # Get action/details if any
+    uuid    = request.GET.get('uuid', None)
+    action  = request.GET.get('action', None)
+    details = booleanize(request.GET.get('details', None))
+    computing_uuid = request.GET.get('uuid', None)
+    data['details'] = details
+    data['action'] = action
+    
+    if details and computing_uuid:
+        try:
+            data['computing'] = Computing.objects.get(uuid=computing_uuid, user=request.user)
+        except Computing.DoesNotExist:
+            data['computing'] = Computing.objects.get(uuid=computing_uuid, user=None)
+    
+    else:
+        data['computings'] = list(Computing.objects.filter(user=None)) + list(Computing.objects.filter(user=request.user))
+        # Attach user conf in any
+        for computing in data['computings']:
+            computing.attach_user_conf_data(request.user)
+            computing.user_conf_data_json = json.dumps(computing.user_conf_data)
+            computing.sys_conf_data_json = json.dumps(computing.sys_conf_data)
+    
 
     return render(request, 'computings.html', {'data': data})
 
@@ -898,6 +919,7 @@ def edit_computing_conf(request):
             computingUserConf.data = new_conf_data
             computingUserConf.save()
             data['saved'] = True
+            return HttpResponseRedirect('/computings')
         
         # Dump conf data for the webpage
         if computingUserConf.data:

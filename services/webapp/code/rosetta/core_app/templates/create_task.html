@@ -36,12 +36,12 @@
             <td><b>Task container</b></td><td>
               {% if data.container %}
               <select name="task_container_uuid">
-              <option value="{{data.container.uuid}}" selected>{{data.container.name}} ({{data.container.type}})</option>
+              <option value="{{data.container.uuid}}" selected>{{data.container.name}} ({{data.container.type.title}})</option>
               </select>
               {% else %}
               <select name="task_container_uuid" >
               {% for container in data.containers %}
-              <option value="{{container.uuid}}">{{container.name}} ({{container.type}})</option>
+              <option value="{{container.uuid}}">{{container.name}} ({{container.type.title}})</option>
               {% endfor %}
               </select>
               {% endif %}
