@@ -112,9 +112,18 @@ class Container(models.Model):
         if not self.ports:
             return None
         return(int(self.ports.split(',')[0]))
-            
-            
 
+
+    @property 
+    def image_name(self):
+        return self.image.split(':')[0]
+    
+    def image_tag(self):
+        
+        if ':' in self.image:
+            return self.image.split(':')[1]
+        else:
+            return 'latest'
 
 #=========================
 #  Computing resources

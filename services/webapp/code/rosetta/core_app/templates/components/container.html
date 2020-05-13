@@ -5,7 +5,7 @@
       <table class="dashboard" style="margin:10px">
         
        <tr>
-        <td colspan="2" style="background:{{ container.color }}; height:25px">
+        <td colspan="2" style="background:{{ container.color }}; height:15px">
         </td>
        </tr>
 
@@ -21,7 +21,12 @@
 
        <tr>
         <td><b>Image</b></td>
-        <td>{{ container.image }}</td>
+        <td>{{ container.image_name }}</td>
+       </tr>
+
+       <tr>
+        <td><b>V. tag</b></td>
+        <td>{{ container.image_tag }}</td>
        </tr>
 
        <tr>
@@ -88,23 +93,23 @@
       
       {% else %}
       <div style="width:300px; float:left; border: #e0e0e0 solid 1px; margin:10px; background:#f8f8f8; margin-bottom:15px">
-        <div style="background:{{container.color}}; height:24px;">
-        </div>
+
         
-        <div style="padding:10px; margin-top:5px; text-align:center; border-bottom: #e0e0e0 solid 1px; ">
-        <a href="?uuid={{ container.uuid }}">{{ container.name }}</a>
+        <div style="padding:10px; margin-top:5px; text-align:center; border-bottom: {{container.color}} solid 10px; ">
+        <a href="?uuid={{ container.uuid }}">{{ container.name }}</a>&nbsp; 
+        {% if container.type == 'docker' %}<img src="/static/img/docker-logo.svg" style="height:18px; width:18px; margin-bottom:4px" />{% endif %}
+        {% if container.type == 'singularity' %}<img src="/static/img/singularity-logo.svg" style="height:18px; width:18px; margin-bottom:4px" />{% endif %}
         </div>
         
         <div style="padding:10px;">
-        <b>Type:</b> {{ container.type.title }}
-        {% if container.type == 'docker' %}<img src="/static/img/docker-logo.svg" style="height:18px; width:18px; margin-bottom:2px" />{% endif %}
-        {% if container.type == 'singularity' %}<img src="/static/img/singularity-logo.svg" style="height:18px; width:18px; margin-bottom:2px" />{% endif %}
-        
+
+        <b>Image:</b> {{ container.image_name }}
+
         <br/>
-        <b>Image:</b> {{ container.image }}
+        <b>Version:</b> {{ container.image_tag }}
         </div>
         
-        <div style="margin-bottom:10px; text-align:center">
+        <div style="margin-bottom:13px; margin-top: 3px; text-align:center">
         <a href="/create_task?task_container_uuid={{ container.uuid }}" class="btn btn-light" style="border: #c0c0c0 1px solid">&nbsp;<i class="fa fa-play" style="color:green"></i></a>
         </div>    
       
