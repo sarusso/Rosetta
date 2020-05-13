@@ -317,8 +317,8 @@ class SlurmComputingManager(ComputingManager):
         # Submit the job
         if task.container.type == 'singularity':
 
-            if not task.container.supports_dynamic_ports:
-                raise Exception('This task does not support dynamic port allocation and is therefore not supported using singularity on Slurm')
+            #if not task.container.supports_dynamic_ports:
+            #     raise Exception('This task does not support dynamic port allocation and is therefore not supported using singularity on Slurm')
 
             # Set pass if any
             if task.auth_pass:

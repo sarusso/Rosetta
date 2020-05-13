@@ -466,12 +466,12 @@ def create_task(request):
     step = request.POST.get('step', None)
 
     # Container uuid if any
-    container_uuid = request.GET.get('container_uuid', None)
+    container_uuid = request.GET.get('task_container_uuid', None)
     if container_uuid:
         try:
-            data['container'] = Container.objects.get(uuid=container_uuid, user=request.user)
+            data['task_container'] = Container.objects.get(uuid=container_uuid, user=request.user)
         except Container.DoesNotExist:
-            data['container'] = Container.objects.get(uuid=container_uuid, user=None)
+            data['task_container'] = Container.objects.get(uuid=container_uuid, user=None)
     else:
         # Get containers
         data['containers'] = list(Container.objects.filter(user=None)) + list(Container.objects.filter(user=request.user))
@@ -479,12 +479,15 @@ def create_task(request):
     # Get computings 
     data['computings'] = list(Computing.objects.filter(user=None)) + list(Computing.objects.filter(user=request.user))
 
-        
 
-    if step == 'one':
+    # Handle step
+    if step:
 
-        # We have a step one submitted, get the first tab parameters
+        # Task name
         task_name = request.POST.get('task_name', None)
+        if not task_name:
+            raise ErrorMessage('Missing task name')
+        data['task_name'] = task_name
 
         # Task container
         task_container_uuid = request.POST.get('task_container_uuid', None)
@@ -495,9 +498,10 @@ def create_task(request):
                 task_container =  Container.objects.get(uuid=task_container_uuid, user=request.user)
             except Container.DoesNotExist:
                 raise Exception('Consistency error, container with uuid "{}" does not exists or user "{}" does not have access rights'.format(task_container_uuid, request.user.email))
+        data['task_container'] = task_container
 
-        # task computing
-        task_computing_uuid = request.POST.get('task_computing', None)
+        # Task computing
+        task_computing_uuid = request.POST.get('task_computing_uuid', None)
         try:
             task_computing = Computing.objects.get(uuid=task_computing_uuid, user=None)
         except Computing.DoesNotExist:
@@ -505,87 +509,86 @@ def create_task(request):
                 task_computing =  Computing.objects.get(uuid=task_computing_uuid, user=request.user)
             except Computing.DoesNotExist:
                 raise Exception('Consistency error, computing with uuid "{}" does not exists or user "{}" does not have access rights'.format(task_computing_uuid, request.user.email))
+        data['task_computing'] = task_computing
+            
+        # Handle step one/two
+        if step == 'one':
+    
+            # Set step and task uuid
+            data['step'] = 'two'
+            
+        elif step == 'two':
 
+            # Generate the task uuid
+            task_uuid = str(uuid.uuid4())
 
-        # Generate the task uuid
-        task_uuid = str(uuid.uuid4())
+            # Create the task object
+            task = Task(uuid      = task_uuid,
+                        user      = request.user,
+                        name      = task_name,
+                        status    = TaskStatuses.created,
+                        container = task_container,
+                        computing = task_computing)
 
-        # Create the task object
-        task = Task(uuid      = task_uuid,
-                    user      = request.user,
-                    name      = task_name,
-                    status    = TaskStatuses.created,
-                    container = task_container,
-                    computing = task_computing)
+            # Add auth
+            task.auth_user     = request.POST.get('auth_user', None)
+            task.auth_pass     = request.POST.get('auth_password', None)
+            task.access_method = request.POST.get('access_method', None)
+            
+            # Cheks
+            if task.auth_pass and len(task.auth_pass) < 6:
+                raise ErrorMessage('Task password must be at least 6 chars') 
+            
+            # Computing options # TODO: This is hardcoded thinking about Slurm
+            computing_cpus = request.POST.get('computing_cpus', None)
+            computing_memory = request.POST.get('computing_memory', None)
+            computing_partition = request.POST.get('computing_partition', None)
+            
+            computing_options = {}
+            if computing_cpus:
+                try:
+                    int(computing_cpus)
+                except:
+                    raise Exception('Cannot convert computing_cpus to int')
+                computing_options['cpus'] = int(computing_cpus)
+    
+            if computing_memory:
+                computing_options['memory'] = computing_memory
+    
+            if computing_partition:
+                computing_options['partition'] = computing_partition        
+            
+            if computing_options:
+                task.computing_options = computing_options
+                        
+            # Attach user config to computing
+            task.computing.attach_user_conf_data(task.user)
 
-        # Save the task in the cache
-        _task_cache[task_uuid] = task
+            # Set port if not dynamic ports
+            if not task.container.supports_dynamic_ports:
+                if task.container.ports:
+                    task.port = task.container.port
 
-        # Set step and task uuid
-        data['step'] = 'two'
-        data['task'] = task
-        
-    elif step == 'two':
-        
-        # Get back the task
-        task_uuid = request.POST.get('task_uuid', None)
-        task = _task_cache[task_uuid]
-
-        # Add auth
-        task.auth_user     = request.POST.get('auth_user', None)
-        task.auth_pass     = request.POST.get('auth_password', None)
-        task.access_method = request.POST.get('access_method', None)
-        
-        # Cheks
-        if task.auth_pass and len(task.auth_pass) < 6:
-            raise ErrorMessage('Task password must be at least 6 chars') 
-        
-        # Computing options # TODO: This is hardcoded thinking about Slurm
-        computing_cpus = request.POST.get('computing_cpus', None)
-        computing_memory = request.POST.get('computing_memory', None)
-        computing_partition = request.POST.get('computing_partition', None)
-        
-        computing_options = {}
-        if computing_cpus:
+            # Save the task before starting it, or the computing manager will not be able to work properly
+            task.save()
+    
+            # Start the task
             try:
-                int(computing_cpus)
+                task.computing.manager.start_task(task)
             except:
-                raise Exception('Cannot convert computing_cpus to int')
-            computing_options['cpus'] = int(computing_cpus)
+                # Delete the task if could not start it
+                task.delete()
+                
+                # ..and re-raise
+                raise
 
-        if computing_memory:
-            computing_options['memory'] = computing_memory
-
-        if computing_partition:
-            computing_options['partition'] = computing_partition        
-        
-        if computing_options:
-            task.computing_options = computing_options
-        
-        logger.debug('computing_options="{}"'.format(computing_options))
-        
-        # Save the task in the DB
-        task.save()
-
-        # Attach user config to computing
-        task.computing.attach_user_conf_data(task.user)
-
-        # Start the task
-        #try:
-        task.computing.manager.start_task(task)
-        #except:
-        #    task.delete()
-        #    raise
-
-        # Set step        
-        data['step'] = 'created'
+            # Set step        
+            data['step'] = 'created'
 
     else:
         
         # Set step
         data['step'] = 'one'
-        
-
 
     return render(request, 'create_task.html', {'data': data})
 

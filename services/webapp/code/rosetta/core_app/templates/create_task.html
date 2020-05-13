@@ -23,7 +23,7 @@
 
 
           <table class="dashboard" style="max-width:700px">
-          <tr><td></td></tr>
+          <tr><td colspan="2"></td></tr>
 
            <tr>
             <td><b>Task name </b></td>
@@ -34,9 +34,9 @@
 
           <tr>
             <td><b>Task container</b></td><td>
-              {% if data.container %}
+              {% if data.task_container %}
               <select name="task_container_uuid">
-              <option value="{{data.container.uuid}}" selected>{{data.container.name}} ({{data.container.type.title}})</option>
+              <option value="{{data.task_container.uuid}}" selected>{{data.task_container.name}} ({{data.task_container.type.title}})</option>
               </select>
               {% else %}
               <select name="task_container_uuid" >
@@ -45,18 +45,16 @@
               {% endfor %}
               </select>
               {% endif %}
-              <!--  &nbsp; | <a href="/add_container">Add new...</a>  -->  
             </td>
            </tr>
            
            <tr>
             <td><b>Computing resource</b></td><td>
-              <select name="task_computing" >
+              <select name="task_computing_uuid" >
               {% for computing in data.computings %}}
-              <option value="{{ computing.uuid }}">{{ computing.name}}</option>  <!--  ({% if computing.user %}{{ computing.user }}{% else %}platform{% endif %})  -->
+              <option value="{{ computing.uuid }}">{{ computing.name}}</option>
               {% endfor %}
               </select>
-              <!--  &nbsp; | <a href="/add_computing">Add new...</a>-->
             </td>
            </tr>
 
@@ -70,30 +68,60 @@
 
       {% elif data.step == 'two' %}
 
-          <h3>Step 2: authentication and computing details</h3> 
+          <h3>Step 2: add authentication and computing details</h3> 
 
           <br/>
+          <table class="dashboard" style="max-width:700px">
+          <tr><td colspan="2"></td></tr>
+
+           <tr>
+            <td><b>Task name </b></td>
+            <td>
+             <input type="text" name="task_name_RECAP" value="{{ data.task_name }}" placeholder="" size="23" disabled />
+            </td>
+           </tr>
+
+          <tr>
+            <td><b>Task container</b></td><td>
+              <select name="task_container_uuid_RECAP">
+              <option value="" selected>{{data.task_container.name}} ({{data.task_container.type.title}})</option>
+              </select>
+            </td>
+           </tr>
+           
+           <tr>
+            <td><b>Computing resource</b></td><td>
+              <select name="task_computing_uuid_RECAP" >
+              <option value="">{{ data.task_computing.name}}</option>
+              </select>
+            </td>
+           </tr>
+
+          </table>
           
-          {% if data.task.container.type == 'singularity' and not data.task.container.supports_dynamic_ports %}
-          <div> <p style="font-size:15px; max-width:700px; margin-bottom:20px">
+          <br>          
+          {% if data.task_container.type == 'singularity' and not data.task_container.supports_dynamic_ports %}
+          <div> <p style="font-size:15px; max-width:700px; margin-bottom:20px; margin-left:5px">
           <i class="fa fa-exclamation-triangle" style="color:orange"></i> This container does not support dynamic ports and you are running it with Singularity, without network insulation. This means that if the container port is already occupied, it will not be able to start.
           </p></div>
           {% endif %}
           
-          {% if data.task.container.ports and not data.task.container.supports_pass_auth %}
-          <div> <p style="font-size:15px; max-width:700px; margin-bottom:20px">
-          <i class="fa fa-exclamation-triangle" style="color:orange"></i> This container does not support any authentication. This means that anyone running on the same network will be able to access it services.
+          {% if data.task_container.ports and not data.task_container.supports_pass_auth %}
+          <div> <p style="font-size:15px; max-width:700px; margin-bottom:20px; margin-left:5px">
+          <i class="fa fa-exclamation-triangle" style="color:orange"></i> This container does not support configuring any authentication. This means that unless it is built-in within the container, anyone running on the same network will be able to access it.
           </p></div>
           {% endif %}
         
           <form action="/create_task/" method="POST">
           {% csrf_token %}
           <input type="hidden" name="step" value="two" />
-          <input type="hidden" name="task_uuid" value="{{ data.task.uuid }}" />
+          <input type="hidden" name="task_name" value="{{ data.task_name }}" />
+          <input type="hidden" name="task_container_uuid" value="{{ data.task_container.uuid }}" />
+          <input type="hidden" name="task_computing_uuid" value="{{ data.task_computing.uuid }}" />
 
           <table class="dashboard" style="max-width:700px">
-          <tr><td></td></tr>
-           {% if data.task.container.supports_user_auth %}
+          <tr><td colspan="2"></td></tr>
+           {% if data.task_container.supports_user_auth %}
            <tr>
             <td><b>Task user</b></td>
             <td>
@@ -102,7 +130,7 @@
            </tr>
            {% endif %}
 
-           {% if data.task.container.supports_pass_auth %}
+           {% if data.task_container.supports_pass_auth %}
            <tr>
             <td valign="top"><b>Set task password</b></td>
             <td>
@@ -131,7 +159,7 @@
             </td>
            </tr>  -->
            
-           {% if data.task.computing.type == 'slurm' %}
+           {% if data.task_computing.type == 'slurm' %}
            <tr>
             <td><b>Computing options</b></td>
             <td>

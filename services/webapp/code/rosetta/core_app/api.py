@@ -307,7 +307,8 @@ print(port)
                 logger.info('Setting task "{}" to ip "{}" and port "{}"'.format(task.uuid, task_ip, task_port))
                 task.status = TaskStatuses.running
                 task.ip     = task_ip
-                task.port   = int(task_port)
+                if task.container.supports_dynamic_ports:
+                    task.port = int(task_port)
                 task.save()
                         
                 # Notify the user that the task called back home

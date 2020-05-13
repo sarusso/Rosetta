@@ -53,7 +53,7 @@
 
            <tr>
             <td><b>IP</b></td>
-            <td>{{ task.ip}}</td>
+            <td>{{ task.ip }}</td>
            </tr>
 
            <tr>
@@ -83,16 +83,23 @@
             {% else %}
             <!-- <a href=?uuid={{task.uuid}}&action=start>Start</a> |  -->
             <font color="#c0c0c0">Stop</font> | 
-            
             {% endif %}
             <a href="?uuid={{task.uuid}}&action=delete&details=False">Delete</a>
+            
+            {% if task.port %}
             {% if task.status == "running" %}
              | <a href="?uuid={{task.uuid}}&action=connect">Connect</a>
             {% else %}
              | <font color="#c0c0c0">Connect</font>
             {% endif%}
-             
-            | <a href="/task_log/?uuid={{task.uuid}}&action=viewlog">View Log</a>
+            {% endif %}
+            
+            {% if task.status == "created" %}
+             | <font color="#c0c0c0">View Log</font>
+            {% else %}
+             | <a href="/task_log/?uuid={{task.uuid}}&action=viewlog">View Log</a>             
+            {% endif %}
+            
 
             </td>
   
@@ -144,23 +151,28 @@
  
             <div style="margin-bottom:10px; text-align:center; padding:5px">
             
-            <!-- Stop / Delete -->
-            {% if task.status == "stopped" %}
+            <!-- Stop / Delete / Cancel -->
+            {% if task.status == "stopped" or task.status == "created" %}
             <a href="?uuid={{task.uuid}}&action=delete&fromlist=True" class="btn btn-action">Delete</a>
-            {% else %}
+            {% else %}            
             <a href="?uuid={{task.uuid}}&action=stop&fromlist=True" class="btn btn-action">Stop</a>
             {% endif %}
             
             <!-- Connect -->
+            {% if task.port %}
             {% if task.status == "running" %}
             <a href="?uuid={{task.uuid}}&action=connect" class="btn btn-connect">Connect</a>
             {% else %}
             <a href="" class="btn btn-disabled">Connect</a>  
             {% endif %}
+            {% endif %}
                         
             <!-- View log -->
+            {% if task.status == "created" %}
+            <a href="" class="btn btn-disabled">Logs</a>  
+            {% else %}
             <a href="/task_log/?uuid={{task.uuid}}&action=viewlog" class="btn btn-action">Logs</a>        
-
+            {% endif %}
             </div>    
           
           

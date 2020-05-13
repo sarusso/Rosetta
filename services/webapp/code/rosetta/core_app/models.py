@@ -80,7 +80,7 @@ class Container(models.Model):
     image    = models.CharField('Container image', max_length=255, blank=False, null=False)
     type     = models.CharField('Container type', max_length=36, blank=False, null=False)
     registry = models.CharField('Container registry', max_length=255, blank=False, null=False)
-    ports    = models.CharField('Container service ports', max_length=36, blank=True, null=True)
+    ports    = models.CharField('Container ports', max_length=36, blank=True, null=True)
 
     # Capabilities
     supports_dynamic_ports = models.BooleanField(default=False)
@@ -106,6 +106,13 @@ class Container(models.Model):
         color_map_index = string_int_hash % len(color_map)
         return color_map[color_map_index]
 
+    @property 
+    def port(self):
+        if not self.ports:
+            return None
+        return(int(self.ports.split(',')[0]))
+            
+            
 
 
 #=========================
