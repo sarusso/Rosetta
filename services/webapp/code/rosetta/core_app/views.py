@@ -393,7 +393,21 @@ def tasks(request):
                     logger.debug('Task "{}" has no running tunnel, creating it'.format(task))
 
                     # Tunnel command
-                    tunnel_command= 'ssh -4 -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} localhost & '.format(task.tunnel_port, task.ip, task.port)
+                    if task.computing.type == 'remotehop':           
+                                  
+                        # Get computing params
+                        first_host = task.computing.get_conf_param('first_host')
+                        first_user = task.computing.get_conf_param('first_user')
+                        #second_host = task.computing.get_conf_param('second_host')
+                        #second_user = task.computing.get_conf_param('second_user')
+                        #setup_command = task.computing.get_conf_param('setup_command')
+                        #base_port = task.computing.get_conf_param('base_port')
+                                        
+                        tunnel_command= 'ssh -4 -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} {}@{} & '.format(task.tunnel_port, task.ip, task.port, first_user, first_host)
+                    
+                    else:
+                        tunnel_command= 'ssh -4 -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} localhost & '.format(task.tunnel_port, task.ip, task.port)
+                    
                     background_tunnel_command = 'nohup {} >/dev/null 2>&1 &'.format(tunnel_command)
 
                     # Log
@@ -534,6 +548,10 @@ def create_task(request):
             task.auth_user     = request.POST.get('auth_user', None)
             task.auth_pass     = request.POST.get('auth_password', None)
             task.access_method = request.POST.get('access_method', None)
+            task_base_port     = request.POST.get('task_base_port', None)
+            
+            if task_base_port:
+                task.port = task_base_port
             
             # Cheks
             if task.auth_pass and len(task.auth_pass) < 6:
@@ -811,15 +829,17 @@ def computings(request):
             data['computing'] = Computing.objects.get(uuid=computing_uuid, user=request.user)
         except Computing.DoesNotExist:
             data['computing'] = Computing.objects.get(uuid=computing_uuid, user=None)
+
+        # Attach user conf in any
+        data['computing'].attach_user_conf_data(request.user)
+            
     
     else:
         data['computings'] = list(Computing.objects.filter(user=None)) + list(Computing.objects.filter(user=request.user))
+        
         # Attach user conf in any
         for computing in data['computings']:
             computing.attach_user_conf_data(request.user)
-            computing.user_conf_data_json = json.dumps(computing.user_conf_data)
-            computing.sys_conf_data_json = json.dumps(computing.sys_conf_data)
-    
 
     return render(request, 'computings.html', {'data': data})
 

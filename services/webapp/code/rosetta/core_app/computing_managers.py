@@ -242,7 +242,6 @@ class RemoteComputingManager(ComputingManager):
 
         # Stop the task remotely
         stop_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "kill -9 {}"\''.format(user_keys.private_key_file, user, host, task.pid)
-        logger.debug(stop_command)
         out = os_shell(stop_command, capture=True)
         if out.exit_code != 0:
             if not 'No such process' in out.stderr:
@@ -265,7 +264,7 @@ class RemoteComputingManager(ComputingManager):
         host = task.computing.get_conf_param('host')
         user = task.computing.get_conf_param('user')
 
-        # Stop the task remotely
+        # View log remotely
         view_log_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "cat \$HOME/{}.log"\''.format(user_keys.private_key_file, user, host, task.uuid)
 
         out = os_shell(view_log_command, capture=True)
@@ -400,7 +399,6 @@ class SlurmComputingManager(ComputingManager):
 
         # Stop the task remotely
         stop_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "scancel {}"\''.format(user_keys.private_key_file, user, host, task.pid)
-        logger.debug(stop_command)
         out = os_shell(stop_command, capture=True)
         if out.exit_code != 0:
             raise Exception(out.stderr)
@@ -422,7 +420,7 @@ class SlurmComputingManager(ComputingManager):
         host = task.computing.get_conf_param('master')
         user = task.computing.get_conf_param('user')
 
-        # Stop the task remotely
+        # View log remotely
         view_log_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "cat \$HOME/{}.log"\''.format(user_keys.private_key_file, user, host, task.uuid)
 
         out = os_shell(view_log_command, capture=True)
@@ -430,6 +428,160 @@ class SlurmComputingManager(ComputingManager):
             raise Exception(out.stderr)
         else:
             return out.stdout
+
+
+
+class RemotehopComputingManager(ComputingManager):
+    
+    def _start_task(self, task, **kwargs):
+        logger.debug('Starting a remote task "{}"'.format(task.computing))
+
+        # Get computing params
+        first_host = task.computing.get_conf_param('first_host')
+        first_user = task.computing.get_conf_param('first_user')
+        second_host = task.computing.get_conf_param('second_host')
+        second_user = task.computing.get_conf_param('second_user')
+        setup_command = task.computing.get_conf_param('setup_command')
+
+        # De hard-code
+        use_agent = False
+
+        # Get user keys
+        if task.computing.requires_user_keys:
+            user_keys = KeyPair.objects.get(user=task.user, default=True)
+        else:
+            raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
+
+        # Get webapp conn string
+        from.utils import get_webapp_conn_string
+        webapp_conn_string = get_webapp_conn_string()
+            
+        # Run the container on the host (non blocking)
+        if task.container.type == 'singularity':
+
+            task.tid    = task.uuid
+            task.save()
+
+            # Set pass if any
+            if task.auth_pass:
+                authstring = ' export SINGULARITYENV_AUTH_PASS={} && '.format(task.auth_pass)
+            else:
+                authstring = ''
+ 
+            run_command  = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, first_user, first_host)
+            run_command += '"ssh -4 -o StrictHostKeyChecking=no {}@{} /bin/bash -c \''.format(second_user, second_host)
+            
+            if use_agent:
+                run_command += '\'wget {}/api/v1/base/agent/?task_uuid={} -O \$HOME/agent_{}.py &> /dev/null && export BASE_PORT=\$(python \$HOME/agent_{}.py 2> \$HOME/{}.log) && '.format(webapp_conn_string, task.uuid, task.uuid, task.uuid, task.uuid)
+                if setup_command:
+                    run_command += setup_command + ' && '
+                run_command += '\'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\$BASE_PORT && {} '.format(authstring)
+                run_command += 'exec nohup singularity run --pid --writable-tmpfs --containall --cleanenv '
+            else:
+                run_command += ' : && ' # Trick to prevent some issues in exporting variables                
+                if setup_command:
+                    run_command += setup_command + ' && '
+                run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT={} && {} '.format(task.port, authstring)
+                run_command += 'exec nohup singularity run --pid --writable-tmpfs --containall --cleanenv '
+             
+            # Set registry
+            if task.container.registry == 'docker_local':
+                raise Exception('This computing resource does not support local Docker registries yet')
+                # Get local Docker registry conn string
+                from.utils import get_local_docker_registry_conn_string
+                local_docker_registry_conn_string = get_local_docker_registry_conn_string()
+                registry = 'docker://{}/'.format(local_docker_registry_conn_string)
+            elif task.container.registry == 'docker_hub':
+                registry = 'docker://'
+            else:
+                raise NotImplementedError('Registry {} not supported'.format(task.container.registry))
+     
+            run_command+='{}{} &>> \$HOME/{}.log & echo \$!\'"'.format(registry, task.container.image, task.uuid)
+
+        else:
+            raise NotImplementedError('Container {} not supported'.format(task.container.type))
+
+        out = os_shell(run_command, capture=True)
+        if out.exit_code != 0:
+            raise Exception(out.stderr)
+        
+        # Log        
+        logger.debug('Shell exec output: "{}"'.format(out))
+
+
+        # Load back the task to avoid  concurrency problems in the agent call
+        task_uuid = task.uuid
+        task = Task.objects.get(uuid=task_uuid)
+
+        # Save pid echoed by the command above
+        task_pid = out.stdout
+
+        # Set fields
+        task.status = TaskStatuses.running
+        task.pid = task_pid
+        task.ip  = second_host
+ 
+        # Save
+        task.save()
+
+
+    def _stop_task(self, task, **kwargs):
+
+        # Get user keys
+        if task.computing.requires_user_keys:
+            user_keys = KeyPair.objects.get(user=task.user, default=True)
+        else:
+            raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
+
+        # Get computing params
+        first_host = task.computing.get_conf_param('first_host')
+        first_user = task.computing.get_conf_param('first_user')
+        second_host = task.computing.get_conf_param('second_host')
+        second_user = task.computing.get_conf_param('second_user')
+
+        # Stop the task remotely
+        stop_command  = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, first_user, first_host)
+        stop_command += '"ssh -4 -o StrictHostKeyChecking=no {}@{} '.format(second_user, second_host)
+        stop_command += 'kill -9 {}"'.format(task.pid)
+
+        out = os_shell(stop_command, capture=True)
+        if out.exit_code != 0:
+            if not 'No such process' in out.stderr:
+                raise Exception(out.stderr)
+
+        # Set task as stopped
+        task.status = TaskStatuses.stopped
+        task.save()
+
+
+    def _get_task_log(self, task, **kwargs):
+        
+        # Get user keys
+        if task.computing.requires_user_keys:
+            user_keys = KeyPair.objects.get(user=task.user, default=True)
+        else:
+            raise NotImplementedError('Remote tasks not requiring keys are not yet supported')
+
+        # Get computing params
+        first_host = task.computing.get_conf_param('first_host')
+        first_user = task.computing.get_conf_param('first_user')
+        second_host = task.computing.get_conf_param('second_host')
+        second_user = task.computing.get_conf_param('second_user')
+
+        # View log remotely
+        view_log_command  = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, first_user, first_host)
+        view_log_command += '"ssh -4 -o StrictHostKeyChecking=no {}@{} '.format(second_user, second_host)
+        view_log_command += 'cat \\\\\\$HOME/{}.log"'.format(task.uuid)
+
+        out = os_shell(view_log_command, capture=True)
+        if out.exit_code != 0:
+            raise Exception(out.stderr)
+        else:
+            return out.stdout
+
+
+
+
 
 
 

@@ -130,6 +130,16 @@
            </tr>
            {% endif %}
 
+           {% if data.task_container.supports_dynamic_ports and data.task_computing.type == 'remotehop' %}
+           <tr>
+            <td valign="top" style="width:180px"><b>Set custom port </b></td>
+            <td>
+             <input type="text" name="task_base_port" value="" placeholder="" size="23" style="margin-bottom:5px"/><br>
+             <p style="line-height: 0.9"><font size=-1>This container supports dynamic ports and you can thus set a custom port (>5900) to avoid clashes with services already running on the computing resource.</font></p>
+            </td>
+           </tr>
+           {% endif %}
+
            {% if data.task_container.supports_pass_auth %}
            <tr>
             <td valign="top"><b>Set task password</b></td>

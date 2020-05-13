@@ -1,4 +1,5 @@
 import uuid
+import json
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
@@ -158,6 +159,12 @@ class Computing(models.Model):
             return ComputingSysConf.objects.get(computing=self).data
         except ComputingSysConf.DoesNotExist:
             return None
+
+
+    @property    
+    def sys_conf_data_json(self):
+        return json.dumps(self.sys_conf_data)
+
     
     @property    
     def user_conf_data(self):
@@ -165,6 +172,11 @@ class Computing(models.Model):
             return self._user_conf_data
         except AttributeError:
             raise AttributeError('User conf data is not yet attached, please attach it before accessing.')
+
+
+    @property    
+    def user_conf_data_json(self):
+        return json.dumps(self.user_conf_data)
 
     
     def attach_user_conf_data(self, user):
