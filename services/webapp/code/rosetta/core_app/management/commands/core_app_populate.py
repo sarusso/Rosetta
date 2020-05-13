@@ -47,38 +47,100 @@ class Command(BaseCommand):
         else:
             print('Creating public containers...')
             
-            # MetaDesktop Docker
+            # MinimalMetaDesktop Docker (sarusso repo)
             Container.objects.create(user     = None,
-                                     name     = 'MetaDesktop latest',
-                                     image    = 'rosetta/metadesktop',
+                                     name     = 'BasicMetaDesktop latest',
+                                     image    = 'sarusso/minimalmetadesktop',
                                      type     = 'docker',
-                                     registry = 'docker_local',
+                                     registry = 'docker_hub',
                                      ports    = '8590',
                                      supports_dynamic_ports = True,
                                      supports_user_auth     = False,
                                      supports_pass_auth     = True)
 
-            # MetaDesktop Singularity
+            # BasicMetaDesktop Singularity (sarusso repo)
             Container.objects.create(user     = None,
-                                     name     = 'MetaDesktop latest',
-                                     image    = 'rosetta/metadesktop',
-                                     type     = 'singularity',
-                                     registry = 'docker_local',
+                                     name     = 'BasicMetaDesktop latest',
+                                     image    = 'sarusso/basicmetadesktop',
+                                     type     = 'docker',
+                                     registry = 'docker_hub',
                                      ports    = '8590',
                                      supports_dynamic_ports = True,
                                      supports_user_auth     = False,
                                      supports_pass_auth     = True)
+
+
+            # DevMetaDesktop Singularity (sarusso repo)
+            Container.objects.create(user     = None,
+                                     name     = 'DevMetaDesktop latest',
+                                     image    = 'sarusso/devmetadesktop',
+                                     type     = 'singularity',
+                                     registry = 'docker_hub',
+                                     ports    = '8590',
+                                     supports_dynamic_ports = True,
+                                     supports_user_auth     = False,
+                                     supports_pass_auth     = True)
+
+
+            # MinimalMetaDesktop Singularity (sarusso repo)
+            Container.objects.create(user     = None,
+                                     name     = 'MinimalMetaDesktop latest',
+                                     image    = 'sarusso/minimalmetadesktop',
+                                     type     = 'singularity',
+                                     registry = 'docker_hub',
+                                     ports    = '8590',
+                                     supports_dynamic_ports = True,
+                                     supports_user_auth     = False,
+                                     supports_pass_auth     = True)
+            
+
+            # BasicMetaDesktop Singularity (sarusso repo)
+            Container.objects.create(user     = None,
+                                     name     = 'BasicMetaDesktop latest',
+                                     image    = 'sarusso/basicmetadesktop',
+                                     type     = 'singularity',
+                                     registry = 'docker_hub',
+                                     ports    = '8590',
+                                     supports_dynamic_ports = True,
+                                     supports_user_auth     = False,
+                                     supports_pass_auth     = True)
+
+
+            # DevMetaDesktop Singularity (sarusso repo)
+            Container.objects.create(user     = None,
+                                     name     = 'DevMetaDesktop latest',
+                                     image    = 'sarusso/devmetadesktop',
+                                     type     = 'singularity',
+                                     registry = 'docker_hub',
+                                     ports    = '8590',
+                                     supports_dynamic_ports = True,
+                                     supports_user_auth     = False,
+                                     supports_pass_auth     = True)
+
+
+            # MetaDesktop Singularity (local)
+            #Container.objects.create(user     = None,
+            #                         name     = 'MetaDesktop latest',
+            #                         image    = 'rosetta/metadesktop',
+            #                         type     = 'singularity',
+            #                         registry = 'docker_local',
+            #                         ports    = '8590',
+            #                         supports_dynamic_ports = True,
+            #                         supports_user_auth     = False,
+            #                         supports_pass_auth     = True)
+
+
 
             # Astrocook
-            Container.objects.create(user     = None,
-                                     name     = 'Astrocook b2b819e',
-                                     image    = 'sarusso/astrocook:b2b819e',
-                                     type     = 'docker',
-                                     registry = 'docker_local',
-                                     ports    = '8590',
-                                     supports_dynamic_ports = False,
-                                     supports_user_auth     = False,
-                                     supports_pass_auth     = False)
+            #Container.objects.create(user     = None,
+            #                         name     = 'Astrocook b2b819e',
+            #                         image    = 'sarusso/astrocook:b2b819e',
+            #                         type     = 'docker',
+            #                         registry = 'docker_local',
+            #                         ports    = '8590',
+            #                         supports_dynamic_ports = False,
+            #                         supports_user_auth     = False,
+            #                         supports_pass_auth     = False)
 
 
         # Private containers
@@ -87,8 +149,19 @@ class Command(BaseCommand):
             print('Not creating testuser private containers as they already exist')
         else:
             print('Creating testuser private containers...')
+
+            # JuPyter Singularity
+            Container.objects.create(user     = testuser,
+                                     name     = 'Jupyter Notebook latest',
+                                     image    = 'jupyter/base-notebook',
+                                     type     = 'singularity',
+                                     registry = 'docker_hub',
+                                     ports    = '8888', 
+                                     supports_dynamic_ports = False,
+                                     supports_user_auth     = False,
+                                     supports_pass_auth     = False)
             
-            # JuPyter
+            # JuPyter Docker
             Container.objects.create(user     = testuser,
                                      name     = 'Jupyter Notebook latest',
                                      image    = 'jupyter/base-notebook',
