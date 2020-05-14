@@ -188,27 +188,27 @@ class RemoteComputingManager(ComputingManager):
             else:
                 authstring = ''
 
-            # Set bindings, only from sys config if the resource is not owned by the user
+            # Set binds, only from sys config if the resource is not owned by the user
             if task.computing.user != task.user:
-                bindings = task.computing.get_conf_param('bindings', from_sys_only=True )
+                binds = task.computing.get_conf_param('binds', from_sys_only=True )
             else:
-                bindings = task.computing.get_conf_param('bindings')
-            if not bindings:
-                bindings = ''
+                binds = task.computing.get_conf_param('binds')
+            if not binds:
+                binds = ''
             else:
-                bindings = '-B {}'.format(bindings)
+                binds = '-B {}'.format(binds)
             
-            # Manage task extra volumes
-            if task.extra_volumes:
-                if not bindings:
-                    bindings = '-B {}'.format(task.extra_volumes)
+            # Manage task extra binds
+            if task.extra_binds:
+                if not binds:
+                    binds = '-B {}'.format(task.extra_binds)
                 else:
-                    bindings += ',{}'.format(task.extra_volumes)
+                    binds += ',{}'.format(task.extra_binds)
             
             run_command  = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, user, host)
             run_command += '/bin/bash -c \'"wget {}/api/v1/base/agent/?task_uuid={} -O \$HOME/agent_{}.py &> /dev/null && export BASE_PORT=\$(python \$HOME/agent_{}.py 2> \$HOME/{}.log) && '.format(webapp_conn_string, task.uuid, task.uuid, task.uuid, task.uuid)
             run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\$BASE_PORT && {} '.format(authstring)
-            run_command += 'exec nohup singularity run {} --pid --writable-tmpfs --containall --cleanenv '.format(bindings)
+            run_command += 'exec nohup singularity run {} --pid --writable-tmpfs --containall --cleanenv '.format(binds)
             
             # Set registry
             if task.container.registry == 'docker_local':
@@ -345,27 +345,27 @@ class SlurmComputingManager(ComputingManager):
             else:
                 authstring = ''
 
-            # Set bindings, only from sys config if the resource is not owned by the user
+            # Set binds, only from sys config if the resource is not owned by the user
             if task.computing.user != task.user:
-                bindings = task.computing.get_conf_param('bindings', from_sys_only=True )
+                binds = task.computing.get_conf_param('binds', from_sys_only=True )
             else:
-                bindings = task.computing.get_conf_param('bindings')
-            if not bindings:
-                bindings = ''
+                binds = task.computing.get_conf_param('binds')
+            if not binds:
+                binds = ''
             else:
-                bindings = '-B {}'.format(bindings)
+                binds = '-B {}'.format(binds)
 
-            # Manage task extra volumes
-            if task.extra_volumes:
-                if not bindings:
-                    bindings = '-B {}'.format(task.extra_volumes)
+            # Manage task extra binds
+            if task.extra_binds:
+                if not binds:
+                    binds = '-B {}'.format(task.extra_binds)
                 else:
-                    bindings += ',{}'.format(task.extra_volumes)
+                    binds += ',{}'.format(task.extra_binds)
 
             run_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, user, host)
             run_command += '\'bash -c "echo \\"#!/bin/bash\nwget {}/api/v1/base/agent/?task_uuid={} -O \$HOME/agent_{}.py &> \$HOME/{}.log && export BASE_PORT=\\\\\\$(python \$HOME/agent_{}.py 2> \$HOME/{}.log) && '.format(webapp_conn_string, task.uuid, task.uuid, task.uuid, task.uuid, task.uuid)
             run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\\\\\\$BASE_PORT && {} '.format(authstring)
-            run_command += 'exec nohup singularity run {} --pid --writable-tmpfs --containall --cleanenv '.format(bindings)
+            run_command += 'exec nohup singularity run {} --pid --writable-tmpfs --containall --cleanenv '.format(binds)
             
             # Double to escape for Pythom, six for shell (double times three as \\\ escapes a single slash in shell)
 
@@ -498,22 +498,22 @@ class RemotehopComputingManager(ComputingManager):
             else:
                 authstring = ''
 
-            # Set bindings, only from sys config if the resource is not owned by the user
+            # Set binds, only from sys config if the resource is not owned by the user
             if task.computing.user != task.user:
-                bindings = task.computing.get_conf_param('bindings', from_sys_only=True )
+                binds = task.computing.get_conf_param('binds', from_sys_only=True )
             else:
-                bindings = task.computing.get_conf_param('bindings')
-            if not bindings:
-                bindings = ''
+                binds = task.computing.get_conf_param('binds')
+            if not binds:
+                binds = ''
             else:
-                bindings = '-B {}'.format(bindings)
+                binds = '-B {}'.format(binds)
 
-            # Manage task extra volumes
-            if task.extra_volumes:
-                if not bindings:
-                    bindings = '-B {}'.format(task.extra_volumes)
+            # Manage task extra binds
+            if task.extra_binds:
+                if not binds:
+                    binds = '-B {}'.format(task.extra_binds)
                 else:
-                    bindings += ',{}'.format(task.extra_volumes)
+                    binds += ',{}'.format(task.extra_binds)
 
             run_command  = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, first_user, first_host)
             run_command += '"ssh -4 -o StrictHostKeyChecking=no {}@{} /bin/bash -c \''.format(second_user, second_host)
@@ -523,13 +523,13 @@ class RemotehopComputingManager(ComputingManager):
                 if setup_command:
                     run_command += setup_command + ' && '
                 run_command += '\'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\$BASE_PORT && {} '.format(authstring)
-                run_command += 'exec nohup singularity run {} --pid --writable-tmpfs --containall --cleanenv '.format(bindings)
+                run_command += 'exec nohup singularity run {} --pid --writable-tmpfs --containall --cleanenv '.format(binds)
             else:
                 run_command += ' : && ' # Trick to prevent some issues in exporting variables                
                 if setup_command:
                     run_command += setup_command + ' && '
                 run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT={} && {} '.format(task.port, authstring)
-                run_command += 'exec nohup singularity run {} --pid --writable-tmpfs --containall --cleanenv '.format(bindings)
+                run_command += 'exec nohup singularity run {} --pid --writable-tmpfs --containall --cleanenv '.format(binds)
              
             # Set registry
             if task.container.registry == 'docker_local':

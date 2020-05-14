@@ -272,7 +272,7 @@ class Task(models.Model):
     port      = models.IntegerField('Task port', blank=True, null=True)
     ip        = models.CharField('Task ip address', max_length=36, blank=True, null=True)
     tunnel_port = models.IntegerField('Task tunnel port', blank=True, null=True)
-    extra_volumes = models.CharField('Extra volumes', max_length=4096, blank=True, null=True)
+    extra_binds = models.CharField('Extra binds', max_length=4096, blank=True, null=True)
 
     # Links
     computing = models.ForeignKey(Computing, related_name='+', on_delete=models.CASCADE)

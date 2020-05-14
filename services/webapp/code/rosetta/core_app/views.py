@@ -392,9 +392,12 @@ def tasks(request):
                 else:
                     logger.debug('Task "{}" has no running tunnel, creating it'.format(task))
 
+                    # Get user keys
+                    user_keys = KeyPair.objects.get(user=task.user, default=True)
+
                     # Tunnel command
                     if task.computing.type == 'remotehop':           
-                                  
+                        
                         # Get computing params
                         first_host = task.computing.get_conf_param('first_host')
                         first_user = task.computing.get_conf_param('first_user')
@@ -402,11 +405,14 @@ def tasks(request):
                         #second_user = task.computing.get_conf_param('second_user')
                         #setup_command = task.computing.get_conf_param('setup_command')
                         #base_port = task.computing.get_conf_param('base_port')
-                                        
-                        tunnel_command= 'ssh -4 -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} {}@{} & '.format(task.tunnel_port, task.ip, task.port, first_user, first_host)
+                                 
+                        tunnel_command= 'ssh -4 i {} -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} {}@{} & '.format(user_keys.private_key_file, task.tunnel_port, task.ip, task.port, first_user, first_host)
                     
-                    else:
+                    elif task.computing.type == 'local':
                         tunnel_command= 'ssh -4 -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} localhost & '.format(task.tunnel_port, task.ip, task.port)
+
+                    else:
+                        tunnel_command= 'ssh -4 i {} -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} localhost & '.format(user_keys.private_key_file, task.tunnel_port, task.ip, task.port)
                     
                     background_tunnel_command = 'nohup {} >/dev/null 2>&1 &'.format(tunnel_command)
 
@@ -561,7 +567,7 @@ def create_task(request):
             computing_cpus = request.POST.get('computing_cpus', None)
             computing_memory = request.POST.get('computing_memory', None)
             computing_partition = request.POST.get('computing_partition', None)
-            extra_volumes = request.POST.get('extra_volumes', None)
+            extra_binds = request.POST.get('extra_binds', None)
             
             computing_options = {}
             if computing_cpus:
@@ -588,8 +594,8 @@ def create_task(request):
                 if task.container.ports:
                     task.port = task.container.port
         
-            # Set exttra volumes if any:
-            task.extra_volumes = extra_volumes
+            # Set extra binds if any:
+            task.extra_binds = extra_binds
 
             # Save the task before starting it, or the computing manager will not be able to work properly
             task.save()

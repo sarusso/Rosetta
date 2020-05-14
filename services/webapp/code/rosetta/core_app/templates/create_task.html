@@ -153,10 +153,10 @@
 
            {% if data.task_container.type == 'singularity' %}
            <tr>
-            <td valign="top" style="width:180px"><b>Extra volumes</b></td>
+            <td valign="top" style="width:180px"><b>Extra binds</b></td>
             <td>
              <input type="text" name="extra_volumes" value="" placeholder="" size="23" /><br>
-             <p style="line-height: 0.95"><font size=-1>Here you can set extra volume bindings on top of the ones already define by the administrator. Format is <i>host_directory:container_directory</i>, comma separated.</font></p>
+             <p style="line-height: 0.95"><font size=-1>Here you can set extra binds on top of the ones already define by the administrator. Format is <i>host_directory:container_directory</i>, comma separated.</font></p>
             </td>
            </tr>
            {% endif %}
@@ -195,7 +195,7 @@
              
            <tr><td colspan=2>
            <table><tr><td  style="border: 1px solid lightgray;" >
-           I understand that files saved or modified in this container, if not explicitly saved to a persistent volume, will be LOST when the task ends.
+           I understand that files saved or modified in this container, if not explicitly saved to a persistent bind, will be LOST when the task ends.
            </td><td  style="border: 1px solid lightgray;" >
            <input class="form-check-input" type="checkbox" value="" id="invalidCheck" required>
            </td></table>
