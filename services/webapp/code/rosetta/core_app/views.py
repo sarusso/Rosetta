@@ -406,13 +406,10 @@ def tasks(request):
                         #setup_command = task.computing.get_conf_param('setup_command')
                         #base_port = task.computing.get_conf_param('base_port')
                                  
-                        tunnel_command= 'ssh -4 i {} -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} {}@{} & '.format(user_keys.private_key_file, task.tunnel_port, task.ip, task.port, first_user, first_host)
-                    
-                    elif task.computing.type == 'local':
-                        tunnel_command= 'ssh -4 -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} localhost & '.format(task.tunnel_port, task.ip, task.port)
+                        tunnel_command= 'ssh -4 -i {} -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} {}@{} & '.format(user_keys.private_key_file, task.tunnel_port, task.ip, task.port, first_user, first_host)
 
                     else:
-                        tunnel_command= 'ssh -4 i {} -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} localhost & '.format(user_keys.private_key_file, task.tunnel_port, task.ip, task.port)
+                        tunnel_command= 'ssh -4 -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} localhost & '.format(task.tunnel_port, task.ip, task.port)
                     
                     background_tunnel_command = 'nohup {} >/dev/null 2>&1 &'.format(tunnel_command)
 
