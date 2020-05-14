@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Use dev (local) database for backend
+# Use dev (local) database for backend if not alredy set up
 if [ ! -f services/webapp/db_conf.sh ]; then
     echo "Using dev webapp database settings."
     cp services/webapp/db_conf-dev.sh  services/webapp/db_conf.sh
@@ -9,10 +9,19 @@ else
 fi
 
 
-# Use dev (local) database for backend
+# Use dev certificates if not already set up
 if [ ! -d services/proxy/certificates ]; then
     echo "Using dev certificates."
     cp -a services/proxy/certificates-dev  services/proxy/certificates
 else
     echo "Not using dev certificates as certificates are already present."
+fi
+
+
+# Use dev docker-compose.yml if not already set up
+if [ ! -f docker-compose.yml ]; then
+    echo "Using dev docker-compose.yml"
+    cp docker-compose-dev.yml docker-compose.yml
+else
+    echo "Not using dev docker-compose.yml as already present."
 fi

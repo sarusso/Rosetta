@@ -11,9 +11,6 @@ services:
     volumes:
       - ./data_rosetta/shared:/shared
       # - ./data/singularity_cache:/rosetta/.singularity/cache # Not working, check permissions...
-    ports:
-      - "8590:8590"
-      - "5900:5900"
 
   slurmclusterworker-one:
     image: "rosetta/slurmclusterworker"
@@ -24,9 +21,6 @@ services:
     privileged: true
     volumes:
       - ./data_rosetta/shared:/shared
-    ports:
-      - "8591:8590"
-      - "5901:5900"
 
   dregistry:
     container_name: dregistry
@@ -64,14 +58,12 @@ services:
       #- DJANGO_PUBLIC_HTTP_HOST=http://localhost:8080
     ports:
       - "8080:8080"
-      - "8000:8590"
-      - "8592:8592"
       - "7000-7005:7000-7005"
     volumes:
       - ./data_rosetta/webapp/data:/data
       - ./data_rosetta/webapp/log:/var/log/webapp
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./services/webapp/code:/opt/webapp_code
+      #- ./services/webapp/code:/opt/webapp_code
 
   proxy:
     image: "rosetta/proxy"
