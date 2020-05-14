@@ -134,7 +134,10 @@ class LocalComputingManager(ComputingManager):
     
         out = os_shell(stop_command, capture=True)
         if out.exit_code != 0:
-            raise Exception(out.stderr)
+            if 'No such container' in out.stderr:
+                pass
+            else:
+                raise Exception(out.stderr)
  
         # Set task as stopped
         task.status = TaskStatuses.stopped
@@ -194,7 +197,14 @@ class RemoteComputingManager(ComputingManager):
                 bindings = ''
             else:
                 bindings = '-B {}'.format(bindings)
-
+            
+            # Manage task extra volumes
+            if task.extra_volumes:
+                if not bindings:
+                    bindings = '-B {}'.format(task.extra_volumes)
+                else:
+                    bindings += ',{}'.format(task.extra_volumes)
+            
             run_command  = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, user, host)
             run_command += '/bin/bash -c \'"wget {}/api/v1/base/agent/?task_uuid={} -O \$HOME/agent_{}.py &> /dev/null && export BASE_PORT=\$(python \$HOME/agent_{}.py 2> \$HOME/{}.log) && '.format(webapp_conn_string, task.uuid, task.uuid, task.uuid, task.uuid)
             run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\$BASE_PORT && {} '.format(authstring)
@@ -345,8 +355,14 @@ class SlurmComputingManager(ComputingManager):
             else:
                 bindings = '-B {}'.format(bindings)
 
-            run_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, user, host)
+            # Manage task extra volumes
+            if task.extra_volumes:
+                if not bindings:
+                    bindings = '-B {}'.format(task.extra_volumes)
+                else:
+                    bindings += ',{}'.format(task.extra_volumes)
 
+            run_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, user, host)
             run_command += '\'bash -c "echo \\"#!/bin/bash\nwget {}/api/v1/base/agent/?task_uuid={} -O \$HOME/agent_{}.py &> \$HOME/{}.log && export BASE_PORT=\\\\\\$(python \$HOME/agent_{}.py 2> \$HOME/{}.log) && '.format(webapp_conn_string, task.uuid, task.uuid, task.uuid, task.uuid, task.uuid)
             run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\\\\\\$BASE_PORT && {} '.format(authstring)
             run_command += 'exec nohup singularity run {} --pid --writable-tmpfs --containall --cleanenv '.format(bindings)
@@ -491,6 +507,13 @@ class RemotehopComputingManager(ComputingManager):
                 bindings = ''
             else:
                 bindings = '-B {}'.format(bindings)
+
+            # Manage task extra volumes
+            if task.extra_volumes:
+                if not bindings:
+                    bindings = '-B {}'.format(task.extra_volumes)
+                else:
+                    bindings += ',{}'.format(task.extra_volumes)
 
             run_command  = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, first_user, first_host)
             run_command += '"ssh -4 -o StrictHostKeyChecking=no {}@{} /bin/bash -c \''.format(second_user, second_host)

@@ -135,7 +135,7 @@
             <td valign="top" style="width:180px"><b>Set custom port </b></td>
             <td>
              <input type="text" name="task_base_port" value="" placeholder="" size="23" style="margin-bottom:5px"/><br>
-             <p style="line-height: 0.9"><font size=-1>This container supports dynamic ports and you can thus set a custom port (>5900) to avoid clashes with services already running on the computing resource.</font></p>
+             <p style="line-height: 0.95"><font size=-1>This container supports dynamic ports and you can thus set a custom port (>5900) to avoid clashes with services already running on the computing resource.</font></p>
             </td>
            </tr>
            {% endif %}
@@ -146,6 +146,17 @@
             <td>
              <input type="password" name="auth_password" value="" placeholder="" size="23" /><br>
              <font size=-1>Use a non-sensitive password as it will be stored in plain text. 6 chars min.</font>
+            </td>
+           </tr>
+           {% endif %}
+
+
+           {% if data.task_container.type == 'singularity' %}
+           <tr>
+            <td valign="top" style="width:180px"><b>Extra volumes</b></td>
+            <td>
+             <input type="text" name="extra_volumes" value="" placeholder="" size="23" /><br>
+             <p style="line-height: 0.95"><font size=-1>Here you can set extra volume bindings on top of the ones already define by the administrator. Format is <i>host_directory:container_directory</i>, comma separated.</font></p>
             </td>
            </tr>
            {% endif %}
@@ -184,7 +195,7 @@
              
            <tr><td colspan=2>
            <table><tr><td  style="border: 1px solid lightgray;" >
-           I understand that files saved or modified in this container, if not explicitly saved to a persistent storage, will be LOST when the task ends.
+           I understand that files saved or modified in this container, if not explicitly saved to a persistent volume, will be LOST when the task ends.
            </td><td  style="border: 1px solid lightgray;" >
            <input class="form-check-input" type="checkbox" value="" id="invalidCheck" required>
            </td></table>

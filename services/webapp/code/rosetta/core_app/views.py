@@ -553,14 +553,15 @@ def create_task(request):
             if task_base_port:
                 task.port = task_base_port
             
-            # Cheks
+            # Checks
             if task.auth_pass and len(task.auth_pass) < 6:
                 raise ErrorMessage('Task password must be at least 6 chars') 
             
-            # Computing options # TODO: This is hardcoded thinking about Slurm
+            # Computing options # TODO: This is hardcoded thinking about Slurm and Singularity
             computing_cpus = request.POST.get('computing_cpus', None)
             computing_memory = request.POST.get('computing_memory', None)
             computing_partition = request.POST.get('computing_partition', None)
+            extra_volumes = request.POST.get('extra_volumes', None)
             
             computing_options = {}
             if computing_cpus:
@@ -586,6 +587,9 @@ def create_task(request):
             if not task.container.supports_dynamic_ports:
                 if task.container.ports:
                     task.port = task.container.port
+        
+            # Set exttra volumes if any:
+            task.extra_volumes = extra_volumes
 
             # Save the task before starting it, or the computing manager will not be able to work properly
             task.save()
