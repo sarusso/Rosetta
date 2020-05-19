@@ -208,8 +208,8 @@ class RemoteComputingManager(ComputingManager):
             run_command  = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, user, host)
             run_command += '/bin/bash -c \'"wget {}/api/v1/base/agent/?task_uuid={} -O \$HOME/agent_{}.py &> /dev/null && export BASE_PORT=\$(python \$HOME/agent_{}.py 2> \$HOME/{}.log) && '.format(webapp_conn_string, task.uuid, task.uuid, task.uuid, task.uuid)
             run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\$BASE_PORT && {} '.format(authstring)
-            run_command += 'rm -rf /tmp/{}_data && mkdir /tmp/{}_data &>> \$HOME/{}.log && chmod 700 /tmp/{}_data && '.format(task.uuid, task.uuid, task.uuid, task.uuid) 
-            run_command += 'exec nohup singularity run {} --pid --no-home --home=/home/metauser --workdir /tmp/{}_data --containall --cleanenv '.format(binds, task.uuid)
+            run_command += 'rm -rf /tmp/{}_data && mkdir -p /tmp/{}_data/tmp &>> \$HOME/{}.log && mkdir -p /tmp/{}_data/home &>> \$HOME/{}.log && chmod 700 /tmp/{}_data && '.format(task.uuid, task.uuid, task.uuid, task.uuid, task.uuid, task.uuid) 
+            run_command += 'exec nohup singularity run {} --pid --no-home --home=/home/metauser --workdir /tmp/{}_data/tmp -B/tmp/{}_data/home:/home/metauser --containall --cleanenv '.format(binds, task.uuid, task.uuid)
             
             # Set registry
             if task.container.registry == 'docker_local':
@@ -366,8 +366,8 @@ class SlurmComputingManager(ComputingManager):
             run_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, user, host)
             run_command += '\'bash -c "echo \\"#!/bin/bash\nwget {}/api/v1/base/agent/?task_uuid={} -O \$HOME/agent_{}.py &> \$HOME/{}.log && export BASE_PORT=\\\\\\$(python \$HOME/agent_{}.py 2> \$HOME/{}.log) && '.format(webapp_conn_string, task.uuid, task.uuid, task.uuid, task.uuid, task.uuid)
             run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\\\\\\$BASE_PORT && {} '.format(authstring)
-            run_command += 'rm -rf /tmp/{}_data && mkdir /tmp/{}_data &>> \$HOME/{}.log && chmod 700 /tmp/{}_data && '.format(task.uuid, task.uuid, task.uuid, task.uuid)
-            run_command += 'exec nohup singularity run {} --pid --no-home --home=/home/metauser --workdir /tmp/{}_data --containall --cleanenv '.format(binds, task.uuid)
+            run_command += 'rm -rf /tmp/{}_data && mkdir -p /tmp/{}_data/tmp &>> \$HOME/{}.log && mkdir -p /tmp/{}_data/home &>> \$HOME/{}.log && chmod 700 /tmp/{}_data && '.format(task.uuid, task.uuid, task.uuid, task.uuid, task.uuid, task.uuid)
+            run_command += 'exec nohup singularity run {} --pid --no-home --home=/home/metauser --workdir /tmp/{}_data/tmp -B/tmp/{}_data/home:/home/metauser --containall --cleanenv '.format(binds, task.uuid, task.uuid)
             
             # Double to escape for Pythom, six for shell (double times three as \\\ escapes a single slash in shell)
 
@@ -525,15 +525,15 @@ class RemotehopComputingManager(ComputingManager):
                 if setup_command:
                     run_command += setup_command + ' && '
                 run_command += '\'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\$BASE_PORT && {} '.format(authstring)
-                run_command += 'rm -rf /tmp/{}_data && mkdir /tmp/{}_data &>> \$HOME/{}.log && chmod 700 /tmp/{}_data && '.format(task.uuid, task.uuid, task.uuid, task.uuid)
-                run_command += 'exec nohup singularity run {} --pid --no-home --home=/home/metauser --workdir /tmp/{}_data --containall --cleanenv '.format(binds, task.uuid)
+                run_command += 'rm -rf /tmp/{}_data && mkdir -p /tmp/{}_data/tmp &>> \$HOME/{}.log && mkdir -p /tmp/{}_data/home &>> \$HOME/{}.log && chmod 700 /tmp/{}_data && '.format(task.uuid, task.uuid, task.uuid, task.uuid, task.uuid, task.uuid)
+                run_command += 'exec nohup singularity run {} --pid --no-home --home=/home/metauser --workdir /tmp/{}_data/tmp -B/tmp/{}_data/home:/home/metauser --containall --cleanenv '.format(binds, task.uuid, task.uuid)
             else:
                 run_command += ' : && ' # Trick to prevent some issues in exporting variables                
                 if setup_command:
                     run_command += setup_command + ' && '
                 run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT={} && {} '.format(task.port, authstring)
-                run_command += 'rm -rf /tmp/{}_data && mkdir /tmp/{}_data &>> \$HOME/{}.log && chmod 700 /tmp/{}_data && '.format(task.uuid, task.uuid, task.uuid, task.uuid)
-                run_command += 'exec nohup singularity run {} --pid --no-home --home=/home/metauser --workdir /tmp/{}_data --containall --cleanenv '.format(binds, task.uuid)
+                run_command += 'rm -rf /tmp/{}_data && mkdir -p /tmp/{}_data/tmp &>> \$HOME/{}.log && mkdir -p /tmp/{}_data/home &>> \$HOME/{}.log && chmod 700 /tmp/{}_data && '.format(task.uuid, task.uuid, task.uuid, task.uuid, task.uuid, task.uuid)
+                run_command += 'exec nohup singularity run {} --pid --no-home --home=/home/metauser --workdir /tmp/{}_data/tmp -B/tmp/{}_data/home:/home/metauser --containall --cleanenv '.format(binds, task.uuid, task.uuid)
              
             # Set registry
             if task.container.registry == 'docker_local':
