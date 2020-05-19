@@ -1,124 +1,22 @@
 
-
-          {% if data.task %}      
-
-         
-          <table class="dashboard">
-
-            <!-- <tr>
-             <td colspan="2">
-              <div>
-               <div style="background:{{task.container.color}}; height:24px; width:149px; float:left"></div>
-               <div style="background:{{task.computing.color}}; height:24px; width:149px; float:left"></div>
-              </div>
-             </td>
-            </tr>
-             -->
-
-           <tr>
-            <td><b>Name</b></td>
-            <td>{{ task.name }}</td>
-           </tr>
-
-           <tr>
-            <td><b>ID</b></td>
-            <td>{{ task.id }}</td>
-           </tr>
-
-           <tr>
-            <td><b>Container</b></td>
-            <td><a href="/containers/?uuid={{ task.container.uuid }}">{{ task.container.image }}</a></td>
-           </tr>
-
-           <tr>
-            <td><b>Status</b></td>
-            <td>{{ task.status }}</td>
-           </tr>
-
-           <tr>
-            <td><b>Created at</b></td>
-            <td>{{ task.created }}</td>
-           </tr>
-
-
-           <tr>
-            <td><b>Running on</b></td>
-            <td>{{ task.computing }}</td>
-           </tr>
-
-           <tr>
-            <td><b>Extra binds</b></td>
-            <td>{{ task.extra_binds }}</td>
-           </tr>  
-
-           <tr>
-            <td><b>IP</b></td>
-            <td>{{ task.ip }}</td>
-           </tr>
-
-           <tr>
-            <td><b>Port</b></td>
-            <td>{{ task.port }}</td>
-           </tr>
-           
-           <tr>
-            <td><b>Task tunnel port</b></td>
-            <td>{{ task.tunnel_port }}</td>
-           </tr>
-
-           {% if task.auth_pass %}
-           <tr>
-            <td><b>Task Auth pass</b></td>
-            <td>******</td>
-           </tr>
-           {% endif %}
-
-
-         
-
-           <tr>
-            <td><b>Operations</b></td>
-            
-            <td>
-            {% if task.status == "running" %}
-            <a href="?uuid={{task.uuid}}&action=stop&details={{details}}">Stop</a> | 
-            {% else %}
-            <!-- <a href=?uuid={{task.uuid}}&action=start>Start</a> |  -->
-            <font color="#c0c0c0">Stop</font> | 
-            {% endif %}
-            <a href="?uuid={{task.uuid}}&action=delete&details=False">Delete</a>
-            
-            {% if task.port %}
-            {% if task.status == "running" %}
-             | <a href="?uuid={{task.uuid}}&action=connect">Connect</a>
-            {% else %}
-             | <font color="#c0c0c0">Connect</font>
-            {% endif%}
-            {% endif %}
-            
-            {% if task.status == "created" %}
-             | <font color="#c0c0c0">View Log</font>
-            {% else %}
-             | <a href="/task_log/?uuid={{task.uuid}}&action=viewlog">View Log</a>             
-            {% endif %}
-            
-
-            </td>
-  
-           </tr>
-
-          </table>
-          
+          {% if data.task %} 
+          <div style="width:350px; float:left; border: #e0e0e0 solid 1px; margin:10px; background:#f8f8f8; margin-bottom:20px">
+            <div style="margin-top:5px; padding:10px; text-align:center; border-bottom: #f8f8f8 solid 1px; ">
+            <b>Summary</b>
+            </div>
           {% else %}
           <div style="width:350px; float:left; border: #e0e0e0 solid 1px; margin:10px; background:#f8f8f8; margin-bottom:20px">
-            
-
-            
-            <!-- <div style="background:{{task.color}}; height:24px;"></div> -->
             
             <div style="margin-top:5px; padding:10px; text-align:center; border-bottom: #e0e0e0 solid 1px; ">
             <a href="?uuid={{ task.uuid }}"><b>{{ task.name }}</b></a>
             </div>
+
+
+          {% endif %}
+            
+
+            
+            <!-- <div style="background:{{task.color}}; height:24px;"></div> -->
 
             <!-- <div style="background:{{ task.container.color }}; height:14px;"></div> -->
             
@@ -180,5 +78,129 @@
           
           
           </div>
+
+
+
+          {% if data.task %}      
+
+         
+          <table class="dashboard" style="margin:10px">
+
+            <!-- <tr>
+             <td colspan="2">
+              <div>
+               <div style="background:{{task.container.color}}; height:24px; width:149px; float:left"></div>
+               <div style="background:{{task.computing.color}}; height:24px; width:149px; float:left"></div>
+              </div>
+             </td>
+            </tr>
+             -->
+
+           <tr>
+            <td colspan="2" align="center" style="padding:15px"><b>Details</b></td>
+           </tr>
+
+           <!-- <tr>
+            <td><b>Name</b></td>
+            <td>{{ task.name }}</td>
+           </tr> -->
+
+           <tr>
+            <td><b>ID</b></td>
+            <td>{{ task.id }}</td>
+           </tr>
+
+           <tr>
+            <td><b>Image</b></td>
+            <td><a href="/containers/?uuid={{ task.container.uuid }}">{{ task.container.image }}</a></td>
+           </tr>
+
+           <!-- <tr>
+            <td><b>Status</b></td>
+            <td>{{ task.status }}</td>
+           </tr>  -->
+
+           <tr>
+            <td><b>Created at</b></td>
+            <td>{{ task.created }}</td>
+           </tr>
+
+           <tr>
+            <td><b>Extra binds</b></td>
+            <td>{{ task.extra_binds }}</td>
+           </tr>  
+
+           <tr>
+            <td><b>Host</b></td>
+            <td>{{ task.ip }}</td>
+           </tr>
+
+           <tr>
+            <td><b>Port</b></td>
+            <td>{{ task.port }}</td>
+           </tr>
+           
+           <tr>
+            <td><b>Tunnel port</b></td>
+            <td>{{ task.tunnel_port }}</td>
+           </tr>
+
+           {% if task.auth_pass %}
+           <tr>
+            <td><b>Auth pass</b></td>
+            <td>******</td>
+           </tr>
+           {% endif %}
+
+           <!--  <tr>
+            <td><b>Operations</b></td>
+            
+            <td>
+            {% if task.status == "running" %}
+            <a href="?uuid={{task.uuid}}&action=stop&details={{details}}">Stop</a> | 
+            {% else %}-->
+            <!-- <a href=?uuid={{task.uuid}}&action=start>Start</a> |  -->
+            <!-- <font color="#c0c0c0">Stop</font> | 
+            {% endif %}
+            <a href="?uuid={{task.uuid}}&action=delete&details=False">Delete</a>
+            
+            {% if task.port %}
+            {% if task.status == "running" %}
+             | <a href="?uuid={{task.uuid}}&action=connect">Connect</a>
+            {% else %}
+             | <font color="#c0c0c0">Connect</font>
+            {% endif%}
+            {% endif %}
+            
+            {% if task.status == "created" %}
+             | <font color="#c0c0c0">View Log</font>
+            {% else %}
+             | <a href="/task_log/?uuid={{task.uuid}}&action=viewlog">View Log</a>             
+            {% endif %}
+            
+            </td>
+  
+           </tr>
+           -->
+
+          </table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
           
           {% endif  %}
