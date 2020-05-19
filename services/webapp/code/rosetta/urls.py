@@ -50,6 +50,9 @@ urlpatterns = [
     url(r'^containers/$', core_app_views.containers),
     url(r'^add_container/$', core_app_views.add_container),
 
+    # Sharable link for tasks
+    url(r'^t/(?P<id>\w{0,36})/$', core_app_views.sharable_link_handler),
+
     # Modules
     path('admin/', admin.site.urls),
     path('api/v1/doc/', get_swagger_view(title="Swagger Documentation")),

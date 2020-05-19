@@ -80,10 +80,8 @@
           </div>
 
 
-
           {% if data.task %}      
-
-         
+          <div style="float:left; max-width:450px">
           <table class="dashboard" style="margin:10px">
 
             <!-- <tr>
@@ -152,6 +150,12 @@
            </tr>
            {% endif %}
 
+           <tr>
+            <td style="padding-right:0"><b>Direct link</b>
+            <td>{% if task.status == "running" %}<a href="{{ task.direct_link }}">{{ task.direct_link }}</a>{% else %}N.A. (task not running) {% endif %}</td>
+           </tr>
+
+
            <!--  <tr>
             <td><b>Operations</b></td>
             
@@ -184,7 +188,10 @@
            -->
 
           </table>
-
+          <p style="margin-left:12px; font-size:0.9em; color:#484848">
+          <i class="fa fa-info-circle" style="color:#337ab7"></i> You can share a direct link with other people, but remember that if you have no authentication in place anyone will be able to access.
+          </p>
+          </div>
 
 
 

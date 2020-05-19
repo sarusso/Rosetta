@@ -489,6 +489,74 @@ def hash_string_to_int(string):
 
 
 
+#================================
+#  Tunnel setup
+#================================
+
+def setup_tunnel(task):
+
+    # Importing here instead of on top avoids circular dependencies problems when loading booleanize in settings
+    from .models import Task, KeyPair, TaskStatuses
+    
+    # If there is no tunnel port allocated yet, find one
+    if not task.tunnel_port:
+
+        # Get a free port fot the tunnel:
+        allocated_tunnel_ports = []
+        for other_task in Task.objects.all():
+            if other_task.tunnel_port and not other_task.status in [TaskStatuses.exited, TaskStatuses.stopped]:
+                allocated_tunnel_ports.append(other_task.tunnel_port)
+
+        for port in range(7000, 7006):
+            if not port in allocated_tunnel_ports:
+                tunnel_port = port
+                break
+        if not tunnel_port:
+            logger.error('Cannot find a free port for the tunnel for task "{}"'.format(task))
+            raise ErrorMessage('Cannot find a free port for the tunnel to the task')
+
+        task.tunnel_port = tunnel_port
+        task.save()
+
+
+    # Check if the tunnel is active and if not create it
+    logger.debug('Checking if task "{}" has a running tunnel'.format(task))
+
+    out = os_shell('ps -ef | grep ":{}:{}:{}" | grep -v grep'.format(task.tunnel_port, task.ip, task.port), capture=True)
+
+    if out.exit_code == 0:
+        logger.debug('Task "{}" has a running tunnel, using it'.format(task))
+    else:
+        logger.debug('Task "{}" has no running tunnel, creating it'.format(task))
+
+        # Get user keys
+        user_keys = KeyPair.objects.get(user=task.user, default=True)
+
+        # Tunnel command
+        if task.computing.type == 'remotehop':           
+            
+            # Get computing params
+            first_host = task.computing.get_conf_param('first_host')
+            first_user = task.computing.get_conf_param('first_user')
+            #second_host = task.computing.get_conf_param('second_host')
+            #second_user = task.computing.get_conf_param('second_user')
+            #setup_command = task.computing.get_conf_param('setup_command')
+            #base_port = task.computing.get_conf_param('base_port')
+                     
+            tunnel_command= 'ssh -4 -i {} -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} {}@{} & '.format(user_keys.private_key_file, task.tunnel_port, task.ip, task.port, first_user, first_host)
+
+        else:
+            tunnel_command= 'ssh -4 -o StrictHostKeyChecking=no -nNT -L 0.0.0.0:{}:{}:{} localhost & '.format(task.tunnel_port, task.ip, task.port)
+        
+        background_tunnel_command = 'nohup {} >/dev/null 2>&1 &'.format(tunnel_command)
+
+        # Log
+        logger.debug('Opening tunnel with command: {}'.format(background_tunnel_command))
+
+        # Execute
+        subprocess.Popen(background_tunnel_command, shell=True)
+
+
 
 
 

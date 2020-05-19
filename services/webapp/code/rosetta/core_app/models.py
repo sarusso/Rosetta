@@ -329,11 +329,15 @@ class Task(models.Model):
     def __str__(self):
         return str('Task "{}" of user "{}" running on "{}" in status "{}" created at "{}"'.format(self.name, self.user, self.computing, self.status, self.created))
 
-    @ property
+    @property
     def color(self):
         string_int_hash = hash_string_to_int(self.name)
         color_map_index = string_int_hash % len(color_map)
         return color_map[color_map_index]
+    
+    @property
+    def direct_link(self):
+        return '{}/t/{}'.format(settings.DJANGO_PUBLIC_HTTP_HOST, self.id)
 
 
 
