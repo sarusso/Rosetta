@@ -74,7 +74,7 @@ class LoginToken(models.Model):
 class Container(models.Model):
 
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE, null=True)  
+    user = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE, blank=True, null=True)  
     # If a container has no user, it will be available to anyone. Can be created, edited and deleted only by admins.
 
     name     = models.CharField('Container Name', max_length=255, blank=False, null=False)    

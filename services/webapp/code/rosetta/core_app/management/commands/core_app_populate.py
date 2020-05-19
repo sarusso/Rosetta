@@ -58,7 +58,7 @@ class Command(BaseCommand):
                                      supports_user_auth     = False,
                                      supports_pass_auth     = True)
 
-            # BasicMetaDesktop Singularity (sarusso repo)
+            # BasicMetaDesktop Docker (sarusso repo)
             Container.objects.create(user     = None,
                                      name     = 'BasicMetaDesktop latest',
                                      image    = 'sarusso/basicmetadesktop',
@@ -70,11 +70,11 @@ class Command(BaseCommand):
                                      supports_pass_auth     = True)
 
 
-            # DevMetaDesktop Singularity (sarusso repo)
+            # DevMetaDesktop Docker (sarusso repo)
             Container.objects.create(user     = None,
                                      name     = 'DevMetaDesktop latest',
                                      image    = 'sarusso/devmetadesktop',
-                                     type     = 'singularity',
+                                     type     = 'docker',
                                      registry = 'docker_hub',
                                      ports    = '8590',
                                      supports_dynamic_ports = True,
@@ -150,7 +150,7 @@ class Command(BaseCommand):
         else:
             print('Creating testuser private containers...')
 
-            # JuPyter Singularity
+            # Jupyter Singularity
             Container.objects.create(user     = testuser,
                                      name     = 'Jupyter Notebook latest',
                                      image    = 'jupyter/base-notebook',
@@ -161,7 +161,7 @@ class Command(BaseCommand):
                                      supports_user_auth     = False,
                                      supports_pass_auth     = False)
             
-            # JuPyter Docker
+            # Jupyter Docker
             Container.objects.create(user     = testuser,
                                      name     = 'Jupyter Notebook latest',
                                      image    = 'jupyter/base-notebook',
