@@ -206,9 +206,9 @@ class RemoteComputingManager(ComputingManager):
                     binds += ',{}'.format(task.extra_binds)
             
             run_command  = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, user, host)
-            run_command += '/bin/bash -c \'"wget {}/api/v1/base/agent/?task_uuid={} -O \$HOME/agent_{}.py &> /dev/null && export BASE_PORT=\$(python \$HOME/agent_{}.py 2> \$HOME/{}.log) && '.format(webapp_conn_string, task.uuid, task.uuid, task.uuid, task.uuid)
+            run_command += '/bin/bash -c \'"rm -rf /tmp/{}_data && mkdir -p /tmp/{}_data/tmp && mkdir -p /tmp/{}_data/home && chmod 700 /tmp/{}_data && '.format(task.uuid, task.uuid, task.uuid, task.uuid) 
+            run_command += 'wget {}/api/v1/base/agent/?task_uuid={} -O /tmp/{}_data/agent.py &> /dev/null && export BASE_PORT=\$(python /tmp/{}_data/agent.py 2> /tmp/{}_data/task.log) && '.format(webapp_conn_string, task.uuid, task.uuid, task.uuid, task.uuid)
             run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\$BASE_PORT && {} '.format(authstring)
-            run_command += 'rm -rf /tmp/{}_data && mkdir -p /tmp/{}_data/tmp &>> \$HOME/{}.log && mkdir -p /tmp/{}_data/home &>> \$HOME/{}.log && chmod 700 /tmp/{}_data && '.format(task.uuid, task.uuid, task.uuid, task.uuid, task.uuid, task.uuid) 
             run_command += 'exec nohup singularity run {} --pid --no-home --home=/home/metauser --workdir /tmp/{}_data/tmp -B/tmp/{}_data/home:/home/metauser --containall --cleanenv '.format(binds, task.uuid, task.uuid)
             
             # Set registry
@@ -222,7 +222,7 @@ class RemoteComputingManager(ComputingManager):
             else:
                 raise NotImplementedError('Registry {} not supported'.format(task.container.registry))
     
-            run_command+='{}{} &>> \$HOME/{}.log & echo \$!"\''.format(registry, task.container.image, task.uuid)
+            run_command+='{}{} &>> /tmp/{}_data/task.log & echo \$!"\''.format(registry, task.container.image, task.uuid)
             
         else:
             raise NotImplementedError('Container {} not supported'.format(task.container.type))
@@ -286,7 +286,7 @@ class RemoteComputingManager(ComputingManager):
         user = task.computing.get_conf_param('user')
 
         # View log remotely
-        view_log_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "cat \$HOME/{}.log"\''.format(user_keys.private_key_file, user, host, task.uuid)
+        view_log_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "cat /tmp/{}_data/task.log"\''.format(user_keys.private_key_file, user, host, task.uuid)
 
         out = os_shell(view_log_command, capture=True)
         if out.exit_code != 0:
