@@ -507,7 +507,7 @@ def setup_tunnel(task):
             if other_task.tunnel_port and not other_task.status in [TaskStatuses.exited, TaskStatuses.stopped]:
                 allocated_tunnel_ports.append(other_task.tunnel_port)
 
-        for port in range(7000, 7006):
+        for port in range(7000, 7021):
             if not port in allocated_tunnel_ports:
                 tunnel_port = port
                 break
