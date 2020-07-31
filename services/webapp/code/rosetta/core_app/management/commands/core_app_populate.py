@@ -49,7 +49,7 @@ class Command(BaseCommand):
             
             # MinimalMetaDesktop Docker (sarusso repo)
             Container.objects.create(user     = None,
-                                     name     = 'BasicMetaDesktop latest',
+                                     name     = 'MinimalMetaDesktop latest',
                                      image    = 'sarusso/minimalmetadesktop',
                                      type     = 'docker',
                                      registry = 'docker_hub',
