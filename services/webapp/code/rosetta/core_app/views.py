@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 # Conf
 SUPPORTED_CONTAINER_TYPES = ['docker', 'singularity']
-SUPPORTED_REGISTRIES = ['docker_local', 'docker_hub', 'singularity_hub']
+SUPPORTED_REGISTRIES = ['docker_hub', 'singularity_hub'] # Registry "docker_local" is also supported but must be set manually
 UNSUPPORTED_TYPES_VS_REGISTRIES = ['docker:singularity_hub']
 
 # Task cache
