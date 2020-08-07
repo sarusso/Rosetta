@@ -94,7 +94,7 @@ class Container(models.Model):
 
 
     def __str__(self):
-        return str('Container of type "{}" with image "{}" and  ports "{}" from registry "{}" of user "{}"'.format(self.type, self.image, self.ports, self.registry, self.user))
+        return str('Container "{}" of type "{}" with image "{}" and  ports "{}" from registry "{}" of user "{}"'.format(self.name, self.type, self.image, self.ports, self.registry, self.user))
 
 
     @property
