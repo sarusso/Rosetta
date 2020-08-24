@@ -23,7 +23,7 @@ if [[ $# -eq 0 ]] ; then
     for container_name in ${container_names[@]}
     do
         echo ""
-        echo "$container_name"
+        echo "Container \"$container_name\":"
         docker-compose exec $container_name /bin/bash -c "supervisorctl status"
     done
     echo ""

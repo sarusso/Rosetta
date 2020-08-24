@@ -13,7 +13,7 @@ Requirements:
     
     Bash, Git and Docker. Runs on Linux, Mac or Windows*.
 
-*Windows not supported in development mode due to lack of support for symbolic links.
+*Windows not fully supported in development mode due to lack of support for symbolic links.
 
 Setup
 
@@ -96,4 +96,16 @@ Note that when you edit the Django ORM model, you need to rerun the migrate the 
     $ source /db_conf.sh
     $ cd /opt/webapp_code
     $ python3 manage.py makemigrations
-    $ python3 manage.py migrate  
+    $ python3 manage.py migrate
+    
+## Known issues
+
+    SINGULARITY_TMPDIR=/...
+    .singularity in user home
+
+
+
+
+
+
+
