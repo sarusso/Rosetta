@@ -60,10 +60,10 @@ RUN echo "source /env.sh" > /rosetta/.bash_profile
 #------------------------
 
 # Create dirs
-RUN mkdir /data && mkdir /opt/rosetta && mkdir /var/log/rosetta 
+RUN mkdir /data && mkdir /var/log/rosetta 
 
 # Give right permissions
-RUN chown -R rosetta:rosetta /data && chown -R rosetta:rosetta /opt/rosetta && chown -R rosetta:rosetta /var/log/rosetta
+RUN chown -R rosetta:rosetta /data && chown -R rosetta:rosetta /var/log/rosetta
 
 
 #----------------------

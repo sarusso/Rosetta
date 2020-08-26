@@ -47,7 +47,7 @@ export PYTHONUNBUFFERED=on
 # Check if there is something to migrate or populate
 echo ""
 echo "2) Making migrations..."
-cd /opt/webapp_code && $DJANGO_PYTHON manage.py makemigrations --noinput
+cd /opt/code && $DJANGO_PYTHON manage.py makemigrations --noinput
 EXIT_CODE=$?
 echo "Exit code: $EXIT_CODE"
 if [[ "x$EXIT_CODE" != "x0" ]] ; then
@@ -58,7 +58,7 @@ fi
 echo ""
 
 echo "3) Migrating..."
-cd /opt/webapp_code && $DJANGO_PYTHON manage.py migrate --noinput
+cd /opt/code && $DJANGO_PYTHON manage.py migrate --noinput
 EXIT_CODE=$?
 echo "Exit code: $EXIT_CODE"
 if [[ "x$EXIT_CODE" != "x0" ]] ; then
@@ -69,7 +69,7 @@ fi
 echo ""
 
 echo "4) Populating core app..."
-cd /opt/webapp_code && $DJANGO_PYTHON manage.py core_app_populate  
+cd /opt/code && $DJANGO_PYTHON manage.py core_app_populate  
 EXIT_CODE=$?
 echo "Exit code: $EXIT_CODE"
 if [[ "x$EXIT_CODE" != "x0" ]] ; then

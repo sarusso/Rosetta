@@ -45,20 +45,20 @@ RUN apt-get install docker.io -y
 #------------------------------
 
 # Prepare dir
-RUN mkdir /opt/webapp_code
+RUN mkdir /opt/code
 
 # Install Python requirements..
 COPY requirements.txt /tmp/
-RUN cd /opt/webapp_code && pip3 install -r /tmp/requirements.txt
+RUN cd /opt/code && pip3 install -r /tmp/requirements.txt
 
 # Patch Django 2.2 non-ascii chars in /usr/local/lib/python3.6/dist-packages/django/views/templates/technical_500.html
 RUN sed -i 's/[\x80-\xFF]/./g' /usr/local/lib/python3.6/dist-packages/django/views/templates/technical_500.html
 
 # Install App code
-COPY code /opt/webapp_code
+COPY code /opt/code
 
 # Fix permissions
-RUN chown -R rosetta:rosetta /opt/webapp_code
+RUN chown -R rosetta:rosetta /opt/code
 
 # Copy db conf
 COPY db_conf.sh /db_conf.sh
