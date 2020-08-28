@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Example: ./run_webapp_unit_tests.sh rosetta.core_app.tests.test_apis.ApiTests.test_api_web_auth
+# Example: rosetta/test rosetta.core_app.tests.test_apis.ApiTests.test_api_web_auth
 
 # You probably want to set DJANGO_LOG_LEVEL to ERROR and ROSETTA_LOG_LEVEL to DEBUG if you are doing tdd.
 DJANGO_LOG_LEVEL="CRITICAL"
@@ -10,4 +10,4 @@ ROSETTA_LOG_LEVEL="CRITICAL"
 DJANGO_DB_ENGINE="django.db.backends.sqlite3"
 DJANGO_DB_NAME=":memory:"
 
-rosetta/shell webapp "export DJANGO_DB_ENGINE=$DJANGO_DB_ENGINE && export DJANGO_DB_NAME=$DJANGO_DB_NAME && cd /opt/webapp_code && python3 manage.py makemigrations && DJANGO_LOG_LEVEL=$DJANGO_LOG_LEVEL ROSETTA_LOG_LEVEL=$ROSETTA_LOG_LEVEL python3 manage.py test $@"
+rosetta/shell webapp "export DJANGO_DB_ENGINE=$DJANGO_DB_ENGINE && export DJANGO_DB_NAME=$DJANGO_DB_NAME && cd /opt/code && DJANGO_LOG_LEVEL=$DJANGO_LOG_LEVEL ROSETTA_LOG_LEVEL=$ROSETTA_LOG_LEVEL python3 manage.py test $@"
