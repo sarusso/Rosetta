@@ -6,6 +6,8 @@ _A container-centric Science Platform_
 
 Rosetta makes it easy to run interactive workloads on batch and remote computing systems using Docker and Singularity containers.
 
+Rosetta licensed under the Apache License 2.0, unless otherwise specificed.
+
 
 ## Quickstart
 
@@ -58,14 +60,14 @@ Example Webapp configuraion
 
 ### Extras
 
+List all running services
+
+    # rosetta/ps
+
 Check status (not yet fully supported)
 
     # rosetta/status
 
-
-Run Web App unit tests (with Rosetta running)
-
-    ./run_webapp_unit_tests.sh
 
 
 ### Building errors
@@ -97,6 +99,19 @@ Note that when you edit the Django ORM model, you need to rerun the migrate the 
     $ cd /opt/webapp_code
     $ python3 manage.py makemigrations
     $ python3 manage.py migrate
+    
+### Logs and testing
+
+Run Web App unit tests (with Rosetta running)
+
+    $ rosetta/logs webapp
+    
+    $ rosetta/logs webapp startup
+    
+    $ rosetta/logs webapp server
+    
+    $rosetta/tets
+
     
 ## Known issues
 

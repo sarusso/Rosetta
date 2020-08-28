@@ -46,6 +46,7 @@ services:
     hostname: webapp
     environment:
       - SAFEMODE=False
+      - DJANGO_DEBUG=True
       - DJANGO_LOG_LEVEL=CRITICAL
       - ROSETTA_LOG_LEVEL=DEBUG
       #- ROSETTA_TUNNEL_HOST=
@@ -56,6 +57,7 @@ services:
       #- DJANGO_EMAIL_APIKEY=""
       #- DJANGO_EMAIL_FROM="Rosetta Platform <notifications@rosetta.platform>"
       #- DJANGO_PUBLIC_HTTP_HOST=http://localhost:8080
+      #- DJANGO_SECRET_KEY=""
     ports:
       - "8080:8080"
       - "7000-7020:7000-7020"
@@ -63,7 +65,7 @@ services:
       - ./data_rosetta/webapp/data:/data
       - ./data_rosetta/webapp/log:/var/log/webapp
       - /var/run/docker.sock:/var/run/docker.sock
-      #- ./services/webapp/code:/opt/webapp_code
+      - ./services/webapp/code:/opt/code
 
   proxy:
     image: "rosetta/proxy"

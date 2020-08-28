@@ -30,7 +30,6 @@ _task_cache = {}
 def login_view(request):
 
     data = {}
-    data['title'] = "{} - Login".format(settings.DJANGO_PROJECT_NAME)
 
     # If authenticated user reloads the main URL
     if request.method == 'GET' and request.user.is_authenticated:
@@ -80,7 +79,7 @@ def login_view(request):
                     loginToken.token = token
                     loginToken.save()
                 try:
-                    send_email(to=user.email, subject='{} login link'.format(settings.DJANGO_PROJECT_NAME), text='Hello,\n\nhere is your login link: {}/login/?token={}\n\nOnce logged in, you can go to "My Account" and change password (or just keep using the login link feature).\n\nThe {} Team.'.format(settings.DJANGO_PUBLIC_HTTP_HOST, token, settings.DJANGO_PROJECT_NAME))
+                    send_email(to=user.email, subject='Rosetta login link', text='Hello,\n\nhere is your login link: {}/login/?token={}\n\nOnce logged in, you can go to "My Account" and change password (or just keep using the login link feature).\n\nThe Rosetta Team.'.format(settings.DJANGO_PUBLIC_HTTP_HOST, token))
                 except Exception as e:
                     logger.error(format_exception(e))
                     raise ErrorMessage('Something went wrong. Please retry later.')
@@ -141,7 +140,6 @@ def logout_view(request):
 def register_view(request):
 
     data = {}
-    data['title'] = "{} - Register".format(settings.DJANGO_PROJECT_NAME)
 
     # If authenticated user reloads the main URL
     if request.method == 'GET' and request.user.is_authenticated:
@@ -230,7 +228,6 @@ def account(request):
     except Profile.DoesNotExist:
         profile = Profile.objects.create(user=request.user)
     data['profile'] = profile
-    data['title'] = "{} - Account".format(settings.DJANGO_PROJECT_NAME)
 
     # Set values from POST and GET
     edit = request.POST.get('edit', None)

@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 from django.core.exceptions import ImproperlyConfigured
-
+from .core_app.utils import booleanize
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -22,16 +22,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '-3byo^nd6-x82fuj*#68mj=5#qp*gagg58sc($u$r-=g8ujxu4'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '-3byo^nd6-x82fuj*#68mj=5#qp*gagg58sc($u$r-=g8ujxu4')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = booleanize(os.environ.get('DJANGO_DEBUG', False))
 
+# SECURITY WARNING: check if you want this in production
 ALLOWED_HOSTS = ['*']
 
 
 # Application definition
-
 INSTALLED_APPS = [
     'rosetta.core_app',
     'django.contrib.admin',
@@ -157,7 +157,6 @@ TMP_PATH   = '/tmp/'
 #  Email settings
 #===============================
 
-DJANGO_PROJECT_NAME = os.environ.get('DJANGO_PROJECT_NAME', 'Rosetta')
 DJANGO_PUBLIC_HTTP_HOST = os.environ.get('DJANGO_PUBLIC_HTTP_HOST', 'http://localhost:8080')
 
 DJANGO_EMAIL_SERVICE = os.environ.get('DJANGO_EMAIL_SERVICE', 'Sendgrid')
