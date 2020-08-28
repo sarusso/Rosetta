@@ -12,7 +12,7 @@ if [[ $# -eq 0 ]] ; then
 fi
 
 if [[ "x$2" != "x" ]] ; then
-    tail -f -n 1000 data_rosetta/$1/log/$2.log
+    tail -f -n 1000 data/$1/log/$2.log
 else
     docker-compose logs -f $1    
 fi
