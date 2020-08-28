@@ -32,9 +32,9 @@ Run
 
 Play
 
-    You can now point your browser to http://localhost:8080.
-    
-    To run Slurm jobs use partition "partition1"
+    rosetta/populate
+    # You can now point your browser to http://localhost:8080.
+    # To run Slurm jobs use partition "partition1"
 
 Clean
 
@@ -52,9 +52,10 @@ Example Webapp configuraion
       - ROSETTA_WEBAPP_PORT=8080
       - LOCAL_DOCKER_REGISTRY_HOST=
       - LOCAL_DOCKER_REGISTRY_PORT=5000
-      - DJANGO_EMAIL_APIKEY="<API KEY>"
-      - DJANGO_EMAIL_FROM="Rosetta Platform <notifications@rosetta.platform>
-      - DJANGO_PUBLIC_HTTP_HOST=http://localhost:8080 # Public facing, with shttp or https
+      - DJANGO_EMAIL_SERVICE=Sendgrid
+      - DJANGO_EMAIL_APIKEY=
+      - DJANGO_EMAIL_FROM="Rosetta <notifications@rosetta.local>"
+      - DJANGO_PUBLIC_HTTP_HOST=http://localhost # Public facing, with http or https
 
 
 
@@ -83,22 +84,16 @@ Django development server is running on port 8080 of the "webapp" service.
 
 To enable live code changes, add or comment out the following in docker-compose.yaml under the "volumes" section of the "webapp" service:
 
-    - ./services/webapp/code:/opt/webapp_code
+    - ./services/webapp/code:/opt/code
     
 This will mount the code from services/webapp/code as a volume inside the webapp container itself allowing to make immediately effective codebase edits.
 
-Note that when you edit the Django ORM model, you need to rerun the migrate the database, either by just rerunning the webapp service:
+Note that when you edit the Django ORM model, you need to make migrations and apply them to migrate the database:
 
-    $ rosetta/rerun webapp
+    $ rosetta/makemigrations
+    $ rosetta/migrate
 
-..ora by entering in the webapp service container and manually migrate:
 
-    $ rosetta/shell webapp
-    $ source /env.sh
-    $ source /db_conf.sh
-    $ cd /opt/webapp_code
-    $ python3 manage.py makemigrations
-    $ python3 manage.py migrate
     
 ### Logs and testing
 
@@ -110,13 +105,13 @@ Run Web App unit tests (with Rosetta running)
     
     $ rosetta/logs webapp server
     
-    $rosetta/tets
+    $ rosetta/test
 
     
 ## Known issues
 
     SINGULARITY_TMPDIR=/...
-    .singularity in user home
+    .singularity in user home with limited space
 
 
 

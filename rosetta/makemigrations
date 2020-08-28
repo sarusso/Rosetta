@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Check if we are in the right place
+if [ ! -d ./services ]; then
+    echo "You must run this command from the project's root folder."
+    exit 1
+fi
+
+rosetta/shell webapp "cd /opt/code && source /env.sh && source /db_conf.sh && BACKEND_LOG_LEVEL=ERROR python3 manage.py makemigrations"
+
