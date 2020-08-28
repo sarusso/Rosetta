@@ -1,10 +1,11 @@
+language: python
+
 services:
   - docker
 
 before_install:
-- rosetta/setup
-- rosetta/build
-- rosetta/run
+  - rosetta/setup
+  - rosetta/build
+  - rosetta/run
 
-script:
-- rosetta/test
+script: rosetta/test
