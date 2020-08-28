@@ -157,12 +157,12 @@ TMP_PATH   = '/tmp/'
 #  Email settings
 #===============================
 
-DJANGO_PUBLIC_HTTP_HOST = os.environ.get('DJANGO_PUBLIC_HTTP_HOST', 'http://localhost:8080')
+DJANGO_PUBLIC_HTTP_HOST = os.environ.get('DJANGO_PUBLIC_HTTP_HOST', 'http://localhost')
 
 DJANGO_EMAIL_SERVICE = os.environ.get('DJANGO_EMAIL_SERVICE', 'Sendgrid')
 if not DJANGO_EMAIL_SERVICE in ['Sendgrid', None]:
     raise ImproperlyConfigured('Invalid EMAIL_METHOD ("{}")'.format(DJANGO_EMAIL_SERVICE))
-DJANGO_EMAIL_FROM = os.environ.get('DJANGO_EMAIL_FROM', 'Rosetta Platform <info@rosetta.platform>')
+DJANGO_EMAIL_FROM = os.environ.get('DJANGO_EMAIL_FROM', 'Rosetta <notifications@rosetta.local')
 DJANGO_EMAIL_APIKEY = os.environ.get('DJANGO_EMAIL_APIKEY', None)
 
 

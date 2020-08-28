@@ -8,7 +8,8 @@ echo "  Starting Webapp @ $DATE"
 echo "==================================================="
 echo ""
 
-echo "1) Loading/sourcing env and settings"
+echo "Loading/sourcing env and settings..."
+echo ""
 
 # Load env
 source /env.sh
@@ -16,60 +17,16 @@ source /env.sh
 # Database conf
 source /db_conf.sh
 
-# Django Project conf
-if [[ "x$DJANGO_PROJECT_NAME" == "x" ]] ; then
-    export DJANGO_PROJECT_NAME="Rosetta"
-fi
-
-if [[ "x$DJANGO_PUBLIC_HTTP_HOST" == "x" ]] ; then
-    export DJANGO_PUBLIC_HTTP_HOST="https://rosetta.platform"
-fi
-
-if [[ "x$DJANGO_EMAIL_SERVICE" == "x" ]] ; then
-    export DJANGO_EMAIL_SERVICE="Sendgrid"
-fi
-
-if [[ "x$DJANGO_EMAIL_FROM" == "x" ]] ; then
-    export DJANGO_EMAIL_FROM="Rosetta <rosetta@rosetta.platform>"
-fi
-
-if [[ "x$DJANGO_EMAIL_APIKEY" == "x" ]] ; then
-    export DJANGO_EMAIL_APIKEY=""
-fi
-
 # Stay quiet on Python warnings
 export PYTHONWARNINGS=ignore
 
 # To Python3 (unbuffered). P.s. "python3 -u" does not work..
-export DJANGO_PYTHON=python3
 export PYTHONUNBUFFERED=on
 
-# Check if there is something to migrate or populate
-echo ""
-echo "2) Making migrations..."
-cd /opt/code && $DJANGO_PYTHON manage.py makemigrations --noinput
-EXIT_CODE=$?
-echo "Exit code: $EXIT_CODE"
-if [[ "x$EXIT_CODE" != "x0" ]] ; then
-    echo "This exit code is an error, sleeping 5s and exiting." 
-    sleep 5
-    exit $?
-fi
-echo ""
-
-echo "3) Migrating..."
-cd /opt/code && $DJANGO_PYTHON manage.py migrate --noinput
-EXIT_CODE=$?
-echo "Exit code: $EXIT_CODE"
-if [[ "x$EXIT_CODE" != "x0" ]] ; then
-    echo "This exit code is an error, sleeping 5s and exiting." 
-    sleep 5
-    exit $?
-fi
-echo ""
-
-echo "4) Populating core app..."
-cd /opt/code && $DJANGO_PYTHON manage.py core_app_populate  
+# Apply migrations if any
+# Note: this will also indirectly wait for the DB to become up and reachable
+echo "Applying migrations if any..."
+cd /opt/code && python3 manage.py migrate --noinput
 EXIT_CODE=$?
 echo "Exit code: $EXIT_CODE"
 if [[ "x$EXIT_CODE" != "x0" ]] ; then
@@ -80,5 +37,5 @@ fi
 echo ""
 
 # Run the (development) server
-echo "5) Now starting the server and logging in /var/log/cloud_server.log."
-exec $DJANGO_PYTHON manage.py runserver 0.0.0.0:8080 2>> /var/log/webapp/server.log
+echo "Now starting the server and logging in /var/log/webapp/server.log."
+exec python3 manage.py runserver 0.0.0.0:8080 2>> /var/log/webapp/server.log
