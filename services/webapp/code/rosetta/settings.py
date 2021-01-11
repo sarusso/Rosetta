@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'rosetta.core_app',
     'django.contrib.admin',
     'django.contrib.auth',
+    'mozilla_django_oidc',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -67,6 +68,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'rosetta.context_processors.export_vars'
             ],
         },
     },
@@ -222,6 +224,48 @@ LOGGING = {
         # Read more about logging in the right way: https://lincolnloop.com/blog/django-logging-right-way/
     }
 }
+
+
+
+#===============================
+#  Auth
+#===============================
+
+OIDC_RP_CLIENT_ID  = os.environ.get('OIDC_RP_CLIENT_ID', None)
+
+if OIDC_RP_CLIENT_ID:
+
+    # Add 'mozilla_django_oidc' authentication backend
+    AUTHENTICATION_BACKENDS = (
+        'django.contrib.auth.backends.ModelBackend',
+        'rosetta.auth.RosettaOIDCAuthenticationBackend'
+    )
+    
+    # Base
+    OIDC_RP_CLIENT_SECRET  = os.environ.get('OIDC_RP_CLIENT_SECRET')
+    OIDC_OP_AUTHORIZATION_ENDPOINT = os.environ.get('OIDC_OP_AUTHORIZATION_ENDPOINT')
+    OIDC_OP_TOKEN_ENDPOINT = os.environ.get('OIDC_OP_TOKEN_ENDPOINT')
+    OIDC_OP_USER_ENDPOINT = os.environ.get('OIDC_OP_USER_ENDPOINT')
+    OIDC_RP_SIGN_ALGO = os.environ.get('OIDC_RP_SIGN_ALGO', 'RS256')
+    OIDC_RP_IDP_SIGN_KEY = os.environ.get('OIDC_RP_IDP_SIGN_KEY', None)
+    OIDC_OP_JWKS_ENDPOINT = os.environ.get('OIDC_OP_JWKS_ENDPOINT', None)
+    
+    # Check
+    if OIDC_RP_SIGN_ALGO == 'RS256':
+        if not OIDC_RP_IDP_SIGN_KEY and not OIDC_OP_JWKS_ENDPOINT:
+            raise ImproperlyConfigured('RS256 OpenID requires OIDC_RP_IDP_SIGN_KEY or OIDC_OP_JWKS_ENDPOINT to be set')
+
+    # Optional
+    OIDC_USE_NONCE =  booleanize(os.environ.get('OIDC_USE_NONCE', False))
+    OIDC_TOKEN_USE_BASIC_AUTH = booleanize(os.environ.get('OIDC_TOKEN_USE_BASIC_AUTH', True))
+    
+    # Non-customizable stuff
+    LOGIN_REDIRECT_URL = '/'
+    LOGOUT_REDIRECT_URL = '/'
+    LOGIN_REDIRECT_URL_FAILURE = '/'
+    
+
+
 
 
 

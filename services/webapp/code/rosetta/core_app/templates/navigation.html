@@ -44,6 +44,8 @@
                 <input type="password" class="form-control" placeholder="Password" name='password'>
                 <input type='submit' class="btn btn-lg ha-btn-lg" value='Login' />
                 </form>
+                {% if OPENID %}
+                {% endif %}
               </center>         
             </li>
             <center>
@@ -53,7 +55,23 @@
             </div>
             </center>
             {% endif %}
+
+            {% if OPENID_ENABLED %}
+
+            <li>
+            {% if not user.is_authenticated %}
+                <a href="{% url 'oidc_authentication_init' %}">Login with OpenID Conn. &nbsp;</a>
+            {% endif %}
+            </li>
+            {% endif %}
+
       
         </ul>
+        
+  
+        
+        
+        
+        
     </nav>
     {% endif %}

@@ -9,7 +9,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.models import User
 from django.shortcuts import redirect
 from .models import Profile, LoginToken, Task, TaskStatuses, Container, Computing, KeyPair, ComputingSysConf, ComputingUserConf
-from .utils import send_email, format_exception, timezonize, os_shell, booleanize, debug_param, get_tunnel_host, random_username, setup_tunnel
+from .utils import send_email, format_exception, timezonize, os_shell, booleanize, debug_param, get_tunnel_host, random_username, setup_tunnel, finalize_user_creation
 from .decorators import public_view, private_view
 from .exceptions import ErrorMessage
 
@@ -166,29 +166,7 @@ def register_view(request):
             
             data['user'] = user
 
-            # Create profile
-            logger.debug('Creating user profile for user "{}"'.format(user.email))
-            Profile.objects.create(user=user)
-
-            # Generate user keys
-            out = os_shell('mkdir -p /data/resources/keys/', capture=True)
-            if not out.exit_code == 0:
-                logger.error(out)
-                raise ErrorMessage('Something went wrong in creating user keys folder. Please contact support')
-                
-            command= "/bin/bash -c \"ssh-keygen -q -t rsa -N '' -f /data/resources/keys/{}_id_rsa 2>/dev/null <<< y >/dev/null\"".format(user.username)                        
-            out = os_shell(command, capture=True)
-            if not out.exit_code == 0:
-                logger.error(out)
-                raise ErrorMessage('Something went wrong in creating user keys. Please contact support')
-                
-            
-            # Create key objects
-            KeyPair.objects.create(user = user,
-                                default = True,
-                                private_key_file = '/data/resources/keys/{}_id_rsa'.format(user.username),
-                                public_key_file = '/data/resources/keys/{}_id_rsa.pub'.format(user.username))
-            
+            finalize_user_creation(user)
 
             # Manually set the auth backend for the user
             user.backend = 'django.contrib.auth.backends.ModelBackend'
