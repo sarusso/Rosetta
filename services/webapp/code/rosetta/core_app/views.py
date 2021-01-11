@@ -363,7 +363,7 @@ def tasks(request):
 
                 # Then, redirect to the task through the tunnel
                 tunnel_host = get_tunnel_host()
-                return redirect('http://{}:{}'.format(tunnel_host,task.tunnel_port))
+                return redirect('{}://{}:{}'.format(task.container.protocol, tunnel_host, task.tunnel_port))
 
         except Exception as e:
             data['error'] = 'Error in getting the task or performing the required action'
@@ -700,6 +700,9 @@ def add_container(request):
         # Container name
         container_name = request.POST.get('container_name', None)
 
+        # Container protocol 
+        container_protocol = request.POST.get('container_protocol')
+
         # Container service ports. TODO: support multiple ports? 
         container_ports = request.POST.get('container_ports', None)
         
@@ -709,8 +712,6 @@ def add_container(request):
                     int(container_service_port)
             except:
                 raise ErrorMessage('Invalid container port(s) in "{}"'.format(container_ports))
-
-
         # Capabilities
         container_supports_dynamic_ports = request.POST.get('container_supports_dynamic_ports', None)
         if container_supports_dynamic_ports and container_supports_dynamic_ports == 'True':
@@ -739,6 +740,7 @@ def add_container(request):
                                  name     = container_name,
                                  type     = container_type,
                                  registry = container_registry,
+                                 protocol = container_protocol,
                                  ports    = container_ports,
                                  supports_dynamic_ports = container_supports_dynamic_ports,
                                  supports_user_auth     = container_supports_user_auth,

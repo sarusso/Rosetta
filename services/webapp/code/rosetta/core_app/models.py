@@ -82,6 +82,7 @@ class Container(models.Model):
     type     = models.CharField('Container type', max_length=36, blank=False, null=False)
     registry = models.CharField('Container registry', max_length=255, blank=False, null=False)
     ports    = models.CharField('Container ports', max_length=36, blank=True, null=True)
+    protocol = models.CharField('Container protocol', max_length=36, blank=True, null=True, default='http')
 
     # Capabilities
     supports_dynamic_ports = models.BooleanField(default=False)
