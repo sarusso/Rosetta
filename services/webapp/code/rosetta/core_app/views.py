@@ -924,7 +924,7 @@ def sharable_link_handler(request, id):
 
     # Then, redirect to the task through the tunnel
     tunnel_host = get_tunnel_host()
-    return redirect('http://{}:{}'.format(tunnel_host,task.tunnel_port))
+    return redirect('{}://{}:{}'.format(task.container.protocol, tunnel_host,task.tunnel_port))
     
 
 
