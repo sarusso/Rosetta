@@ -211,6 +211,14 @@ class Computing(models.Model):
                 return None
         return param_value
 
+    @property
+    def conf_params(self):
+        class ConfParams():
+            def __init__(self, computing):
+                self.computing = computing
+            def __getitem__(self, key):
+                return self.computing.get_conf_param(key)
+        return ConfParams(self)
 
     @property
     def manager(self):

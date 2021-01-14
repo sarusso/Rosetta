@@ -314,23 +314,24 @@ class SlurmComputingManager(ComputingManager):
         # Get webapp conn string
         from.utils import get_webapp_conn_string
         webapp_conn_string = get_webapp_conn_string()
+
+        # Initialize sbatch args (force 1 task for now)
+        sbatch_args = '-N1 '
             
         # Get task computing parameters and set sbatch args
-        sbatch_args = ''
         if task.computing_options:
             task_partition = task.computing_options.get('partition', None)
             task_cpus = task.computing_options.get('cpus', None)
             task_memory = task.computing_options.get('memory', None)
 
             # Set sbatch args
-            sbatch_args = ''
             if task_partition:
                 sbatch_args += '-p {} '.format(task_partition)
-            #if task_cpus:
-            #    sbatch_args += '-c {} '.format()
-            #if task_memory:
-            #    sbatch_args += '-m {} '.format()
-        
+            if task_cpus:
+                sbatch_args += '-c {} '.format(task_cpus)
+            if task_memory:
+                sbatch_args += '--mem {} '.format(task_memory)
+
         # Set output and error files
         sbatch_args += ' --output=\$HOME/{}.log --error=\$HOME/{}.log '.format(task.uuid, task.uuid)
 

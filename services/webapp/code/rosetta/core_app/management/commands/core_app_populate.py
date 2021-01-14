@@ -226,7 +226,7 @@ class Command(BaseCommand):
     
             # Create demo slurm sys computing conf
             ComputingSysConf.objects.create(computing = demo_slurm_computing,
-                                            data      = {'master': 'slurmclustermaster-main'})
+                                            data      = {'master': 'slurmclustermaster-main', 'default_partition': 'partition1'})
 
             # Create demo slurm user computing conf
             ComputingUserConf.objects.create(user      = testuser,
