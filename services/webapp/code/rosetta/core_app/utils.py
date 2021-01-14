@@ -134,6 +134,34 @@ def random_username():
     return username
 
 
+def finalize_user_creation(user):
+
+    from .models import Profile, KeyPair
+
+    # Create profile
+    logger.debug('Creating user profile for user "{}"'.format(user.email))
+    Profile.objects.create(user=user)
+
+    # Generate user keys
+    out = os_shell('mkdir -p /data/resources/keys/', capture=True)
+    if not out.exit_code == 0:
+        logger.error(out)
+        raise ErrorMessage('Something went wrong in creating user keys folder. Please contact support')
+        
+    command= "/bin/bash -c \"ssh-keygen -q -t rsa -N '' -f /data/resources/keys/{}_id_rsa 2>/dev/null <<< y >/dev/null\"".format(user.username)                        
+    out = os_shell(command, capture=True)
+    if not out.exit_code == 0:
+        logger.error(out)
+        raise ErrorMessage('Something went wrong in creating user keys. Please contact support')
+        
+    
+    # Create key objects
+    KeyPair.objects.create(user = user,
+                          default = True,
+                          private_key_file = '/data/resources/keys/{}_id_rsa'.format(user.username),
+                          public_key_file = '/data/resources/keys/{}_id_rsa.pub'.format(user.username))
+    
+
 def sanitize_shell_encoding(text):
     return text.encode("utf-8", errors="ignore")
 
