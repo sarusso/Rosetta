@@ -263,8 +263,11 @@ if OIDC_RP_CLIENT_ID:
     LOGIN_REDIRECT_URL = '/'
     LOGOUT_REDIRECT_URL = '/'
     LOGIN_REDIRECT_URL_FAILURE = '/'
-    
+    #OIDC_AUTHENTICATION_CALLBACK_URL = 'rosetta.local/oidc/callback/'
 
+    # Required for the Open ID connect redirects to work properly
+    USE_X_FORWARDED_HOST = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 
