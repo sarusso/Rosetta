@@ -22,7 +22,7 @@
         <b>Account ID</b>
         </td>
         <td>
-        {{data.user.username}} | <a href="/logout/">Logout</a>
+        {{data.user.username}}
         </td>
        </tr>
       
@@ -99,8 +99,21 @@
        </tr>
 
       </table>
-
       </form>
+      
+      <div style="margin-left:10px; margin-top:40px">
+        {% if OPENID_ENABLED %}
+        <form action="{% url 'oidc_logout' %}" method="post">
+        {% csrf_token %}
+        <input type="submit" value="logout">
+        </form>
+        {% else %}
+        <form action="/logout/" method="get">
+        <input type="submit" value="logout">
+        </form>        
+        {% endif %}
+      </div>
+
       
       <br/>
       <br/>

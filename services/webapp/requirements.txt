@@ -5,3 +5,4 @@ djangorestframework==3.9.3
 django-rest-swagger==2.2.0
 dateutils==0.6.6
 sendgrid==5.3.0
+mozilla-django-oidc==1.2.4
