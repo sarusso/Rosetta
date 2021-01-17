@@ -185,9 +185,9 @@
             <td><b>Computing options</b></td>
             <td>
             <table>
-             <tr><td>Partition</td><td><input type="text" name="computing_partition" value="" placeholder="" size="20" /></td></tr>
-             <tr><td>Cpus</td><td><input type="text" name="computing_cpus" value="" placeholder="" size="5" /></td></tr>
-             <tr><td>Memory</td><td><input type="text" name="computing_memory" value="" placeholder="" size="5" /></td></tr>
+             <tr><td>Partition</td><td><input type="text" name="computing_partition" value="{{ data.task_computing.conf_params.default_partition }}" placeholder="" size="20" /></td></tr>
+             <tr><td>Cpus</td><td><input type="text" name="computing_cpus" value="{{ data.task_computing.conf_params.default_cpus }}" placeholder="" size="5" /></td></tr>
+             <tr><td>Memory</td><td><input type="text" name="computing_memory" value="{{ data.task_computing.conf_params.default_memory }}" placeholder="" size="5" /></td></tr>
              </table>
             </td>
            </tr>
