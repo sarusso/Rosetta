@@ -51,18 +51,16 @@ def public_view(wrapped_view):
                 error_text = str(e)
             else:
 
-                # Raise te exception if we are in debug mode
+                # Log the exception 
+                logger.error(format_exception(e))
+
+                # Raise the exception if we are in debug mode
                 if settings.DEBUG:
                     raise
 
-                # Otherwise,
+                # Otherwise, mask it
                 else:
-
-                    # first log the exception
-                    logger.error(format_exception(e))
-
-                    # and then mask it.
-                    error_text = 'something went wrong'
+                    error_text = 'something went wrong ({})'.format(e)
 
             data = {'user': request.user,
                     'title': 'Error',
@@ -111,18 +109,16 @@ def private_view(wrapped_view):
                     error_text = str(e)
                 else:
 
-                    # Raise te exception if we are in debug mode
+                    # Log the exception 
+                    logger.error(format_exception(e))
+    
+                    # Raise the exception if we are in debug mode
                     if settings.DEBUG:
                         raise
-
-                    # Otherwise,
+    
+                    # Otherwise, mask it
                     else:
-
-                        # first log the exception
-                        logger.error(format_exception(e))
-
-                        # and then mask it.
-                        error_text = 'something went wrong'
+                        error_text = 'something went wrong ({})'.format(e)
 
                 data = {'user': request.user,
                         'title': 'Error',

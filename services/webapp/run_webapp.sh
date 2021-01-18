@@ -36,6 +36,48 @@ if [[ "x$EXIT_CODE" != "x0" ]] ; then
 fi
 echo ""
 
+
+if [[ "x$DJANGO_DEV_SERVER" == "xTrue" ]] ; then
+    
 # Run the (development) server
-echo "Now starting the server and logging in /var/log/webapp/server.log."
-exec python3 manage.py runserver 0.0.0.0:8080 2>> /var/log/webapp/server.log
+    echo "Now starting the development server and logging in /var/log/webapp/server.log."
+    exec python3 manage.py runserver 0.0.0.0:8080 2>> /var/log/webapp/server.log
+
+else
+    # Move to the code dir
+    cd /opt/code
+    
+    # Collect static
+    echo "Collecting static files..."
+    python3 manage.py collectstatic
+
+    # Run uWSGI
+    echo "Now starting the uWSGI server and logging in /var/log/webapp/server.log."
+
+	uwsgi --chdir=/opt/code \
+	      --module=rosetta.wsgi \
+	      --env DJANGO_SETTINGS_MODULE=rosetta.settings \
+	      --master --pidfile=/tmp/project-master.pid \
+	      --socket=127.0.0.1:49152 \
+	      --static-map /static=/rosetta/static \
+	      --http :8080 \
+	      --disable-logging 2>> /var/log/webapp/server.log
+fi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

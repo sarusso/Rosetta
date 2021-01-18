@@ -46,6 +46,7 @@ services:
     hostname: webapp
     environment:
       - SAFEMODE=False
+      - DJANGO_DEV_SERVER=True
       - DJANGO_DEBUG=True
       - DJANGO_LOG_LEVEL=CRITICAL
       - ROSETTA_LOG_LEVEL=DEBUG
