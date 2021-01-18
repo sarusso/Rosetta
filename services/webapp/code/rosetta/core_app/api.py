@@ -209,28 +209,27 @@ class UserViewSet(viewsets.ModelViewSet):
 class agent_api(PublicGETAPI):
     
     def _get(self, request):
+        
+        task_uuid = request.GET.get('task_uuid', None)
+        if not task_uuid:
+            return HttpResponse('MISSING task_uuid')
+
+        from django.core.exceptions import ValidationError
+
         try:
-            
-            task_uuid = request.GET.get('task_uuid', None)
-            if not task_uuid:
-                return HttpResponse('MISSING task_uuid')
-    
-            from django.core.exceptions import ValidationError
-    
-            try:
-                task = Task.objects.get(uuid=task_uuid)
-            except (Task.DoesNotExist, ValidationError):
-                return HttpResponse('Unknown task uuid "{}"'.format(task_uuid))
+            task = Task.objects.get(uuid=task_uuid)
+        except (Task.DoesNotExist, ValidationError):
+            return HttpResponse('Unknown task uuid "{}"'.format(task_uuid))
 
 
-            from.utils import get_webapp_conn_string
-            webapp_conn_string = get_webapp_conn_string()
-            
-            action = request.GET.get('action', None)
-            
-            if not action:
-                # Return the agent code
-                agent_code='''
+        from.utils import get_webapp_conn_string
+        webapp_conn_string = get_webapp_conn_string()
+        
+        action = request.GET.get('action', None)
+        
+        if not action:
+            # Return the agent code
+            agent_code='''
 import logging
 import socket
 try:
@@ -285,64 +284,45 @@ else:
 print(port)
 '''
         
-                return HttpResponse(agent_code)
-    
-    
-            elif action=='set_ip_port':
-                
-                task_ip   = request.GET.get('ip', None)
-                if not task_ip:
-                    return HttpResponse('IP not valid (got "{}")'.format(task_ip))
-                
-                task_port = request.GET.get('port', None)
-                if not task_port:
-                    return HttpResponse('Port not valid (got "{}")'.format(task_port))
-                
-                try:
-                    int(task_port)
-                except (TypeError, ValueError):
-                    return HttpResponse('Port not valid (got "{}")'.format(task_port))
-                  
-                # Set fields
-                logger.info('Setting task "{}" to ip "{}" and port "{}"'.format(task.uuid, task_ip, task_port))
-                task.status = TaskStatuses.running
-                task.ip     = task_ip
-                if task.container.supports_dynamic_ports:
-                    task.port = int(task_port)
-                task.save()
-                        
-                # Notify the user that the task called back home
-                logger.info('Sending task ready mail notification to "{}"'.format(task.user.email))
-                mail_subject = 'Your Task "{}" is up and running'.format(task.container.name)
-                mail_text = 'Hello,\n\nyour Task "{}" on {} is up and running: {}/tasks/?uuid={}\n\nThe Rosetta notifications bot.'.format(task.container.name, task.computing, settings.DJANGO_PUBLIC_HTTP_HOST, task.uuid)
-                try:
-                    send_email(to=task.user.email, subject=mail_subject, text=mail_text)
-                except Exception as e:
-                    logger.error('Cannot send task ready email: "{}"'.format(e))
-                return HttpResponse('OK')
-                
-    
-            else:
-                return HttpResponse('Unknown action "{}"'.format(action))
-    
-
-        except Exception as e:
-            logger.error(e)
+            return HttpResponse(agent_code)
 
 
+        elif action=='set_ip_port':
+            
+            task_ip   = request.GET.get('ip', None)
+            if not task_ip:
+                return HttpResponse('IP not valid (got "{}")'.format(task_ip))
+            
+            task_port = request.GET.get('port', None)
+            if not task_port:
+                return HttpResponse('Port not valid (got "{}")'.format(task_port))
+            
+            try:
+                int(task_port)
+            except (TypeError, ValueError):
+                return HttpResponse('Port not valid (got "{}")'.format(task_port))
+              
+            # Set fields
+            logger.info('Setting task "{}" to ip "{}" and port "{}"'.format(task.uuid, task_ip, task_port))
+            task.status = TaskStatuses.running
+            task.ip     = task_ip
+            if task.container.supports_dynamic_ports:
+                task.port = int(task_port)
+            task.save()
+                    
+            # Notify the user that the task called back home
+            logger.info('Sending task ready mail notification to "{}"'.format(task.user.email))
+            mail_subject = 'Your Task "{}" is up and running'.format(task.container.name)
+            mail_text = 'Hello,\n\nyour Task "{}" on {} is up and running: {}/tasks/?uuid={}\n\nThe Rosetta notifications bot.'.format(task.container.name, task.computing, settings.DJANGO_PUBLIC_HTTP_HOST, task.uuid)
+            try:
+                send_email(to=task.user.email, subject=mail_subject, text=mail_text)
+            except Exception as e:
+                logger.error('Cannot send task ready email: "{}"'.format(e))
+            return HttpResponse('OK')
+            
 
-
-
-
-
-
-
-
-
-
-
-
-
+        else:
+            return HttpResponse('Unknown action "{}"'.format(action))
 
 
 

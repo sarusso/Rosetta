@@ -205,7 +205,7 @@ class RemoteComputingManager(ComputingManager):
                 else:
                     binds += ',{}'.format(task.extra_binds)
             
-            run_command  = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, user, host)
+            run_command  = 'ssh -o LogLevel=ERROR -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, user, host)
             run_command += '/bin/bash -c \'"rm -rf /tmp/{}_data && mkdir -p /tmp/{}_data/tmp && mkdir -p /tmp/{}_data/home && chmod 700 /tmp/{}_data && '.format(task.uuid, task.uuid, task.uuid, task.uuid) 
             run_command += 'wget {}/api/v1/base/agent/?task_uuid={} -O /tmp/{}_data/agent.py &> /dev/null && export BASE_PORT=\$(python /tmp/{}_data/agent.py 2> /tmp/{}_data/task.log) && '.format(webapp_conn_string, task.uuid, task.uuid, task.uuid, task.uuid)
             run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\$BASE_PORT && {} '.format(authstring)
@@ -262,7 +262,7 @@ class RemoteComputingManager(ComputingManager):
         user = task.computing.get_conf_param('user')
 
         # Stop the task remotely
-        stop_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "kill -9 {}"\''.format(user_keys.private_key_file, user, host, task.pid)
+        stop_command = 'ssh -o LogLevel=ERROR -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "kill -9 {}"\''.format(user_keys.private_key_file, user, host, task.pid)
         out = os_shell(stop_command, capture=True)
         if out.exit_code != 0:
             if not 'No such process' in out.stderr:
@@ -286,7 +286,7 @@ class RemoteComputingManager(ComputingManager):
         user = task.computing.get_conf_param('user')
 
         # View log remotely
-        view_log_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "cat /tmp/{}_data/task.log"\''.format(user_keys.private_key_file, user, host, task.uuid)
+        view_log_command = 'ssh -o LogLevel=ERROR -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "cat /tmp/{}_data/task.log"\''.format(user_keys.private_key_file, user, host, task.uuid)
 
         out = os_shell(view_log_command, capture=True)
         if out.exit_code != 0:
@@ -364,7 +364,7 @@ class SlurmComputingManager(ComputingManager):
                 else:
                     binds += ',{}'.format(task.extra_binds)
 
-            run_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, user, host)
+            run_command = 'ssh -o LogLevel=ERROR -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, user, host)
             run_command += '\'bash -c "echo \\"#!/bin/bash\nwget {}/api/v1/base/agent/?task_uuid={} -O \$HOME/agent_{}.py &> \$HOME/{}.log && export BASE_PORT=\\\\\\$(python \$HOME/agent_{}.py 2> \$HOME/{}.log) && '.format(webapp_conn_string, task.uuid, task.uuid, task.uuid, task.uuid, task.uuid)
             run_command += 'export SINGULARITY_NOHTTPS=true && export SINGULARITYENV_BASE_PORT=\\\\\\$BASE_PORT && {} '.format(authstring)
             run_command += 'rm -rf /tmp/{}_data && mkdir -p /tmp/{}_data/tmp &>> \$HOME/{}.log && mkdir -p /tmp/{}_data/home &>> \$HOME/{}.log && chmod 700 /tmp/{}_data && '.format(task.uuid, task.uuid, task.uuid, task.uuid, task.uuid, task.uuid)
@@ -431,7 +431,7 @@ class SlurmComputingManager(ComputingManager):
         user = task.computing.get_conf_param('user')
 
         # Stop the task remotely
-        stop_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "scancel {}"\''.format(user_keys.private_key_file, user, host, task.pid)
+        stop_command = 'ssh -o LogLevel=ERROR -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "scancel {}"\''.format(user_keys.private_key_file, user, host, task.pid)
         out = os_shell(stop_command, capture=True)
         if out.exit_code != 0:
             raise Exception(out.stderr)
@@ -454,7 +454,7 @@ class SlurmComputingManager(ComputingManager):
         user = task.computing.get_conf_param('user')
 
         # View log remotely
-        view_log_command = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "cat \$HOME/{}.log"\''.format(user_keys.private_key_file, user, host, task.uuid)
+        view_log_command = 'ssh -o LogLevel=ERROR -i {} -4 -o StrictHostKeyChecking=no {}@{} \'/bin/bash -c "cat \$HOME/{}.log"\''.format(user_keys.private_key_file, user, host, task.uuid)
 
         out = os_shell(view_log_command, capture=True)
         if out.exit_code != 0:
@@ -518,7 +518,7 @@ class RemotehopComputingManager(ComputingManager):
                 else:
                     binds += ',{}'.format(task.extra_binds)
 
-            run_command  = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, first_user, first_host)
+            run_command  = 'ssh -o LogLevel=ERROR -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, first_user, first_host)
             run_command += '"ssh -4 -o StrictHostKeyChecking=no {}@{} /bin/bash -c \''.format(second_user, second_host)
             
             if use_agent:
@@ -592,7 +592,7 @@ class RemotehopComputingManager(ComputingManager):
         second_user = task.computing.get_conf_param('second_user')
 
         # Stop the task remotely
-        stop_command  = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, first_user, first_host)
+        stop_command  = 'ssh -o LogLevel=ERROR -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, first_user, first_host)
         stop_command += '"ssh -4 -o StrictHostKeyChecking=no {}@{} '.format(second_user, second_host)
         stop_command += 'kill -9 {}"'.format(task.pid)
 
@@ -621,7 +621,7 @@ class RemotehopComputingManager(ComputingManager):
         second_user = task.computing.get_conf_param('second_user')
 
         # View log remotely
-        view_log_command  = 'ssh -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, first_user, first_host)
+        view_log_command  = 'ssh -o LogLevel=ERROR -i {} -4 -o StrictHostKeyChecking=no {}@{} '.format(user_keys.private_key_file, first_user, first_host)
         view_log_command += '"ssh -4 -o StrictHostKeyChecking=no {}@{} '.format(second_user, second_host)
         view_log_command += 'cat \\\\\\$HOME/{}.log"'.format(task.uuid)
 
