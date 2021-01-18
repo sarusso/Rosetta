@@ -45,7 +45,9 @@ Clean
 Example Webapp configuraion
 
       - SAFEMODE=False
-      - DJANGO_LOG_LEVEL=CRITICAL
+      - DJANGO_DEV_SERVER=True
+      - DJANGO_DEBUG=True
+      - DJANGO_LOG_LEVEL=ERROR
       - ROSETTA_LOG_LEVEL=ERROR
       - ROSETTA_TUNNEL_HOST=localhost # Not http or https
       - ROSETTA_WEBAPP_HOST= 
@@ -56,7 +58,6 @@ Example Webapp configuraion
       - DJANGO_EMAIL_APIKEY=
       - DJANGO_EMAIL_FROM="Rosetta <notifications@rosetta.local>"
       - DJANGO_PUBLIC_HTTP_HOST=http://localhost # Public facing, with http or https
-
 
 
 ### Extras
